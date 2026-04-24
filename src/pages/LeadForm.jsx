@@ -3,18 +3,23 @@ import { useI18n } from '../context/I18nContext'
 import ProgressBar from '../components/ProgressBar'
 import FormField from '../components/FormField'
 
-const TOTAL_STEPS = 1  // Will grow as more steps are added
+const TOTAL_STEPS = 1
 
-const inputClass = `
-  w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg
-  focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
-  transition-colors duration-200 placeholder:text-slate-400
-`.trim()
+// DS: focus:ring-2 focus:ring-primary/30 (keyboard nav) + 200ms transition
+const inputClass = [
+  'w-full px-4 py-3 text-sm border border-gray-200 rounded-xl',
+  'text-ds-text placeholder:text-slate-400',
+  'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary',
+  'transition-colors duration-200',
+  'bg-white',
+].join(' ')
 
 export default function LeadForm() {
   const { t } = useI18n()
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
+  // DS: loading state — show spinner → then success (UX guideline: Submit Feedback)
+  const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
   const [form, setForm] = useState({
     fullName: '',
@@ -40,63 +45,70 @@ export default function LeadForm() {
     return e
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const e = step === 1 ? validateStep1() : {}
     if (Object.keys(e).length > 0) { setErrors(e); return }
     if (step < TOTAL_STEPS) {
       setStep((s) => s + 1)
     } else {
+      // DS: loading feedback before success
+      setLoading(true)
+      await new Promise((r) => setTimeout(r, 800))
+      setLoading(false)
       setSubmitted(true)
     }
   }
 
   const handleBack = () => setStep((s) => Math.max(1, s - 1))
 
+  // DS: success state with checkmark icon
   if (submitted) {
     return (
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
-        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100
-                        p-8 text-center">
-          <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
+        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-ds-md border border-gray-100
+                        p-10 text-center animate-fadeIn">
+          <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5">
             <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                 stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">{t('lead.success.title')}</h2>
-          <p className="text-slate-500 text-sm">{t('lead.success.message')}</p>
+          <h2 className="text-2xl font-bold text-ds-text mb-3">{t('lead.success.title')}</h2>
+          <p className="text-slate-500 text-sm leading-relaxed">{t('lead.success.message')}</p>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    // DS: py-16 (space-3xl) top/bottom — "large sections 48px+ gaps"
+    <main className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
 
-      {/* Heading */}
-      <div className="text-center mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+      {/* DS: heading 32px+ (text-ds-h1), text-ds-text */}
+      <div className="text-center mb-12">
+        <h1 className="text-ds-h1 font-bold text-ds-text">
           {t('lead.heading')}
         </h1>
-        <p className="text-slate-500 mt-2 text-sm sm:text-base">
+        <p className="text-blue-400 mt-3 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
           {t('lead.subheading')}
         </p>
       </div>
 
       <ProgressBar currentStep={step} totalSteps={TOTAL_STEPS} />
 
-      {/* Form card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 max-w-2xl mx-auto">
+      {/* DS: shadow-ds-md card, rounded-2xl */}
+      <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-10 max-w-2xl mx-auto">
 
-        {/* ===== STEP 1: Contact Information ===== */}
+        {/* STEP 1: Contact Information */}
         {step === 1 && (
           <div className="animate-fadeIn">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-slate-900">{t('lead.step1.title')}</h2>
-              <p className="text-sm text-slate-500 mt-1">{t('lead.step1.desc')}</p>
+            <div className="mb-8">
+              <h2 className="text-ds-h2 font-semibold text-ds-text">{t('lead.step1.title')}</h2>
+              <p className="text-sm text-blue-400 mt-1.5 leading-relaxed">{t('lead.step1.desc')}</p>
             </div>
 
-            <div className="space-y-5">
+            {/* DS: space-xl (32px) gap between fields */}
+            <div className="space-y-6">
               <FormField label={t('lead.step1.fullName')} required error={errors.fullName}>
                 <input
                   type="text"
@@ -151,15 +163,17 @@ export default function LeadForm() {
           </div>
         )}
 
-        {/* ===== NAV BUTTONS ===== */}
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
+        {/* NAV BUTTONS — DS: cursor-pointer, 200ms color shift */}
+        <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-100">
           <button
             type="button"
             onClick={handleBack}
             disabled={step === 1}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-600
-                       border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-500
+                       border border-gray-200 rounded-xl
+                       hover:bg-gray-50 hover:border-gray-300 hover:text-ds-text
                        transition-colors duration-200 cursor-pointer
+                       focus:outline-none focus:ring-2 focus:ring-primary/20
                        disabled:opacity-0 disabled:pointer-events-none"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24"
@@ -172,10 +186,26 @@ export default function LeadForm() {
           <button
             type="button"
             onClick={handleNext}
-            className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white
-                       bg-primary hover:bg-secondary rounded-lg transition-colors duration-200 cursor-pointer"
+            disabled={loading}
+            className="flex items-center gap-2 px-7 py-2.5 text-sm font-semibold text-white
+                       bg-primary hover:bg-secondary rounded-xl shadow-ds-sm
+                       transition-colors duration-200 cursor-pointer
+                       focus:outline-none focus:ring-2 focus:ring-primary/30
+                       disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {step < TOTAL_STEPS ? (
+            {loading ? (
+              // DS: animate-spin for loading indicator only (not decorative)
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"
+                     aria-hidden="true">
+                  <circle className="opacity-25" cx="12" cy="12" r="10"
+                          stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                {t('common.loading')}
+              </>
+            ) : step < TOTAL_STEPS ? (
               <>
                 {t('common.next')}
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24"
@@ -193,3 +223,4 @@ export default function LeadForm() {
     </main>
   )
 }
+

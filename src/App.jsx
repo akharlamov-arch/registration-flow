@@ -1,9 +1,11 @@
+// DS React stack guideline: lazy() for routes — code splitting
+import { lazy, Suspense, useEffect } from 'react'
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
 import { I18nProvider, useI18n } from './context/I18nContext'
 import Header from './components/Header'
-import LeadForm from './pages/LeadForm'
-import RegistrationForm from './pages/RegistrationForm'
+
+const LeadForm         = lazy(() => import('./pages/LeadForm'))
+const RegistrationForm = lazy(() => import('./pages/RegistrationForm'))
 
 function TitleUpdater() {
   const { t } = useI18n()
@@ -17,15 +19,30 @@ function TitleUpdater() {
   return null
 }
 
+// DS: animate-pulse skeleton while lazy chunk loads
+function PageFallback() {
+  return (
+    <main className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+      <div className="max-w-2xl mx-auto space-y-6 animate-pulse">
+        <div className="h-8 bg-gray-100 rounded-xl w-2/3 mx-auto" />
+        <div className="h-4 bg-gray-100 rounded-xl w-1/2 mx-auto" />
+        <div className="h-64 bg-gray-100 rounded-2xl" />
+      </div>
+    </main>
+  )
+}
+
 function AppShell() {
   return (
     <div className="min-h-screen bg-surface font-sans">
       <TitleUpdater />
       <Header />
-      <Routes>
-        <Route path="/" element={<LeadForm />} />
-        <Route path="/registration" element={<RegistrationForm />} />
-      </Routes>
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
+          <Route path="/" element={<LeadForm />} />
+          <Route path="/registration" element={<RegistrationForm />} />
+        </Routes>
+      </Suspense>
     </div>
   )
 }
