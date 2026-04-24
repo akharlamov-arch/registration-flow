@@ -1,0 +1,141 @@
+/* style.css — Custom styles for iTrucking Registration Portal */
+
+/* ============================================================
+   BASE
+============================================================ */
+*, *::before, *::after {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+/* ============================================================
+   STEP TRANSITIONS
+============================================================ */
+.step {
+  animation: fadeInStep 0.2s ease-out;
+}
+
+@keyframes fadeInStep {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .step,
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+   FORM INPUTS
+============================================================ */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+}
+
+/* Hide native file input */
+input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Language select — hide native arrow on Safari */
+select#lang-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* ============================================================
+   PROGRESS STEP INDICATORS
+============================================================ */
+#step-indicators {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+/* ============================================================
+   FILE UPLOAD ZONE
+============================================================ */
+.file-upload-zone {
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.file-upload-zone:focus-visible {
+  outline: 2px solid #2563EB;
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   CHECKBOX & RADIO CUSTOM STYLES
+============================================================ */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #2563EB;
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+input[type="radio"] {
+  border-radius: 50%;
+}
+
+/* ============================================================
+   SCROLLBAR (subtle)
+============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* ============================================================
+   LOADING SPINNER
+============================================================ */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: spin 0.8s linear infinite;
+}
+
+/* ============================================================
+   UTILITY
+============================================================ */
+.ring-primary\/20 {
+  --tw-ring-color: rgb(37 99 235 / 0.2);
+}

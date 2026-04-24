@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iTrucking — Complete Registration</title>
+  <meta name="description" content="Complete your iTrucking registration. Approved applicants only." />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary:   '#2563EB',
+            secondary: '#3B82F6',
+            cta:       '#F97316',
+            surface:   '#F8FAFC',
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="../assets/css/style.css" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="../assets/images/logo.svg" />
+</head>
+
+<body class="bg-surface font-sans min-h-screen" data-page="registration">
+
+  <!-- ============================================================
+       HEADER
+  ============================================================ -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+
+      <!-- Logo -->
+      <a href="../index.html" class="flex items-center gap-2.5 cursor-pointer flex-shrink-0"
+         aria-label="iTrucking home">
+        <img src="../assets/images/logo.svg" alt="" class="h-8 w-auto" aria-hidden="true" />
+        <span class="font-bold text-xl text-[#1E293B] tracking-tight">iTrucking</span>
+      </a>
+
+      <!-- Right controls: Language + Phone -->
+      <div class="flex items-center gap-3 sm:gap-5">
+
+        <!-- Language selector -->
+        <div class="relative flex items-center">
+          <svg class="absolute left-2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03
+                 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843
+                 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998
+                 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0
+                 0A17.919 17.919 0 0112 16.5a17.92 17.92 0 01-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113
+                 1.157-4.418" />
+          </svg>
+          <select
+            id="lang-select"
+            class="pl-7 pr-3 py-1.5 text-sm font-medium text-[#1E293B] bg-gray-50 border border-gray-200
+                   rounded-lg cursor-pointer hover:border-primary focus:outline-none focus:ring-2
+                   focus:ring-primary/30 transition-colors duration-200"
+            aria-label="Select language"
+            onchange="setLanguage(this.value)">
+            <option value="en">EN</option>
+            <option value="ru">RU</option>
+            <option value="uk">UK</option>
+            <option value="es">ES</option>
+          </select>
+        </div>
+
+        <!-- Phone -->
+        <a href="tel:+19162694606"
+           class="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-secondary
+                  transition-colors duration-200 cursor-pointer"
+           aria-label="Call us at (916) 269-4606">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091
+                 l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035
+                 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173
+                 L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+          </svg>
+          <span class="hidden sm:block">(916) 269-4606</span>
+        </a>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       MAIN
+  ============================================================ -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+
+    <!-- Page heading -->
+    <div class="text-center mb-8">
+      <!-- Approved badge -->
+      <div class="inline-flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-700
+                  text-xs font-semibold px-3 py-1 rounded-full mb-4">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+             stroke-width="2.5" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Approved</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-[#1E293B]" data-i18n="registration.heading">
+        Complete Your Registration
+      </h1>
+      <p class="text-slate-500 mt-2 text-sm sm:text-base" data-i18n="registration.subheading">
+        Your application has been approved. Please complete the registration process below.
+      </p>
+    </div>
+
+    <!-- ============================================================
+         PROGRESS BAR
+    ============================================================ -->
+    <div id="progress-container" class="mb-8 max-w-2xl mx-auto">
+      <div id="step-indicators" class="flex items-center justify-center mb-4 gap-0" role="list"
+           aria-label="Form steps"></div>
+      <p id="step-counter" class="text-center text-xs text-slate-400 mb-2 font-medium">Step 1 of 1</p>
+      <div class="w-full bg-gray-200 rounded-full h-1.5">
+        <div id="progress-bar"
+             class="bg-primary h-1.5 rounded-full transition-all duration-500 ease-in-out"
+             style="width: 0%"
+             role="progressbar"
+             aria-valuenow="0"
+             aria-valuemin="0"
+             aria-valuemax="100">
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         FORM CARD
+    ============================================================ -->
+    <div id="form-card"
+         class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 max-w-2xl mx-auto">
+
+      <!-- ========== STEP 1: Personal Information ========== -->
+      <div id="step-1" class="step" data-step="1">
+
+        <div class="mb-6">
+          <h2 class="text-lg font-semibold text-[#1E293B]" data-i18n="registration.step1.title">
+            Personal Information
+          </h2>
+          <p class="text-sm text-slate-500 mt-1" data-i18n="registration.step1.desc">
+            Please confirm your personal details to continue.
+          </p>
+        </div>
+
+        <div class="space-y-5">
+
+          <!-- Full Name -->
+          <div class="input-wrapper">
+            <label for="fullName" class="block text-sm font-medium text-[#1E293B] mb-1.5">
+              <span data-i18n="registration.step1.fullName">Full Name</span>
+              <span class="text-red-500 ml-0.5" aria-hidden="true">*</span>
+            </label>
+            <input
+              type="text"
+              id="fullName"
+              name="fullName"
+              required
+              autocomplete="name"
+              class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg
+                     focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
+                     transition-colors duration-200 placeholder:text-slate-400"
+              data-i18n-placeholder="registration.step1.fullNamePlaceholder"
+              placeholder="John Doe" />
+          </div>
+
+          <!-- Email -->
+          <div class="input-wrapper">
+            <label for="email" class="block text-sm font-medium text-[#1E293B] mb-1.5">
+              <span data-i18n="registration.step1.email">Email Address</span>
+              <span class="text-red-500 ml-0.5" aria-hidden="true">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              autocomplete="email"
+              class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg
+                     focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
+                     transition-colors duration-200 placeholder:text-slate-400"
+              data-i18n-placeholder="registration.step1.emailPlaceholder"
+              placeholder="john@company.com" />
+          </div>
+
+          <!-- Phone -->
+          <div class="input-wrapper">
+            <label for="phone" class="block text-sm font-medium text-[#1E293B] mb-1.5">
+              <span data-i18n="registration.step1.phone">Phone Number</span>
+              <span class="text-red-500 ml-0.5" aria-hidden="true">*</span>
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              required
+              autocomplete="tel"
+              class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg
+                     focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
+                     transition-colors duration-200 placeholder:text-slate-400"
+              data-i18n-placeholder="registration.step1.phonePlaceholder"
+              placeholder="+1 (555) 000-0000" />
+          </div>
+
+        </div>
+      </div>
+      <!-- /step-1 -->
+
+    </div>
+    <!-- /form-card -->
+
+    <!-- ============================================================
+         NAVIGATION BUTTONS
+    ============================================================ -->
+    <div id="nav-buttons" class="flex items-center justify-between mt-6 max-w-2xl mx-auto">
+
+      <!-- Back -->
+      <button
+        id="btn-back"
+        type="button"
+        onclick="prevStep()"
+        class="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-600 bg-white
+               border border-gray-200 rounded-lg hover:border-primary hover:text-primary
+               focus:outline-none focus:ring-2 focus:ring-primary/30
+               transition-colors duration-200 cursor-pointer"
+        aria-label="Go back to previous step">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+             stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        <span data-i18n="common.back">Back</span>
+      </button>
+
+      <!-- Next / Submit -->
+      <button
+        id="btn-next"
+        type="button"
+        onclick="nextStep()"
+        class="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-cta
+               rounded-lg hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-cta/40
+               transition-colors duration-200 cursor-pointer shadow-sm">
+        <span class="btn-next-label" data-i18n="common.next">Next</span>
+        <svg class="w-4 h-4 btn-next-arrow" fill="none" viewBox="0 0 24 24"
+             stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        </svg>
+      </button>
+
+    </div>
+
+  </main>
+
+  <!-- ============================================================
+       SCRIPTS
+  ============================================================ -->
+  <script src="../assets/js/i18n.js"></script>
+  <script src="../assets/js/app.js"></script>
+
+</body>
+</html>
