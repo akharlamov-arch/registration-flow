@@ -22,8 +22,8 @@ function TitleUpdater() {
 // DS: animate-pulse skeleton while lazy chunk loads
 function PageFallback() {
   return (
-    <main className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-      <div className="max-w-2xl mx-auto space-y-6 animate-pulse">
+    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+      <div className="space-y-6 animate-pulse">
         <div className="h-8 bg-gray-100 rounded-xl w-2/3 mx-auto" />
         <div className="h-4 bg-gray-100 rounded-xl w-1/2 mx-auto" />
         <div className="h-64 bg-gray-100 rounded-2xl" />
@@ -34,7 +34,7 @@ function PageFallback() {
 
 function AppShell() {
   return (
-    <div className="min-h-screen bg-surface font-sans">
+    <div className="min-h-screen bg-white font-sans">
       <TitleUpdater />
       <Header />
       <Suspense fallback={<PageFallback />}>

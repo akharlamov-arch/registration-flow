@@ -9,11 +9,11 @@ export default {
     extend: {
       colors: {
         primary:   '#2563EB',
-        secondary: '#3B82F6',
+        secondary: '#1D4ED8',
         cta:       '#F97316',
-        surface:   '#EFF6FF',
-        // DS text token
-        'ds-text': '#1E40AF',
+        surface:   '#F5F5F5',
+        // DS text token — minimalist near-black
+        'ds-text': '#111111',
       },
       fontFamily: {
         sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],

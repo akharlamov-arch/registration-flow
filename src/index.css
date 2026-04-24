@@ -8,10 +8,10 @@
 ============================================================ */
 :root {
   --color-primary:    #2563EB;
-  --color-secondary:  #3B82F6;
+  --color-secondary:  #1D4ED8;
   --color-cta:        #F97316;
-  --color-background: #EFF6FF;
-  --color-text:       #1E40AF;
+  --color-background: #FAFAFA;
+  --color-text:       #111111;
 
   --space-xs:   0.25rem;   /* 4px  */
   --space-sm:   0.5rem;    /* 8px  */
@@ -42,8 +42,8 @@
 
 body {
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  color: var(--color-text);
-  background-color: var(--color-background);
+  color: #111111;
+  background-color: #FAFAFA;
 }
 
 /* ============================================================

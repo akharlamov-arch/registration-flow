@@ -1,15 +1,28 @@
 import { useState } from 'react'
 import { useI18n } from '../context/I18nContext'
-import ProgressBar from '../components/ProgressBar'
+import StepIndicator from '../components/StepIndicator'
 import FormField from '../components/FormField'
+import PhoneInput from '../components/PhoneInput'
 
 const TOTAL_STEPS = 1
+
+// Icon for each step
+const STEPS = [
+  {
+    label: 'Personal',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+      </svg>
+    ),
+  },
+]
 
 // DS: focus:ring-2 focus:ring-primary/30 + 200ms transition
 const inputClass = [
   'w-full px-4 py-3 text-sm border border-gray-200 rounded-xl',
-  'text-ds-text placeholder:text-slate-400',
-  'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary',
+  'text-gray-900 placeholder:text-gray-400',
+  'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400',
   'transition-colors duration-200',
   'bg-white',
 ].join(' ')
@@ -61,8 +74,8 @@ export default function RegistrationForm() {
 
   if (submitted) {
     return (
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
-        <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-ds-md border border-gray-100
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
+        <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100
                         p-10 text-center animate-fadeIn">
           <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5">
             <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24"
@@ -70,7 +83,7 @@ export default function RegistrationForm() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-ds-text mb-3">{t('registration.success.title')}</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">{t('registration.success.title')}</h2>
           <p className="text-slate-500 text-sm leading-relaxed">{t('registration.success.message')}</p>
         </div>
       </main>
@@ -78,29 +91,29 @@ export default function RegistrationForm() {
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+    <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
 
       {/* DS: heading 32px+ text-ds-h1, text-ds-text */}
       <div className="text-center mb-12">
-        <h1 className="text-ds-h1 font-bold text-ds-text">
+        <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">
           {t('registration.heading')}
         </h1>
-        <p className="text-blue-400 mt-3 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
+        <p className="text-gray-500 mt-3 text-sm sm:text-base mx-auto leading-relaxed">
           {t('registration.subheading')}
         </p>
       </div>
 
-      <ProgressBar currentStep={step} totalSteps={TOTAL_STEPS} />
+      <StepIndicator steps={STEPS} currentStep={step} />
 
       {/* DS: shadow-ds-md, rounded-2xl card */}
-      <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-10 max-w-2xl mx-auto">
+      <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-10">
 
         {/* STEP 1: Personal Information */}
         {step === 1 && (
           <div className="animate-fadeIn">
             <div className="mb-8">
-              <h2 className="text-ds-h2 font-semibold text-ds-text">{t('registration.step1.title')}</h2>
-              <p className="text-sm text-blue-400 mt-1.5 leading-relaxed">{t('registration.step1.desc')}</p>
+              <h2 className="text-lg sm:text-ds-h2 font-semibold text-gray-900">{t('registration.step1.title')}</h2>
+              <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">{t('registration.step1.desc')}</p>
             </div>
 
             <div className="space-y-6">
@@ -131,13 +144,10 @@ export default function RegistrationForm() {
               </FormField>
 
               <FormField label={t('registration.step1.phone')} required error={errors.phone}>
-                <input
-                  type="tel"
+                <PhoneInput
                   id="phone"
                   value={form.phone}
-                  onChange={(e) => update('phone', e.target.value)}
-                  placeholder={t('registration.step1.phonePlaceholder')}
-                  autoComplete="tel"
+                  onChange={(val) => update('phone', val)}
                   className={inputClass}
                   aria-invalid={!!errors.phone}
                 />
@@ -152,11 +162,11 @@ export default function RegistrationForm() {
             type="button"
             onClick={handleBack}
             disabled={step === 1}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-500
-                       border border-gray-200 rounded-xl
-                       hover:bg-gray-50 hover:border-gray-300 hover:text-ds-text
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-500
+                       border border-gray-200 rounded-md
+                       hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900
                        transition-colors duration-200 cursor-pointer
-                       focus:outline-none focus:ring-2 focus:ring-primary/20
+                       focus:outline-none focus:ring-2 focus:ring-gray-200
                        disabled:opacity-0 disabled:pointer-events-none"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24"
@@ -172,7 +182,7 @@ export default function RegistrationForm() {
             onClick={handleNext}
             disabled={loading}
             className="flex items-center gap-2 px-7 py-2.5 text-sm font-semibold text-white
-                       bg-cta hover:bg-orange-500 rounded-xl shadow-ds-sm
+                       bg-cta hover:bg-orange-500 rounded-md shadow-ds-sm
                        transition-colors duration-200 cursor-pointer
                        focus:outline-none focus:ring-2 focus:ring-cta/30
                        disabled:opacity-70 disabled:cursor-not-allowed"

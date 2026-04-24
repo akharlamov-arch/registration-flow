@@ -10,7 +10,7 @@ export default function ProgressBar({ currentStep, totalSteps }) {
 
   return (
     // DS: space-2xl bottom margin (48px)
-    <div className="mb-12 max-w-2xl mx-auto">
+    <div className="mb-12">
 
       {/* Step dots + connector lines */}
       <div className="flex items-center justify-center mb-3" role="list" aria-label="Form steps">
@@ -61,7 +61,7 @@ export default function ProgressBar({ currentStep, totalSteps }) {
       </div>
 
       {/* Counter — DS: text-ds-text muted */}
-      <p className="text-center text-xs text-blue-400 mb-3 font-medium tracking-wide uppercase">
+      <p className="text-center text-xs text-gray-400 mb-3 font-medium tracking-wide uppercase">
         {t('progress.stepLabel')} {currentStep} {t('progress.of')} {totalSteps}
       </p>
 
