@@ -5,7 +5,7 @@ const translations = {
     common: {
       next: 'Next',
       back: 'Back',
-      submit: 'Submit Application',
+      submit: 'Submit',
       nextStep: 'Next Step',
       optional: '(optional)',
       required: 'This field is required',
