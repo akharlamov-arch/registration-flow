@@ -107,7 +107,7 @@ const translations = {
       },
       success: {
         title: 'Application Submitted!',
-        message: 'Thank you! We will review your application and contact you within 1–2 business days.',
+        message: 'Thank you! We will review your application and contact you within 5–7 business days.',
       },
     },
     registration: {
@@ -238,7 +238,7 @@ const translations = {
       },
       success: {
         title: 'Заявка отправлена!',
-        message: 'Спасибо! Мы рассмотрим вашу заявку и свяжемся с вами в течение 1–2 рабочих дней.',
+        message: 'Спасибо! Мы рассмотрим вашу заявку и свяжемся с вами в течение 5–7 рабочих дней.',
       },
     },
     registration: {
@@ -369,7 +369,7 @@ const translations = {
       },
       success: {
         title: 'Заявку надіслано!',
-        message: "Дякуємо! Ми розглянемо вашу заявку та зв'яжемося з вами протягом 1–2 робочих днів.",
+        message: "Дякуємо! Ми розглянемо вашу заявку та зв'яжемося з вами протягом 5–7 робочих днів.",
       },
     },
     registration: {
@@ -500,7 +500,7 @@ const translations = {
       },
       success: {
         title: '¡Solicitud Enviada!',
-        message: '¡Gracias! Revisaremos su solicitud y nos comunicaremos en 1–2 días hábiles.',
+        message: '¡Gracias! Revisaremos su solicitud y nos comunicaremos en 5–7 días hábiles.',
       },
     },
     registration: {

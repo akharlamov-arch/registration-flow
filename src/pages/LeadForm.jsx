@@ -292,7 +292,11 @@ export default function LeadForm() {
       {/* DS: heading 32px+ (text-ds-h1), text-ds-text */}
       <div className="text-center mb-6 sm:mb-10">
         <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">
-          {t('lead.heading')}
+          {t('lead.heading').split('iTrucking').map((part, i, arr) =>
+            i < arr.length - 1
+              ? <span key={i}>{part}<span className="text-red-600">iTrucking</span></span>
+              : <span key={i}>{part}</span>
+          )}
         </h1>
         <p className="text-gray-500 mt-3 text-sm sm:text-base mx-auto leading-relaxed">
           {t('lead.subheading')}
