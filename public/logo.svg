@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" fill="none">
+  <!-- Truck icon -->
+  <rect x="0" y="0" width="40" height="40" rx="8" fill="#2563EB"/>
+  <!-- Cargo body -->
+  <rect x="5" y="12" width="20" height="14" rx="2" fill="white"/>
+  <!-- Cab -->
+  <path d="M25 19h10a2 2 0 012 2v5H25V19z" fill="white"/>
+  <!-- Cab window -->
+  <rect x="27" y="21" width="7" height="4" rx="1" fill="#93C5FD"/>
+  <!-- Wheels -->
+  <circle cx="11" cy="28" r="3.5" fill="#1E3A5F"/>
+  <circle cx="11" cy="28" r="1.5" fill="#93C5FD"/>
+  <circle cx="31" cy="28" r="3.5" fill="#1E3A5F"/>
+  <circle cx="31" cy="28" r="1.5" fill="#93C5FD"/>
+  <!-- Undercarriage -->
+  <rect x="5" y="25" width="32" height="1.5" rx="0.75" fill="#BFDBFE"/>
+</svg>
