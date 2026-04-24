@@ -18,7 +18,7 @@ export default function StepIndicator({ steps, currentStep }) {
               {/* Connector line */}
               {i > 0 && (
                 <div
-                  className={`h-px w-12 sm:w-20 transition-colors duration-300 ${
+                  className={`h-px w-4 sm:w-8 transition-colors duration-300 ${
                     isCompleted ? 'bg-gray-400' : 'bg-gray-200'
                   }`}
                 />

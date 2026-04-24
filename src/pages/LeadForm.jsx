@@ -89,7 +89,7 @@ function ReviewRow({ label, value }) {
 
 // DS: focus:ring-2 focus:ring-primary/30 (keyboard nav) + 200ms transition
 const inputClass = [
-  'w-full px-4 py-3 text-sm border border-gray-200 rounded-xl',
+  'w-full px-4 py-3 text-base sm:text-sm border border-gray-200 rounded-xl',
   'text-gray-900 placeholder:text-gray-400',
   'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400',
   'transition-colors duration-200',
@@ -97,7 +97,7 @@ const inputClass = [
 ].join(' ')
 
 const selectClass = [
-  'w-full px-4 py-3 text-sm border border-gray-200 rounded-xl',
+  'w-full px-4 py-3 text-base sm:text-sm border border-gray-200 rounded-xl',
   'text-gray-900',
   'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400',
   'transition-colors duration-200 bg-white appearance-none cursor-pointer',
@@ -953,7 +953,7 @@ export default function LeadForm() {
                   }}
                   placeholder="1"
                   className={[
-                    'w-full px-4 py-3 text-sm border rounded-xl transition-colors duration-200 bg-white',
+                    'w-full px-4 py-3 text-base sm:text-sm border rounded-xl transition-colors duration-200 bg-white',
                     'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400',
                     modalErrors.personalTrucks ? 'border-red-300' : 'border-gray-200',
                   ].join(' ')}
