@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useI18n } from '../context/I18nContext'
 
 // Placeholder — replace with real data from backend/context
@@ -30,7 +29,6 @@ function Row({ label, value }) {
 
 export default function OtpVerification() {
   const { t } = useI18n()
-  const navigate = useNavigate()
   const [step, setStep] = useState('otp')
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
@@ -112,7 +110,7 @@ export default function OtpVerification() {
 
           <button
             type="button"
-            onClick={() => navigate('/registration')}
+            onClick={() => { /* TODO: navigate to next account setup step */ }}
             className="w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                        bg-primary hover:bg-secondary rounded-xl shadow-ds-sm
                        transition-colors duration-200 cursor-pointer

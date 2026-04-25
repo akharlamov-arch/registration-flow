@@ -5,7 +5,6 @@ import { I18nProvider, useI18n } from './context/I18nContext'
 import Header from './components/Header'
 
 const LeadForm         = lazy(() => import('./pages/LeadForm'))
-const RegistrationForm = lazy(() => import('./pages/RegistrationForm'))
 const OtpVerification  = lazy(() => import('./pages/OtpVerification'))
 
 function TitleUpdater() {
@@ -41,8 +40,7 @@ function AppShell() {
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/" element={<LeadForm />} />
-          <Route path="/verify" element={<OtpVerification />} />
-          <Route path="/registration" element={<RegistrationForm />} />
+          <Route path="/registration" element={<OtpVerification />} />
         </Routes>
       </Suspense>
     </div>
