@@ -20,9 +20,9 @@ const PLACEHOLDER = {
 function Row({ label, value }) {
   if (!value) return null
   return (
-    <div className="flex items-start justify-between gap-4 py-3 border-b border-gray-100 last:border-0">
-      <span className="text-sm text-gray-500 shrink-0 w-40">{label}</span>
-      <span className="text-sm font-medium text-gray-900 text-right">{value}</span>
+    <div className="flex flex-col gap-0.5 py-2 border-b border-gray-100 last:border-0">
+      <span className="text-xs text-gray-400">{label}</span>
+      <span className="text-sm font-medium text-gray-900 break-all">{value}</span>
     </div>
   )
 }
@@ -33,6 +33,8 @@ export default function OtpVerification() {
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [marketingConsent, setMarketingConsent] = useState(false)
+  const [showModal, setShowModal] = useState(false)
 
   const handleSubmit = async () => {
     if (!code.trim()) {
@@ -64,43 +66,62 @@ export default function OtpVerification() {
           </p>
         </div>
 
-        <div className="max-w-lg mx-auto space-y-5">
+        <div className="space-y-5">
+          {/* Two-column data card */}
           <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-8">
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-              {t('accountReview.sectionContact')}
-            </h2>
-            <Row label={t('accountReview.labelName')}        value={`${PLACEHOLDER.firstName} ${PLACEHOLDER.lastName}`} />
-            <Row label={t('accountReview.labelEmail')}       value={PLACEHOLDER.email} />
-            <Row label={t('accountReview.labelPhone')}       value={PLACEHOLDER.phone} />
-            <Row label={t('accountReview.labelAccountType')} value={PLACEHOLDER.accountType} />
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-4">
-              {t('accountReview.sectionBusiness')}
-            </h2>
-            <Row label={t('accountReview.labelCompany')}    value={PLACEHOLDER.companyName} />
-            <Row label={t('accountReview.labelBizType')}    value={PLACEHOLDER.businessType} />
-            <Row label={t('accountReview.labelTitle')}      value={PLACEHOLDER.companyTitle} />
-            <Row label={t('accountReview.labelTrucks')}     value={PLACEHOLDER.companyTrucks} />
-            <Row label={t('accountReview.labelDOT')}        value={PLACEHOLDER.companyDOT} />
-            <Row label={t('accountReview.labelMC')}         value={PLACEHOLDER.companyMC} />
-            <Row label={t('accountReview.labelFuel')}       value={PLACEHOLDER.usesFuelProgram} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-0">
+              {/* Left column: Contact */}
+              <div>
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
+                  {t('accountReview.sectionContact')}
+                </h2>
+                <Row label={t('accountReview.labelName')}        value={`${PLACEHOLDER.firstName} ${PLACEHOLDER.lastName}`} />
+                <Row label={t('accountReview.labelEmail')}       value={PLACEHOLDER.email} />
+                <Row label={t('accountReview.labelPhone')}       value={PLACEHOLDER.phone} />
+                <Row label={t('accountReview.labelAccountType')} value={PLACEHOLDER.accountType} />
+              </div>
+              {/* Right column: Business */}
+              <div>
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 mt-6 sm:mt-0">
+                  {t('accountReview.sectionBusiness')}
+                </h2>
+                <Row label={t('accountReview.labelCompany')}  value={PLACEHOLDER.companyName} />
+                <Row label={t('accountReview.labelBizType')}  value={PLACEHOLDER.businessType} />
+                <Row label={t('accountReview.labelTitle')}    value={PLACEHOLDER.companyTitle} />
+                <Row label={t('accountReview.labelTrucks')}   value={PLACEHOLDER.companyTrucks} />
+                <div className="flex gap-4 py-2 border-b border-gray-100">
+                  <div className="flex-1">
+                    <span className="text-xs text-gray-400">{t('accountReview.labelDOT')}</span>
+                    <p className="text-sm font-medium text-gray-900">{PLACEHOLDER.companyDOT}</p>
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-xs text-gray-400">{t('accountReview.labelMC')}</span>
+                    <p className="text-sm font-medium text-gray-900">{PLACEHOLDER.companyMC}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
-            <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round"
-                    d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-            </svg>
-            <p className="text-sm text-blue-800 leading-relaxed">{t('accountReview.bankNotice')}</p>
-          </div>
-
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
-            <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24"
+          {/* Warnings — red background */}
+          <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+            <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round"
                     d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
             </svg>
-            <p className="text-sm text-amber-800 leading-relaxed">
+            <p className="text-sm text-red-800 leading-relaxed">
+              {t('accountReview.bankNotice')}
+            </p>
+          </div>
+
+          <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+            <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round"
+                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            <p className="text-sm text-red-800 leading-relaxed">
               {t('accountReview.errorNotice')}{' '}
               <a href="tel:+19162694606" className="font-semibold whitespace-nowrap hover:underline">
                 (916) 269-4606
@@ -108,9 +129,24 @@ export default function OtpVerification() {
             </p>
           </div>
 
+          {/* Marketing consent */}
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <div className="mt-0.5 flex-shrink-0">
+              <input
+                type="checkbox"
+                checked={marketingConsent}
+                onChange={(e) => setMarketingConsent(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-primary accent-primary cursor-pointer"
+              />
+            </div>
+            <span className="text-sm text-gray-600 leading-relaxed group-hover:text-gray-800 transition-colors">
+              {t('accountReview.marketingConsent')}
+            </span>
+          </label>
+
           <button
             type="button"
-            onClick={() => { /* TODO: navigate to next account setup step */ }}
+            onClick={() => setShowModal(true)}
             className="w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                        bg-primary hover:bg-secondary rounded-xl shadow-ds-sm
                        transition-colors duration-200 cursor-pointer
@@ -123,6 +159,77 @@ export default function OtpVerification() {
             </svg>
           </button>
         </div>
+
+        {/* Important Notice Modal */}
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+               onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
+            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 sm:p-8 space-y-5">
+
+              {/* Header */}
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-amber-100">
+                  <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24"
+                       stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round"
+                          d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">{t('accountReview.modalTitle')}</h2>
+                </div>
+              </div>
+
+              {/* Body */}
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {t('accountReview.modalBody')}
+              </p>
+
+              {/* Marketing consent (shown only if not already checked) */}
+              {!marketingConsent && (
+                <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-xl bg-gray-50 border border-gray-200">
+                  <div className="mt-0.5 flex-shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={marketingConsent}
+                      onChange={(e) => setMarketingConsent(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 accent-primary cursor-pointer"
+                    />
+                  </div>
+                  <span className="text-sm text-gray-600 leading-relaxed group-hover:text-gray-800 transition-colors">
+                    {t('accountReview.marketingConsent')}
+                  </span>
+                </label>
+              )}
+
+              {/* Actions */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => { /* TODO: proceed to next step */ setShowModal(false) }}
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold text-white
+                             bg-primary hover:bg-secondary rounded-xl transition-colors duration-200
+                             focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer"
+                >
+                  {t('accountReview.modalConfirm')}
+                </button>
+                <a
+                  href="tel:+19162694606"
+                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold
+                             text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl
+                             transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                       stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round"
+                          d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                  </svg>
+                  {t('accountReview.modalContact')}
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     )
   }
