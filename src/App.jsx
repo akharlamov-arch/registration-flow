@@ -7,6 +7,7 @@ import Header from './components/Header'
 const LeadForm         = lazy(() => import('./pages/LeadForm'))
 const RegistrationForm = lazy(() => import('./pages/RegistrationForm'))
 const OtpVerification  = lazy(() => import('./pages/OtpVerification'))
+const AccountReview    = lazy(() => import('./pages/AccountReview'))
 
 function TitleUpdater() {
   const { t } = useI18n()
@@ -42,6 +43,7 @@ function AppShell() {
         <Routes>
           <Route path="/" element={<LeadForm />} />
           <Route path="/verify" element={<OtpVerification />} />
+          <Route path="/account-review" element={<AccountReview />} />
           <Route path="/registration" element={<RegistrationForm />} />
         </Routes>
       </Suspense>

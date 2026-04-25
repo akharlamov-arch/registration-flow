@@ -1,67 +1,16 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useI18n } from '../context/I18nContext'
-
-const OTP_LENGTH = 6
 
 export default function OtpVerification() {
   const { t } = useI18n()
   const navigate = useNavigate()
-  const [digits, setDigits] = useState(Array(OTP_LENGTH).fill(''))
+  const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const inputRefs = useRef([])
-
-  const handleDigitChange = (index, value) => {
-    // Only allow single digit
-    const digit = value.replace(/\D/g, '').slice(-1)
-    const next = [...digits]
-    next[index] = digit
-    setDigits(next)
-    setError('')
-
-    // Auto-advance to next input
-    if (digit && index < OTP_LENGTH - 1) {
-      inputRefs.current[index + 1]?.focus()
-    }
-  }
-
-  const handleKeyDown = (index, e) => {
-    if (e.key === 'Backspace') {
-      if (digits[index]) {
-        // Clear current
-        const next = [...digits]
-        next[index] = ''
-        setDigits(next)
-      } else if (index > 0) {
-        // Move back
-        inputRefs.current[index - 1]?.focus()
-      }
-    } else if (e.key === 'ArrowLeft' && index > 0) {
-      inputRefs.current[index - 1]?.focus()
-    } else if (e.key === 'ArrowRight' && index < OTP_LENGTH - 1) {
-      inputRefs.current[index + 1]?.focus()
-    }
-  }
-
-  const handlePaste = (e) => {
-    e.preventDefault()
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH)
-    if (!pasted) return
-    const next = [...digits]
-    for (let i = 0; i < pasted.length; i++) {
-      next[i] = pasted[i]
-    }
-    setDigits(next)
-    setError('')
-    // Focus last filled or next empty
-    const focusIdx = Math.min(pasted.length, OTP_LENGTH - 1)
-    inputRefs.current[focusIdx]?.focus()
-  }
 
   const handleSubmit = async () => {
-    const code = digits.join('')
-    if (code.length < OTP_LENGTH) {
+    if (!code.trim()) {
       setError(t('otp.errorIncomplete'))
       return
     }
@@ -69,10 +18,8 @@ export default function OtpVerification() {
     // In production: validate OTP against backend here
     await new Promise((r) => setTimeout(r, 800))
     setLoading(false)
-    navigate('/registration')
+    navigate('/account-review')
   }
-
-  const codeEntered = digits.join('').length === OTP_LENGTH
 
   return (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
@@ -103,35 +50,24 @@ export default function OtpVerification() {
 
         {/* OTP input */}
         <div className="mb-8">
-          <p className="text-sm font-medium text-gray-700 mb-4 text-center">{t('otp.enterCode')}</p>
-          <div className="flex items-center justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
-            {digits.map((digit, i) => (
-              <input
-                key={i}
-                ref={(el) => { inputRefs.current[i] = el }}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleDigitChange(i, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                onFocus={(e) => e.target.select()}
-                className={[
-                  'w-11 h-14 sm:w-13 sm:h-16 text-center text-xl font-bold rounded-xl border-2',
-                  'text-gray-900 bg-white',
-                  'focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors duration-200',
-                  error
-                    ? 'border-red-300 bg-red-50'
-                    : digit
-                    ? 'border-gray-900'
-                    : 'border-gray-200',
-                ].join(' ')}
-                aria-label={`${t('otp.digitLabel')} ${i + 1}`}
-              />
-            ))}
-          </div>
+          <p className="text-sm font-medium text-gray-700 mb-3 text-center">{t('otp.enterCode')}</p>
+          <input
+            type="text"
+            autoComplete="one-time-code"
+            spellCheck={false}
+            value={code}
+            onChange={(e) => { setCode(e.target.value); setError('') }}
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+
+            className={[
+              'w-full px-4 py-3 rounded-xl border-2 text-center text-xl font-bold tracking-widest uppercase',
+              'text-gray-900 bg-white text-base',
+              'focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors duration-200',
+              error ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-gray-400',
+            ].join(' ')}
+          />
           {error && (
-            <p className="text-xs text-red-500 mt-3 text-center" role="alert">{error}</p>
+            <p className="text-xs text-red-500 mt-2 text-center" role="alert">{error}</p>
           )}
         </div>
 
