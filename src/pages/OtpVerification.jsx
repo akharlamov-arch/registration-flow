@@ -1812,6 +1812,11 @@ export default function OtpVerification() {
               ))}
             </div>
 
+            {/* PIN recommendation note */}
+            <p className="mt-3 mb-1 text-xs text-blue-700 bg-blue-100 rounded-lg px-3 py-2">
+              {t('contractSigned.pinRecommendation')}
+            </p>
+
             {/* Add truck */}
             {trucks.length < MAX_TRUCKS && (
               <button
@@ -1820,9 +1825,6 @@ export default function OtpVerification() {
                 className="mt-4 flex items-center gap-1.5 text-sm font-medium text-primary hover:text-secondary
                            transition-colors duration-200 cursor-pointer focus:outline-none"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
                 {t('contractSigned.addTruckBtn')}
                 <span className="text-xs text-gray-400 font-normal ml-1">({trucks.length}/{MAX_TRUCKS})</span>
               </button>
