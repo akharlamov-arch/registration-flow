@@ -84,7 +84,8 @@ export default function OtpVerification() {
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
-    // TODO: proceed to next step after bank info
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setStep('plaid')
   }
 
   const handleSubmit = async () => {
@@ -181,38 +182,15 @@ export default function OtpVerification() {
         </div>
 
         <div className="space-y-5">
-          {/* Plaid verified data card */}
-          <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-8">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="w-5 h-5 rounded bg-gray-900 flex items-center justify-center flex-shrink-0">
-                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                  <path d="M12 3L19 7V15L12 19L5 15V7L12 3Z" />
-                  <path d="M5 7L12 11L19 7" />
-                  <path d="M12 11V19" />
-                </svg>
-              </div>
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t('bankInfo.sectionPlaid')}</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12">
-              <Row label={t('bankInfo.labelVerificationStatus')} value={PLACEHOLDER.plaidVerificationStatus} />
-              <Row label={t('bankInfo.labelBankName')}           value={PLACEHOLDER.plaidBankName} />
-              <Row label={t('bankInfo.labelSelectedAccount')}    value={PLACEHOLDER.plaidSelectedAccount} />
-              <Row label={t('bankInfo.labelAccountType')}        value={PLACEHOLDER.plaidAccountType} />
-            </div>
-          </div>
 
-          {/* Manual entry warning */}
+          {/* Info notice */}
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
             <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round"
                     d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
             </svg>
-            <p className="text-sm text-amber-800 leading-relaxed">
-              {t('bankInfo.manualWarningPre')}{' '}
-              <strong className="font-bold">{t('bankInfo.manualWarningBold')}</strong>{' '}
-              {t('bankInfo.manualWarningPost')}
-            </p>
+            <p className="text-sm text-amber-800 leading-relaxed">{t('bankInfo.infoNotice')}</p>
           </div>
 
           {/* Manual input card */}
@@ -267,65 +245,10 @@ export default function OtpVerification() {
                 {bankErrors.routingNumber && <p className="text-xs text-red-500 mt-1.5">{bankErrors.routingNumber}</p>}
               </div>
 
-              {/* Bank screenshot upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  {t('bankInfo.labelScreenshot')}
-                </label>
-                <p className="text-xs text-gray-500 mb-3 leading-relaxed">{t('bankInfo.screenshotDesc')}</p>
-
-                {/* Example image */}
-                <div className="mb-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                  <p className="text-xs text-gray-400 mb-3 font-medium">{t('bankInfo.screenshotExampleLabel')}</p>
-                  <img
-                    src="/registration-flow/bofa.png"
-                    alt="Bank of America app screenshot example"
-                    className="w-full max-w-xs mx-auto block rounded-lg"
-                  />
-                </div>
-
-                {/* Upload zone */}
-                <label
-                  className={[
-                    'flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed cursor-pointer transition-colors duration-200',
-                    bankForm.bankScreenshot
-                      ? 'border-gray-400 bg-gray-50'
-                      : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50',
-                  ].join(' ')}
-                >
-                  <input
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.heic,.pdf"
-                    className="sr-only"
-                    onChange={(e) => updateBank('bankScreenshot', e.target.files?.[0] ?? null)}
-                  />
-                  {bankForm.bankScreenshot ? (
-                    <>
-                      <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24"
-                           stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <p className="text-sm font-medium text-gray-700">{bankForm.bankScreenshot.name}</p>
-                      <p className="text-xs text-gray-400">{t('lead.step3.tapToChange')}</p>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24"
-                           stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round"
-                              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                      </svg>
-                      <p className="text-sm font-medium text-gray-700">{t('bankInfo.screenshotBtn')}</p>
-                      <p className="text-xs text-gray-400">{t('bankInfo.screenshotHint')}</p>
-                    </>
-                  )}
-                </label>
-              </div>
-
             </div>
           </div>
 
-          {/* Next Step button */}
+          {/* Confirm with Plaid button */}
           <button
             type="button"
             onClick={handleBankSubmit}
@@ -334,7 +257,7 @@ export default function OtpVerification() {
                        transition-colors duration-200 cursor-pointer
                        focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
-            {t('bankInfo.nextBtn')}
+            {t('bankInfo.confirmBtn')}
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
             </svg>
@@ -498,7 +421,7 @@ export default function OtpVerification() {
                     setMarketingConsent(modalConsent)
                     setShowModal(false)
                     window.scrollTo({ top: 0, behavior: 'smooth' })
-                    setStep('plaid')
+                    setStep('bankInfo')
                   }}
                   className="flex-1 flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold text-white
                              bg-primary hover:bg-secondary rounded-md transition-colors duration-200
