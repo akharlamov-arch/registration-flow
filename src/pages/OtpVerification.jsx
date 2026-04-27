@@ -3,6 +3,47 @@ import { useI18n } from '../context/I18nContext'
 import StepIndicator from '../components/StepIndicator'
 import PhoneInput from '../components/PhoneInput'
 
+// ── Review helpers (same design as LeadForm review step) ───────────────────
+function ReviewSection({ title, onEdit, editLabel, children }) {
+  return (
+    <div className="border border-gray-100 rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b border-gray-100">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{title}</p>
+        {onEdit ? (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-secondary
+                       transition-colors duration-200 cursor-pointer focus:outline-none"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+            </svg>
+            {editLabel}
+          </button>
+        ) : (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-green-600">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+            </svg>
+            {editLabel}
+          </span>
+        )}
+      </div>
+      <div className="px-5 divide-y divide-gray-50">{children}</div>
+    </div>
+  )
+}
+
+function ReviewRow({ label, value }) {
+  return (
+    <div className="flex items-start justify-between py-3 gap-6">
+      <span className="text-xs text-gray-400 flex-shrink-0 mt-0.5 leading-relaxed">{label}</span>
+      <span className="text-sm text-gray-900 text-right font-medium leading-relaxed break-all">{value || '—'}</span>
+    </div>
+  )
+}
+
 const US_STATES = [
   ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],
   ['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['FL','Florida'],['GA','Georgia'],
@@ -1216,7 +1257,7 @@ export default function OtpVerification() {
         return
       }
       window.scrollTo({ top: 0, behavior: 'smooth' })
-      // next step TBD
+      setStep('finalReview')
     }
 
     const radioBase = 'flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors duration-200'
@@ -1387,6 +1428,173 @@ export default function OtpVerification() {
               </svg>
             </button>
           </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (step === 'finalReview') {
+    // Determine which home address to show
+    const homeAddrForm =
+      personalAddressOption === 'business' ? addressForm
+      : personalAddressOption === 'mailing' ? mailingForm
+      : personalAddressForm
+
+    const homeAddrLabel =
+      personalAddressOption === 'business' ? t('finalReview.valueSameAsBusiness')
+      : personalAddressOption === 'mailing' ? t('finalReview.valueSameAsMailing')
+      : null
+
+    // Mask SSN: show •••••XXXX
+    const maskedSsn = personalForm.ssn
+      ? '•••••' + personalForm.ssn.slice(-4)
+      : '—'
+
+    const maskDl = (val) => val ? val.slice(0, 2) + '•••••' + val.slice(-2) : '—'
+
+    const goEdit = (target) => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setStep(target)
+    }
+
+    return (
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
+        <div className="text-center mb-8 sm:mb-10">
+          <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">{t('finalReview.heading')}</h1>
+          <p className="text-gray-500 mt-3 text-sm sm:text-base leading-relaxed max-w-xl mx-auto">
+            {t('finalReview.subheading')}
+          </p>
+        </div>
+
+        <div className="max-w-3xl mx-auto space-y-3">
+
+          {/* 1. Billing Address */}
+          <ReviewSection
+            title={t('finalReview.sectionBillingAddress')}
+            onEdit={() => goEdit('address')}
+            editLabel={t('finalReview.editBtn')}
+          >
+            <ReviewRow label={t('finalReview.labelStreet')} value={addressForm.street1 + (addressForm.street2 ? `, ${addressForm.street2}` : '')} />
+            <ReviewRow label={t('finalReview.labelCity')} value={addressForm.city} />
+            <ReviewRow label={t('finalReview.labelState')} value={addressForm.state} />
+            <ReviewRow label={t('finalReview.labelZip')} value={addressForm.zip} />
+          </ReviewSection>
+
+          {/* 2. Mailing Address (if different) */}
+          {addressForm.mailingOption === 'different' && (
+            <ReviewSection
+              title={t('finalReview.sectionMailingAddress')}
+              onEdit={() => goEdit('address')}
+              editLabel={t('finalReview.editBtn')}
+            >
+              <ReviewRow label={t('finalReview.labelStreet')} value={mailingForm.street1 + (mailingForm.street2 ? `, ${mailingForm.street2}` : '')} />
+              <ReviewRow label={t('finalReview.labelCity')} value={mailingForm.city} />
+              <ReviewRow label={t('finalReview.labelState')} value={mailingForm.state} />
+              <ReviewRow label={t('finalReview.labelZip')} value={mailingForm.zip} />
+            </ReviewSection>
+          )}
+
+          {/* 3. Personal Information */}
+          <ReviewSection
+            title={t('finalReview.sectionPersonalInfo')}
+            onEdit={() => goEdit('personalInfo')}
+            editLabel={t('finalReview.editBtn')}
+          >
+            <ReviewRow label={t('finalReview.labelSsn')} value={maskedSsn} />
+            <ReviewRow label={t('finalReview.labelDl')} value={maskDl(personalForm.dlNumber)} />
+            {personalForm.dlFile && (
+              <ReviewRow label={t('finalReview.labelDlFile')} value={personalForm.dlFile.name} />
+            )}
+          </ReviewSection>
+
+          {/* 4. Home Address */}
+          <ReviewSection
+            title={t('finalReview.sectionHomeAddress')}
+            onEdit={() => goEdit('personalAddress')}
+            editLabel={t('finalReview.editBtn')}
+          >
+            {homeAddrLabel ? (
+              <ReviewRow label={t('finalReview.labelStreet')} value={homeAddrLabel} />
+            ) : (
+              <>
+                <ReviewRow label={t('finalReview.labelStreet')} value={homeAddrForm.street1 + (homeAddrForm.street2 ? `, ${homeAddrForm.street2}` : '')} />
+                <ReviewRow label={t('finalReview.labelCity')} value={homeAddrForm.city} />
+                <ReviewRow label={t('finalReview.labelState')} value={homeAddrForm.state} />
+                <ReviewRow label={t('finalReview.labelZip')} value={homeAddrForm.zip} />
+              </>
+            )}
+          </ReviewSection>
+
+          {/* 5. Bank — locked, verified via Plaid */}
+          <ReviewSection
+            title={t('finalReview.sectionBank')}
+            editLabel={t('finalReview.plaidBadge')}
+          >
+            <div className="py-4 flex items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded-full text-xs font-semibold text-green-700">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {t('finalReview.plaidBadge')}
+              </span>
+              <p className="text-xs text-gray-400 leading-relaxed">{t('finalReview.plaidNote')}</p>
+            </div>
+          </ReviewSection>
+
+          {/* 6. Billing Contact */}
+          <ReviewSection
+            title={t('finalReview.sectionBillingContact')}
+            onEdit={() => goEdit('billingContact')}
+            editLabel={t('finalReview.editBtn')}
+          >
+            {billingContactOption === 'self' ? (
+              <ReviewRow label={t('finalReview.labelContactType')} value={t('finalReview.valueSelf')} />
+            ) : (
+              <>
+                <ReviewRow label={t('finalReview.labelFirstName')} value={billingContactForm.firstName} />
+                <ReviewRow label={t('finalReview.labelLastName')} value={billingContactForm.lastName} />
+                <ReviewRow label={t('finalReview.labelEmail')} value={billingContactForm.email} />
+                <ReviewRow label={t('finalReview.labelPhone')} value={billingContactForm.phone} />
+                {billingContactForm.title && (
+                  <ReviewRow label={t('finalReview.labelTitle')} value={billingContactForm.title} />
+                )}
+              </>
+            )}
+          </ReviewSection>
+
+        </div>
+
+        {/* Back + Submit */}
+        <div className="max-w-3xl mx-auto mt-8 flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('billingContact') }}
+            className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold
+                       text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
+                       transition-colors duration-200 cursor-pointer
+                       focus:outline-none focus:ring-2 focus:ring-gray-200"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            {t('finalReview.backBtn')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              // TODO: submit logic
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                       bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                       transition-colors duration-200 cursor-pointer
+                       focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {t('finalReview.submitBtn')}
+          </button>
         </div>
       </main>
     )
