@@ -218,8 +218,9 @@ export default function LeadForm() {
     }
     if (!form.phone.trim()) {
       e.phone = t('common.required')
-    } else if (form.phone.replace(/\D/g, '').length !== 10) {
-      e.phone = t('common.phoneInvalid')
+    } else {
+      const d = form.phone.replace(/\D/g, '')
+      if ((d.length === 11 ? d.slice(1) : d).length !== 10) e.phone = t('common.phoneInvalid')
     }
     return e
   }
@@ -255,8 +256,9 @@ export default function LeadForm() {
     if (!form.refLastName.trim()) e.refLastName = t('common.required')
     if (!form.refPhone.trim()) {
       e.refPhone = t('common.required')
-    } else if (form.refPhone.replace(/\D/g, '').length !== 10) {
-      e.refPhone = t('common.phoneInvalid')
+    } else {
+      const d = form.refPhone.replace(/\D/g, '')
+      if ((d.length === 11 ? d.slice(1) : d).length !== 10) e.refPhone = t('common.phoneInvalid')
     }
     return e
   }

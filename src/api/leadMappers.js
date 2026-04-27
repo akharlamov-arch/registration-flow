@@ -1,0 +1,313 @@
+// ── Response mappers (API snake_case → React camelCase) ────────────────────
+
+/**
+ * Maps the top-level lead object returned by fetch_by_code into the shape
+ * expected by the React form state.
+ */
+export function mapLeadFromApi(apiLead) {
+  return {
+    firstName:            apiLead.first_name   || '',
+    lastName:             apiLead.last_name    || '',
+    email:                apiLead.email        || '',
+    phone:                apiLead.phone        || '',
+    accountType:          apiLead['is_business?'] ? 'business' : 'personal',
+    businessOwnerConfirm: !!apiLead['is_business?'],
+    companyName:          apiLead.company_name || '',
+    businessType:         apiLead.business_type || '',
+    companyTitle:         apiLead.title        || '',
+    fleetSize:            apiLead.fleet_size   ?? '',
+    dot: apiLead.company_dot != null ? String(apiLead.company_dot) : '',
+    mc:  apiLead.company_mc  != null ? String(apiLead.company_mc)  : '',
+    refFirstName:         apiLead.referer?.ref_first_name || '',
+    refLastName:          apiLead.referer?.ref_last_name  || '',
+    refCompany:           apiLead.referer?.ref_company    || '',
+    refPhone:             apiLead.referer?.ref_phone      || '',
+    driverLicenseNumber:  apiLead.driver_license_number   || '',
+  }
+}
+
+const EMPTY_ADDRESS = { line1: '', line2: '', city: '', state: '', zip: '' }
+
+function pickAddress(raw) {
+  if (!raw) return null
+  return {
+    line1: raw.line1 || '',
+    line2: raw.line2 || '',
+    city:  raw.city  || '',
+    state: raw.state || '',
+    zip:   raw.zip   || '',
+  }
+}
+
+/**
+ * Returns company, mailing, and personal address state from the API lead.
+ * Falls back to same-as-company / same-as-business when the server has no
+ * separate address stored.
+ */
+export function mapAddressesFromApi(apiLead) {
+  const companyAddress = pickAddress(apiLead.company_address || apiLead.address)
+    ?? { ...EMPTY_ADDRESS }
+
+  const rawMailing = pickAddress(apiLead.mailing_address)
+  const mailingAddressChoice = rawMailing ? 'other' : 'same-as-company'
+  const mailingAddress = rawMailing ?? { ...companyAddress }
+
+  const rawPersonal = pickAddress(apiLead.shipping_address)
+  const personalAddressChoice = rawPersonal ? 'other' : 'same-as-business'
+  const personalAddress = rawPersonal ?? { ...companyAddress }
+
+  return {
+    companyAddress,
+    mailingAddressChoice,
+    mailingAddress,
+    personalAddressChoice,
+    personalAddress,
+  }
+}
+
+/**
+ * Returns bank form values and the initial Plaid state derived from the API lead.
+ * Detects whether the lead was previously verified via Plaid and restores that state.
+ */
+export function mapBankFromApi(apiLead) {
+  const bank         = apiLead.bank_information || {}
+  const metadataPlaid = apiLead.metadata?.plaid || {}
+
+  const bankForm = {
+    name:                      bank.name                  || '',
+    accountType:               bank.account_type          || '',
+    routingNumber:             bank.routing_number        || '',
+    accountNumberMasked:       bank.account_number_masked || '',
+    accountNumberMaskedConfirm: bank.account_number_masked || '',
+  }
+
+  const isPlaid =
+    bank.verification_method === 'plaid' ||
+    !!bank.plaid_account_id              ||
+    !!metadataPlaid.plaid_account_id
+
+  if (!isPlaid) {
+    return {
+      bank: bankForm,
+      plaidState: {
+        status:                 'not_started',
+        linkSessionId:          '',
+        requestId:              null,
+        requiresManualBankInput: false,
+        institution:            null,
+        selectedAccount:        null,
+      },
+    }
+  }
+
+  const mask    = bank.plaid_account_mask    || metadataPlaid.plaid_account_mask    || bank.account_number_masked || ''
+  const subtype = bank.plaid_account_subtype || metadataPlaid.plaid_account_subtype || bank.account_type || ''
+
+  return {
+    bank: bankForm,
+    plaidState: {
+      status:       'verified',
+      linkSessionId: bank.plaid_link_session_id || metadataPlaid.plaid_link_session_id || '',
+      requestId:    null,
+      requiresManualBankInput: !!metadataPlaid.plaid_manual_bank_required,
+      institution: {
+        name: bank.plaid_institution_name || metadataPlaid.plaid_institution_name || bank.name || '',
+      },
+      selectedAccount: {
+        id:      bank.plaid_account_id || metadataPlaid.plaid_account_id || null,
+        mask,
+        subtype,
+        type:    subtype,
+      },
+    },
+  }
+}
+
+/**
+ * Returns billingChoice and billingContact from the API lead.
+ * A billing contact whose email differs from the lead's primary email is "other".
+ */
+export function mapBillingContactFromApi(apiLead, primaryEmail) {
+  const billing = apiLead.billing_contact || {}
+
+  if (billing.email && billing.email !== primaryEmail) {
+    return {
+      billingChoice: 'other',
+      billingContact: {
+        name:  billing.name  || '',
+        role:  billing.role  || '',
+        email: billing.email || '',
+      },
+    }
+  }
+
+  return {
+    billingChoice: 'self',
+    billingContact: {
+      name:  billing.name                   || '',
+      role:  billing.role                   || '',
+      email: primaryEmail || billing.email  || '',
+    },
+  }
+}
+
+/**
+ * Converts the API's files array into the form.files map and initial uploadStatus.
+ * API shape: [{ type: 'voidCheck', name: 'void_check.pdf' }, ...]
+ */
+export function mapFilesFromApi(apiLead) {
+  const files        = {}
+  const uploadStatus = {}
+
+  for (const fileInfo of apiLead.files || []) {
+    if (fileInfo.type && fileInfo.name) {
+      files[fileInfo.type]        = { field: fileInfo.type, filename: fileInfo.name }
+      uploadStatus[fileInfo.type] = { type: 'success', message: 'Document previously uploaded.' }
+    }
+  }
+
+  return { files, uploadStatus }
+}
+
+/**
+ * Determines which step to resume at from a fetch_by_code response.
+ * Valid resumable range is [2, 12]; anything outside defaults to step 2.
+ * Callers must additionally trigger contract embed loading when step === 10.
+ */
+export function getResumeStep(json) {
+  const raw  = json.step_completed ?? json.completed_step
+  const step = typeof raw === 'number' ? raw : parseInt(raw, 10)
+  return Number.isFinite(step) && step >= 2 && step <= 12 ? step : 2
+}
+
+/**
+ * Converts a successful Plaid exchange API response into the Plaid state slice.
+ *
+ * NOTE: requiresManualBankInput is forced to true as a temporary workaround for a
+ * Plaid tokenized-account issue (see index.js line 1297). Remove this override once
+ * the underlying issue is resolved and standard routing/account numbers flow through.
+ */
+export function mapPlaidExchangeResult(data, metadata, selectedAccount) {
+  const p = data?.plaid || {}
+
+  return {
+    status:       'verified',
+    linkSessionId: metadata?.link_session_id || '',
+    requestId:    p.request_id || null,
+    requiresManualBankInput: true, // forced override — see note above
+    institution: {
+      name: p.institution_name || metadata?.institution?.name || '',
+    },
+    selectedAccount: {
+      id:      p.plaid_account_id  || selectedAccount?.id      || null,
+      mask:    p.account_mask      || selectedAccount?.mask     || '',
+      subtype: p.account_subtype   || selectedAccount?.subtype  || '',
+      type:    selectedAccount?.type || '',
+    },
+    bankUpdates: {
+      name:        p.institution_name  || metadata?.institution?.name || '',
+      accountType: p.account_subtype   || selectedAccount?.subtype    || '',
+    },
+  }
+}
+
+// ── Payload builders (React state → API request body) ─────────────────────
+
+/**
+ * Builds the body for POST /api/leads/update-lead.
+ *
+ * bank.routingNumber is omitted when empty: after a successful non-tokenized Plaid
+ * exchange the routing number is stored server-side only; sending an empty string
+ * would overwrite (clear) the server-stored value.
+ */
+export function buildUpdateLeadPayload(form, otpCode, sessionToken, plaidState, stepCompleted) {
+  const bank = { ...form.bank }
+  if (!bank.routingNumber) {
+    delete bank.routingNumber
+  }
+
+  return {
+    form: {
+      ...form,
+      bank,
+      plaid: {
+        status:                 plaidState.status,
+        linkSessionId:          plaidState.linkSessionId          || '',
+        requestId:              plaidState.requestId              || null,
+        requiresManualBankInput: !!plaidState.requiresManualBankInput,
+        institution:            plaidState.institution            || null,
+        selectedAccount:        plaidState.selectedAccount        || null,
+      },
+    },
+    code:          otpCode,
+    sessionToken,
+    stepCompleted,
+  }
+}
+
+/**
+ * Builds the FormData for POST /api/leads/upload_document.
+ * Do NOT set Content-Type when sending — the browser sets the multipart boundary.
+ */
+export function buildUploadDocumentFormData(key, file, otpCode, sessionToken) {
+  const formData = new FormData()
+  formData.append('code', otpCode || '')
+  if (sessionToken) {
+    formData.append('sessionToken', sessionToken)
+  }
+  formData.append('field', key)
+  formData.append('file', file, file.name)
+  return formData
+}
+
+/**
+ * Builds the body for POST /api/leads/generate_contract.
+ */
+export function buildContractPayload(form, otpCode, sessionToken, registrationProof = null) {
+  return {
+    registrationProof,
+    code:    otpCode,
+    sessionToken,
+    form,
+  }
+}
+
+/**
+ * Builds the body for POST /api/leads/sign_embed_url.
+ */
+export function buildSignEmbedPayload(otpCode, sessionToken, documentId) {
+  return { code: otpCode, sessionToken, documentId }
+}
+
+/**
+ * Builds the body for POST /api/leads/set_fuel_cards.
+ * otpCode is included only when present (index.js flow); omitted for post-signing flow.
+ */
+export function buildFuelCardsPayload(otpCode, sessionToken, fuelCards) {
+  const payload = { sessionToken, fuelCards }
+  if (otpCode) payload.otpCode = otpCode
+  return payload
+}
+
+// ── Validation helpers ─────────────────────────────────────────────────────
+
+/**
+ * Validates the OTP code format.
+ * Accepts both pure-numeric (generated by generateOtpCode) and legacy hex codes.
+ */
+export function isValidOtp(otp) {
+  return /^[0-9A-F]{6}$/.test(String(otp || '').trim().toUpperCase())
+}
+
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024 // 10 MB
+
+/**
+ * Validates a file before upload.
+ * Returns { ok: true } or { ok: false, reason: 'size' | 'type' }.
+ */
+export function validateUploadFile(file) {
+  if (file.size > MAX_UPLOAD_BYTES) return { ok: false, reason: 'size' }
+  const allowed = file.type === 'application/pdf' || file.type.startsWith('image/')
+  if (!allowed) return { ok: false, reason: 'type' }
+  return { ok: true }
+}
