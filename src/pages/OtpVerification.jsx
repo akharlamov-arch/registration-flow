@@ -1726,34 +1726,34 @@ export default function OtpVerification() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-ds-sm overflow-hidden">
 
           {/* Small centered label */}
-          <div className="text-center pt-5 pb-3 px-4 border-b border-gray-100">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">{t('allDone.servicesTitle')}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{t('allDone.servicesSubtitle')}</p>
+          <div className="text-center px-6 py-5 bg-blue-600">
+            <p className="text-sm font-semibold text-white">{t('allDone.servicesTitle')}</p>
+            <p className="text-xs text-blue-100 mt-1">{t('allDone.servicesSubtitle')}</p>
           </div>
 
           {/* Cards — stacked on mobile, horizontal rows on desktop */}
-          <div className="divide-y divide-gray-100">
+          <div className="flex flex-col gap-4 p-4 sm:p-6">
             {services.map((svc) => (
               <a
                 key={svc.href}
                 href={svc.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-col sm:flex-row hover:bg-gray-50 transition-colors duration-200"
+                className="group flex flex-col sm:flex-row rounded-xl border border-gray-100 overflow-hidden hover:border-primary hover:shadow-ds-sm transition-all duration-200"
               >
-                {/* Image — full width on mobile, fixed width on desktop */}
-                <div className="w-full sm:w-64 sm:flex-shrink-0 overflow-hidden">
+                {/* Image — half width on desktop */}
+                <div className="w-full sm:w-1/2 sm:flex-shrink-0 overflow-hidden">
                   <img
                     src={svc.img}
                     alt={svc.title}
                     className="w-full h-auto sm:h-full sm:object-cover block"
                   />
                 </div>
-                {/* Text */}
-                <div className="p-4 sm:p-5 flex flex-col justify-center flex-1">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-1">{svc.title}</h3>
+                {/* Text — half width on desktop */}
+                <div className="w-full sm:w-1/2 p-5 sm:p-8 flex flex-col justify-center">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">{svc.title}</h3>
                   <p className="text-xs text-gray-500 leading-relaxed">{svc.desc}</p>
-                  <span className="mt-3 text-xs font-semibold text-primary group-hover:underline">
+                  <span className="mt-4 text-xs font-semibold text-primary group-hover:underline">
                     {t('allDone.learnMore')}
                   </span>
                 </div>
