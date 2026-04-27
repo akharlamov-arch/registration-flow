@@ -313,6 +313,7 @@ const translations = {
       modalBody2: ', confirm that all information is accurate, and consent to the use of my data for account verification and contract processing.',
       modalAgreeBtn: 'I agree',
       modalCallBtn: 'Call us',
+      modalCallNote: 'If you have questions before signing, feel free to call us.',
     },
     registration: {
       heading: 'Complete Your Registration',
@@ -647,6 +648,7 @@ const translations = {
       modalBody2: ', подтверждаю, что все данные достоверны, и даю согласие на использование моих данных для верификации аккаунта и обработки договора.',
       modalAgreeBtn: 'Я согласен',
       modalCallBtn: 'Позвонить нам',
+      modalCallNote: 'Если у вас есть вопросы перед подписанием договора, вы можете позвонить нам, нажав на кнопку ниже.',
     },
     registration: {
       title: 'iTrucking — Завершить регистрацию',
@@ -982,6 +984,7 @@ const translations = {
       modalBody2: ', підтверджую, що всі дані є достовірними, та даю згоду на використання моїх даних для верифікації облікового запису та обробки договору.',
       modalAgreeBtn: 'Я погоджуюсь',
       modalCallBtn: 'Позвонити нам',
+      modalCallNote: 'Якщо у вас є запитання перед підписанням договору, ви можете позвонити нам, натиснувши на кнопку нижче.',
     },
     registration: {
       title: 'iTrucking — Завершити реєстрацію',
@@ -1317,6 +1320,7 @@ const translations = {
       modalBody2: ', confirmo que toda la información es precisa, y doy mi consentimiento para el uso de mis datos en la verificación de cuenta y el procesamiento de contratos.',
       modalAgreeBtn: 'Acepto',
       modalCallBtn: 'Llámenos',
+      modalCallNote: 'Si tiene preguntas antes de firmar el contrato, puede llamarnos haciendo clic en el botón.',
     },
     registration: {
       title: 'iTrucking — Completar Registro',
