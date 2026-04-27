@@ -43,6 +43,8 @@ export default function OtpVerification() {
   const [modalConsent, setModalConsent] = useState(false)
   const [bankForm, setBankForm] = useState({ accountNumber: '', confirmAccountNumber: '', routingNumber: '', bankScreenshot: null })
   const [bankErrors, setBankErrors] = useState({})
+  const [addressForm, setAddressForm] = useState({ street1: '', street2: '', city: '', state: '', zip: '', mailingOption: '' })
+  const [addressErrors, setAddressErrors] = useState({})
 
   const updateBank = (key, val) => setBankForm(prev => ({ ...prev, [key]: val }))
   const clearBankError = (key) => setBankErrors(prev => { const n = { ...prev }; delete n[key]; return n })
@@ -52,6 +54,39 @@ export default function OtpVerification() {
     'transition-colors duration-200 bg-white text-gray-900',
     err ? 'border-red-300 bg-red-50' : 'border-gray-200',
   ].join(' ')
+
+  const updateAddress = (key, val) => setAddressForm(prev => ({ ...prev, [key]: val }))
+  const clearAddressError = (key) => setAddressErrors(prev => { const n = { ...prev }; delete n[key]; return n })
+  const addressInputClass = (err) => [
+    'w-full px-4 py-3 text-base sm:text-sm border rounded-xl',
+    'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400',
+    'transition-colors duration-200 bg-white text-gray-900',
+    err ? 'border-red-300 bg-red-50' : 'border-gray-200',
+  ].join(' ')
+
+  const handleAddressSubmit = () => {
+    const errs = {}
+    if (!addressForm.street1.trim()) errs.street1 = t('address.errorStreet1Required')
+    if (!addressForm.city.trim()) errs.city = t('address.errorCityRequired')
+    if (!addressForm.state.trim()) errs.state = t('address.errorStateRequired')
+    if (!addressForm.zip.trim()) {
+      errs.zip = t('address.errorZipRequired')
+    } else if (!/^\d{5}(-\d{4})?$/.test(addressForm.zip.trim())) {
+      errs.zip = t('address.errorZipFormat')
+    }
+    if (!addressForm.mailingOption) errs.mailingOption = t('address.errorMailingOption')
+    if (Object.keys(errs).length) {
+      setAddressErrors(errs)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (addressForm.mailingOption === 'different') {
+      setStep('mailingAddress')
+    } else {
+      setStep('addressDone') // next step — TBD
+    }
+  }
 
   const BANK_STEPS = [
     {
@@ -180,12 +215,169 @@ export default function OtpVerification() {
             </button>
             <button
               type="button"
+              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('address') }}
               className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                          bg-primary hover:bg-secondary rounded-md shadow-ds-sm
                          transition-colors duration-200 cursor-pointer
                          focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               {t('plaidStub.button')}
+            </button>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (step === 'address') {
+    return (
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
+        <div className="text-center mb-8 sm:mb-10">
+          <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">{t('address.heading')}</h1>
+          <p className="text-gray-500 mt-3 text-sm sm:text-base leading-relaxed max-w-md mx-auto">
+            {t('address.subheading')}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-10 max-w-3xl mx-auto">
+          <div className="space-y-5">
+
+            {/* Street Address 1 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                {t('address.labelStreet1')} <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                autoComplete="address-line1"
+                value={addressForm.street1}
+                onChange={e => { updateAddress('street1', e.target.value); clearAddressError('street1') }}
+                placeholder={t('address.placeholderStreet1')}
+                className={addressInputClass(addressErrors.street1)}
+              />
+              {addressErrors.street1 && <p className="mt-1.5 text-xs text-red-600">{addressErrors.street1}</p>}
+            </div>
+
+            {/* Street Address 2 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                {t('address.labelStreet2')}
+              </label>
+              <input
+                type="text"
+                autoComplete="address-line2"
+                value={addressForm.street2}
+                onChange={e => updateAddress('street2', e.target.value)}
+                placeholder={t('address.placeholderStreet2')}
+                className={addressInputClass(false)}
+              />
+            </div>
+
+            {/* City / State / ZIP */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {t('address.labelCity')} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  autoComplete="address-level2"
+                  value={addressForm.city}
+                  onChange={e => { updateAddress('city', e.target.value); clearAddressError('city') }}
+                  placeholder={t('address.placeholderCity')}
+                  className={addressInputClass(addressErrors.city)}
+                />
+                {addressErrors.city && <p className="mt-1.5 text-xs text-red-600">{addressErrors.city}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {t('address.labelState')} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  autoComplete="address-level1"
+                  value={addressForm.state}
+                  onChange={e => { updateAddress('state', e.target.value.toUpperCase().slice(0, 2)); clearAddressError('state') }}
+                  placeholder={t('address.placeholderState')}
+                  className={addressInputClass(addressErrors.state)}
+                />
+                {addressErrors.state && <p className="mt-1.5 text-xs text-red-600">{addressErrors.state}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {t('address.labelZip')} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  autoComplete="postal-code"
+                  inputMode="numeric"
+                  value={addressForm.zip}
+                  onChange={e => { updateAddress('zip', e.target.value); clearAddressError('zip') }}
+                  placeholder={t('address.placeholderZip')}
+                  className={addressInputClass(addressErrors.zip)}
+                />
+                {addressErrors.zip && <p className="mt-1.5 text-xs text-red-600">{addressErrors.zip}</p>}
+              </div>
+            </div>
+
+            {/* Mailing option */}
+            <div className="pt-2">
+              <p className="text-sm font-semibold text-gray-800 mb-3">{t('address.mailingLabel')}</p>
+              <div className="space-y-3">
+                {[
+                  { value: 'same', label: t('address.radioSame') },
+                  { value: 'different', label: t('address.radioDifferent') },
+                ].map(opt => (
+                  <label
+                    key={opt.value}
+                    className={[
+                      'flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors duration-150',
+                      addressForm.mailingOption === opt.value
+                        ? 'border-primary bg-blue-50/60 ring-1 ring-primary/20'
+                        : 'border-gray-200 bg-gray-50/60 hover:bg-gray-100/60',
+                    ].join(' ')}
+                  >
+                    <input
+                      type="radio"
+                      name="mailingOption"
+                      value={opt.value}
+                      checked={addressForm.mailingOption === opt.value}
+                      onChange={() => { updateAddress('mailingOption', opt.value); clearAddressError('mailingOption') }}
+                      className="w-4 h-4 accent-primary flex-shrink-0"
+                    />
+                    <span className="text-sm font-medium text-gray-800">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+              {addressErrors.mailingOption && (
+                <p className="mt-2 text-xs text-red-600">{addressErrors.mailingOption}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('plaid') }}
+              className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold
+                         text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
+                         transition-colors duration-200 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-gray-200"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
+              {t('address.backBtn')}
+            </button>
+            <button
+              type="button"
+              onClick={handleAddressSubmit}
+              className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                         bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                         transition-colors duration-200 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              {t('address.nextBtn')}
             </button>
           </div>
         </div>
