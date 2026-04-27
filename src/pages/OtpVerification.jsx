@@ -1742,11 +1742,11 @@ export default function OtpVerification() {
                 className="group flex flex-col hover:bg-gray-50 transition-colors duration-200"
               >
                 {/* Horizontal banner image */}
-                <div className="w-full overflow-hidden" style={{ aspectRatio: '2.4/1' }}>
+                <div className="w-full overflow-hidden">
                   <img
                     src={svc.img}
                     alt={svc.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-auto block"
                   />
                 </div>
                 {/* Text */}
