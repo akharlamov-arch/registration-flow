@@ -1731,28 +1731,28 @@ export default function OtpVerification() {
             <p className="text-xs text-gray-400 mt-0.5">{t('allDone.servicesSubtitle')}</p>
           </div>
 
-          {/* Cards — stacked on mobile, 3-col on desktop */}
-          <div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+          {/* Cards — stacked on mobile, horizontal rows on desktop */}
+          <div className="divide-y divide-gray-100">
             {services.map((svc) => (
               <a
                 key={svc.href}
                 href={svc.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-col hover:bg-gray-50 transition-colors duration-200"
+                className="group flex flex-col sm:flex-row hover:bg-gray-50 transition-colors duration-200"
               >
-                {/* Horizontal banner image */}
-                <div className="w-full overflow-hidden">
+                {/* Image — full width on mobile, fixed width on desktop */}
+                <div className="w-full sm:w-64 sm:flex-shrink-0 overflow-hidden">
                   <img
                     src={svc.img}
                     alt={svc.title}
-                    className="w-full h-auto block"
+                    className="w-full h-auto sm:h-full sm:object-cover block"
                   />
                 </div>
                 {/* Text */}
-                <div className="p-4 flex flex-col flex-1">
+                <div className="p-4 sm:p-5 flex flex-col justify-center flex-1">
                   <h3 className="text-sm font-semibold text-gray-900 mb-1">{svc.title}</h3>
-                  <p className="text-xs text-gray-500 leading-relaxed flex-1">{svc.desc}</p>
+                  <p className="text-xs text-gray-500 leading-relaxed">{svc.desc}</p>
                   <span className="mt-3 text-xs font-semibold text-primary group-hover:underline">
                     {t('allDone.learnMore')}
                   </span>
