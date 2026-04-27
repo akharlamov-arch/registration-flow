@@ -69,6 +69,9 @@ export default function OtpVerification() {
   const [peekDl, setPeekDl] = useState(false)
   const [peekDlConfirm, setPeekDlConfirm] = useState(false)
   const peekTimers = useRef({})
+  const [personalAddressOption, setPersonalAddressOption] = useState('')
+  const [personalAddressForm, setPersonalAddressForm] = useState({ street1: '', street2: '', city: '', state: '', zip: '' })
+  const [personalAddressErrors, setPersonalAddressErrors] = useState({})
 
   const updateBank = (key, val) => setBankForm(prev => ({ ...prev, [key]: val }))
   const clearBankError = (key) => setBankErrors(prev => { const n = { ...prev }; delete n[key]; return n })
@@ -157,6 +160,14 @@ export default function OtpVerification() {
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+        </svg>
+      ),
+    },
+    {
+      label: t('personalAddress.stepLabel'),
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
         </svg>
       ),
     },
@@ -627,7 +638,7 @@ export default function OtpVerification() {
         return
       }
       window.scrollTo({ top: 0, behavior: 'smooth' })
-      // next step TBD
+      setStep('personalAddress')
     }
 
     const backStep = addressForm.mailingOption === 'different' ? 'mailingAddress' : 'address'
@@ -807,6 +818,246 @@ export default function OtpVerification() {
             <button
               type="button"
               onClick={handlePersonalSubmit}
+              className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                         bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                         transition-colors duration-200 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              {t('common.nextStep')}
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (step === 'personalAddress') {
+    const hasMailing = addressForm.mailingOption === 'different'
+
+    const updatePersonalAddr = (key, val) =>
+      setPersonalAddressForm(prev => ({ ...prev, [key]: val }))
+    const clearPersonalAddrError = (key) =>
+      setPersonalAddressErrors(prev => { const n = { ...prev }; delete n[key]; return n })
+    const personalAddrInputClass = (err) => [
+      'w-full px-4 py-3 text-base sm:text-sm border rounded-xl',
+      'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400',
+      'transition-colors duration-200 bg-white text-gray-900',
+      err ? 'border-red-300 bg-red-50' : 'border-gray-200',
+    ].join(' ')
+
+    const handlePersonalAddressSubmit = () => {
+      const errs = {}
+      if (!personalAddressOption) {
+        errs.option = t('personalAddress.errorOptionRequired')
+      }
+      if (personalAddressOption === 'new') {
+        if (!personalAddressForm.street1.trim()) errs.street1 = t('address.errorStreet1Required')
+        if (!personalAddressForm.city.trim()) errs.city = t('address.errorCityRequired')
+        if (!personalAddressForm.state.trim()) errs.state = t('address.errorStateRequired')
+        if (!personalAddressForm.zip.trim()) {
+          errs.zip = t('address.errorZipRequired')
+        } else if (!/^\d{5}(-\d{4})?$/.test(personalAddressForm.zip.trim())) {
+          errs.zip = t('address.errorZipFormat')
+        }
+      }
+      if (Object.keys(errs).length) {
+        setPersonalAddressErrors(errs)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      // next step TBD
+    }
+
+    const AddressPreview = ({ form }) => (
+      <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+        {form.street1}{form.street2 ? `, ${form.street2}` : ''}, {form.city}, {form.state} {form.zip}
+      </p>
+    )
+
+    const radioBase = 'flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors duration-200'
+    const radioSelected = 'border-primary bg-blue-50/40'
+    const radioIdle = 'border-gray-200 hover:border-gray-300 bg-white'
+
+    return (
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
+        <StepIndicator steps={BANK_STEPS} currentStep={4} />
+        <div className="text-center mb-8 sm:mb-10">
+          <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">{t('personalAddress.heading')}</h1>
+          <p className="text-gray-500 mt-3 text-sm sm:text-base leading-relaxed max-w-xl mx-auto">
+            {t('personalAddress.subheading')}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-10 max-w-3xl mx-auto">
+
+          <div className="space-y-3">
+
+            {/* Option: same as business address */}
+            <label className={[radioBase, personalAddressOption === 'business' ? radioSelected : radioIdle].join(' ')}>
+              <input
+                type="radio"
+                name="personalAddressOption"
+                value="business"
+                checked={personalAddressOption === 'business'}
+                onChange={() => { setPersonalAddressOption('business'); setPersonalAddressErrors({}) }}
+                className="mt-0.5 accent-primary flex-shrink-0"
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900">{t('personalAddress.radioBusinessLabel')}</p>
+                <AddressPreview form={addressForm} />
+              </div>
+            </label>
+
+            {/* Option: same as mailing address — only if mailing was provided */}
+            {hasMailing && (
+              <label className={[radioBase, personalAddressOption === 'mailing' ? radioSelected : radioIdle].join(' ')}>
+                <input
+                  type="radio"
+                  name="personalAddressOption"
+                  value="mailing"
+                  checked={personalAddressOption === 'mailing'}
+                  onChange={() => { setPersonalAddressOption('mailing'); setPersonalAddressErrors({}) }}
+                  className="mt-0.5 accent-primary flex-shrink-0"
+                />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900">{t('personalAddress.radioMailingLabel')}</p>
+                  <AddressPreview form={mailingForm} />
+                </div>
+              </label>
+            )}
+
+            {/* Option: new address */}
+            <label className={[radioBase, personalAddressOption === 'new' ? radioSelected : radioIdle].join(' ')}>
+              <input
+                type="radio"
+                name="personalAddressOption"
+                value="new"
+                checked={personalAddressOption === 'new'}
+                onChange={() => { setPersonalAddressOption('new'); setPersonalAddressErrors({}) }}
+                className="mt-0.5 accent-primary flex-shrink-0"
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900">{t('personalAddress.radioNewLabel')}</p>
+              </div>
+            </label>
+
+          </div>
+
+          {personalAddressErrors.option && (
+            <p className="mt-3 text-xs text-red-500">{personalAddressErrors.option}</p>
+          )}
+
+          {/* New address form */}
+          {personalAddressOption === 'new' && (
+            <div className="mt-6 space-y-4 animate-fadeIn">
+              {/* Street 1 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {t('address.labelStreet1')} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  autoComplete="street-address"
+                  value={personalAddressForm.street1}
+                  onChange={e => { updatePersonalAddr('street1', e.target.value); clearPersonalAddrError('street1') }}
+                  placeholder={t('address.placeholderStreet1')}
+                  className={personalAddrInputClass(personalAddressErrors.street1)}
+                />
+                {personalAddressErrors.street1 && <p className="mt-1.5 text-xs text-red-600">{personalAddressErrors.street1}</p>}
+              </div>
+              {/* Street 2 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {t('address.labelStreet2')}
+                </label>
+                <input
+                  type="text"
+                  autoComplete="address-line2"
+                  value={personalAddressForm.street2}
+                  onChange={e => updatePersonalAddr('street2', e.target.value)}
+                  placeholder={t('address.placeholderStreet2')}
+                  className={personalAddrInputClass(false)}
+                />
+              </div>
+              {/* City + State + ZIP */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    {t('address.labelCity')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    autoComplete="address-level2"
+                    value={personalAddressForm.city}
+                    onChange={e => { updatePersonalAddr('city', e.target.value); clearPersonalAddrError('city') }}
+                    placeholder={t('address.placeholderCity')}
+                    className={personalAddrInputClass(personalAddressErrors.city)}
+                  />
+                  {personalAddressErrors.city && <p className="mt-1.5 text-xs text-red-600">{personalAddressErrors.city}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    {t('address.labelState')} <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={personalAddressForm.state}
+                      onChange={e => { updatePersonalAddr('state', e.target.value); clearPersonalAddrError('state') }}
+                      className={[personalAddrInputClass(personalAddressErrors.state), 'appearance-none pr-8'].join(' ')}
+                    >
+                      <option value="">{t('address.placeholderState')}</option>
+                      {US_STATES.map(([code, name]) => (
+                        <option key={code} value={code}>{name}</option>
+                      ))}
+                    </select>
+                    <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                         fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </div>
+                  {personalAddressErrors.state && <p className="mt-1.5 text-xs text-red-600">{personalAddressErrors.state}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    {t('address.labelZip')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    maxLength={10}
+                    value={personalAddressForm.zip}
+                    onChange={e => { updatePersonalAddr('zip', e.target.value.replace(/[^\d-]/g, '')); clearPersonalAddrError('zip') }}
+                    placeholder={t('address.placeholderZip')}
+                    className={personalAddrInputClass(personalAddressErrors.zip)}
+                  />
+                  {personalAddressErrors.zip && <p className="mt-1.5 text-xs text-red-600">{personalAddressErrors.zip}</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('personalInfo') }}
+              className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold
+                         text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
+                         transition-colors duration-200 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-gray-200"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
+              {t('personalAddress.backBtn')}
+            </button>
+            <button
+              type="button"
+              onClick={handlePersonalAddressSubmit}
               className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                          bg-primary hover:bg-secondary rounded-md shadow-ds-sm
                          transition-colors duration-200 cursor-pointer
