@@ -277,64 +277,11 @@ export default function OtpVerification() {
                 {/* Example image */}
                 <div className="mb-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
                   <p className="text-xs text-gray-400 mb-3 font-medium">{t('bankInfo.screenshotExampleLabel')}</p>
-                  <svg viewBox="0 0 320 400" className="w-full max-w-xs mx-auto" role="img" aria-label="Bank of America app screenshot example">
-                    {/* Phone background */}
-                    <rect width="320" height="400" rx="16" fill="#f9fafb" stroke="#e5e7eb" strokeWidth="1"/>
-                    {/* Top white area */}
-                    <rect x="0" y="0" width="320" height="50" rx="16" fill="#ffffff"/>
-                    <rect x="0" y="34" width="320" height="16" fill="#ffffff"/>
-                    {/* Nav labels */}
-                    <text x="230" y="30" fontFamily="sans-serif" fontSize="8" fill="#6b7280">Inbox</text>
-                    <text x="264" y="30" fontFamily="sans-serif" fontSize="8" fill="#6b7280">Products</text>
-                    <text x="316" y="30" textAnchor="end" fontFamily="sans-serif" fontSize="8" fill="#6b7280">Log Out</text>
-                    {/* Back arrow */}
-                    <path d="M22 25 L14 19 M14 19 L22 13" stroke="#2563eb" strokeWidth="2" fill="none" strokeLinecap="round"/>
-                    {/* BofA circle badge */}
-                    <circle cx="300" cy="60" r="16" fill="#E31837"/>
-                    <rect x="291" y="54" width="18" height="3" rx="1" fill="white"/>
-                    <rect x="291" y="59" width="18" height="3" rx="1" fill="white"/>
-                    <rect x="291" y="64" width="12" height="3" rx="1" fill="white"/>
-                    {/* Erica search bar */}
-                    <rect x="12" y="44" width="268" height="28" rx="14" fill="#f3f4f6" stroke="#e5e7eb" strokeWidth="1"/>
-                    <circle cx="30" cy="58" r="5" stroke="#9ca3af" strokeWidth="1.2" fill="none"/>
-                    <line x1="34" y1="62" x2="37" y2="65" stroke="#9ca3af" strokeWidth="1.2" strokeLinecap="round"/>
-                    <text x="46" y="62" fontFamily="sans-serif" fontSize="9" fill="#9ca3af">Hi, I&apos;m Erica. How can I help?</text>
-                    {/* Provided by */}
-                    <text x="308" y="88" textAnchor="end" fontFamily="sans-serif" fontSize="7.5" fill="#9ca3af">Provided by Bank of America</text>
-                    {/* DEBIT / EDIT */}
-                    <text x="16" y="112" fontFamily="sans-serif" fontSize="14" fontWeight="800" fill="#111827">DEBIT</text>
-                    <text x="304" y="112" textAnchor="end" fontFamily="sans-serif" fontSize="12" fontWeight="700" fill="#E31837">EDIT</text>
-                    {/* Balance */}
-                    <text x="160" y="146" textAnchor="middle" fontFamily="sans-serif" fontSize="26" fontWeight="700" fill="#111827">$1,821.36</text>
-                    <text x="160" y="163" textAnchor="middle" fontFamily="sans-serif" fontSize="9.5" fill="#6b7280">Available balance</text>
-                    {/* White card */}
-                    <rect x="10" y="178" width="300" height="208" rx="14" fill="white" stroke="#e5e7eb" strokeWidth="1"/>
-                    {/* Section header */}
-                    <text x="24" y="202" fontFamily="sans-serif" fontSize="11.5" fontWeight="600" fill="#111827">Account &amp; routing numbers</text>
-                    {/* Chevron up */}
-                    <path d="M298 206 L304 200 M304 200 L310 206" stroke="#6b7280" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                    {/* Separator */}
-                    <line x1="10" y1="214" x2="310" y2="214" stroke="#f3f4f6" strokeWidth="1"/>
-                    {/* Account number */}
-                    <text x="24" y="234" fontFamily="sans-serif" fontSize="11" fontWeight="700" fill="#111827">Account number</text>
-                    <text x="296" y="234" textAnchor="end" fontFamily="monospace" fontSize="10.5" fill="#374151">3257642456809</text>
-                    <line x1="24" y1="244" x2="296" y2="244" stroke="#f3f4f6" strokeWidth="0.5"/>
-                    {/* Routing numbers */}
-                    <text x="24" y="263" fontFamily="sans-serif" fontSize="11" fontWeight="700" fill="#111827">Routing numbers</text>
-                    <line x1="24" y1="271" x2="296" y2="271" stroke="#f3f4f6" strokeWidth="0.5"/>
-                    {/* Paper & electronic */}
-                    <text x="24" y="289" fontFamily="sans-serif" fontSize="10.5" fill="#111827">Paper &amp; electronic</text>
-                    <text x="296" y="289" textAnchor="end" fontFamily="monospace" fontSize="10.5" fill="#374151">121000358</text>
-                    <text x="24" y="303" fontFamily="sans-serif" fontSize="8" fill="#9ca3af">Use for checks, direct deposits &amp; outgoing payments.</text>
-                    <line x1="24" y1="313" x2="296" y2="313" stroke="#f3f4f6" strokeWidth="0.5"/>
-                    {/* Wires */}
-                    <text x="24" y="331" fontFamily="sans-serif" fontSize="10.5" fill="#111827">Wires</text>
-                    <text x="296" y="331" textAnchor="end" fontFamily="monospace" fontSize="10.5" fill="#374151">026009593</text>
-                    <text x="24" y="345" fontFamily="sans-serif" fontSize="8" fill="#9ca3af">Use this routing number for incoming wire transfers.</text>
-                    {/* Bottom hint */}
-                    <line x1="10" y1="388" x2="310" y2="388" stroke="#f3f4f6" strokeWidth="1"/>
-                    <text x="160" y="397" textAnchor="middle" fontFamily="sans-serif" fontSize="7.5" fill="#d1d5db">Take a screenshot of this screen in your banking app</text>
-                  </svg>
+                  <img
+                    src="/registration-flow/bofa.png"
+                    alt="Bank of America app screenshot example"
+                    className="w-full max-w-xs mx-auto block rounded-lg"
+                  />
                 </div>
 
                 {/* Upload zone */}
