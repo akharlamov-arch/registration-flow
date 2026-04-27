@@ -335,7 +335,7 @@ const translations = {
     },
     contractSigned: {
       heading: 'Done. Thanks for signing!',
-      subheading: "We've received all the information needed to issue your fuel card(s). After a quick review of your contract by our managers, your card(s) will be shipped to your mailing address via USPS. Delivery typically takes 5–7 business days.",
+      subheading: "We've received all the information needed to issue your fuel card(s). After a quick review of your contract by our managers, your card(s) will be shipped to your mailing address via USPS. Delivery typically takes 1–2 business days.",
       truckBlockTitle: 'Set Up Your Fuel Cards',
       truckBlockDesc: 'Please enter the truck number and a Driver ID (used as a PIN at the pump) for each of your trucks. You can add up to 50 trucks.',
       labelTruckNumber: 'Truck #',
@@ -685,7 +685,7 @@ const translations = {
     },
     contractSigned: {
       heading: 'Готово. Спасибо за подпись!',
-      subheading: 'Мы получили всю необходимую информацию для выпуска топливных карт. После короткой проверки договора нашими менеджерами, карты будут отправлены на ваш почтовый адрес через USPS. Доставка занимает 5–7 рабочих дней.',
+      subheading: 'Мы получили всю необходимую информацию для выпуска топливных карт. После короткой проверки договора нашими менеджерами, карты будут отправлены на ваш почтовый адрес через USPS. Доставка занимает 1–2 рабочих дня.',
       truckBlockTitle: 'Настройте топливные карты',
       truckBlockDesc: 'Укажите номер трака и Driver ID (используется как PIN-код на заправочной станции) для каждого трака. Можно добавить до 50 траков.',
       labelTruckNumber: 'Номер трака',
@@ -1035,7 +1035,7 @@ const translations = {
     },
     contractSigned: {
       heading: 'Готово. Дякуюза за підпис!',
-      subheading: 'Ми отримали всю необхідну інформацію для випуску топливних карт. Після короткої перевірки договору нашими менеджерами, карти будуть надіслані на вашу поштову адресу через USPS. Доставка зазвичай займає 5–7 робочих днів.',
+      subheading: 'Ми отримали всю необхідну інформацію для випуску топливних карт. Після короткої перевірки договору нашими менеджерами, карти будуть надіслані на вашу поштову адресу через USPS. Доставка зазвичай займає 1–2 робочих дні.',
       truckBlockTitle: 'Налаштуйте топливні карти',
       truckBlockDesc: 'Вкажіть номер трака та Driver ID (використовується як PIN-код на азс) для кожного з ваших траків. Можна додати до 50 траків.',
       labelTruckNumber: 'Номер трака',
@@ -1385,7 +1385,7 @@ const translations = {
     },
     contractSigned: {
       heading: '¡Listo. ¡Gracias por firmar!',
-      subheading: 'Hemos recibido toda la información necesaria para emitir sus tarjetas de combustible. Tras una breve revisión del contrato por nuestros gestores, sus tarjetas serán enviadas a su dirección postal por USPS. La entrega suele tardar 5–7 días hábiles.',
+      subheading: 'Hemos recibido toda la información necesaria para emitir sus tarjetas de combustible. Tras una breve revisión del contrato por nuestros gestores, sus tarjetas serán enviadas a su dirección postal por USPS. La entrega suele tardar 1–2 días hábiles.',
       truckBlockTitle: 'Configure sus Tarjetas de Combustible',
       truckBlockDesc: 'Ingrese el número de camión y un Driver ID (se usa como PIN en la bomba) para cada uno de sus camiones. Puede agregar hasta 50 camiones.',
       labelTruckNumber: 'Número de Camión',
