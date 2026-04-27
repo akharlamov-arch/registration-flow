@@ -154,6 +154,8 @@ const translations = {
       point1: 'Confirm the bank account you entered in the previous step — this account will be used to pay for our services.',
       point2: 'Complete personal verification. You must be the business owner to open a company account.',
       button: 'Continue to verify with Plaid',
+      mismatchWarning: 'If the account numbers in Plaid do not match what you entered in the previous step, the system will not proceed and will ask you to verify again.',
+      backBtn: 'Back to Bank Information',
     },
     bankInfo: {
       heading: 'Company Bank Information',
@@ -358,6 +360,8 @@ const translations = {
       point1: 'Подтвердите банковский счёт, введённый на предыдущем шаге — он будет использоваться для оплаты наших услуг.',
       point2: 'Пройдите личную верификацию. Для открытия корпоративного аккаунта вы должны быть владельцем бизнеса.',
       button: 'Перейти к верификации через Plaid',
+      mismatchWarning: 'Если номера счётов в Plaid не совпадают с введёнными на предыдущем шаге, система не пропустит вас дальше и попросит проверить ещё раз.',
+      backBtn: 'Назад к банковской информации',
     },
     bankInfo: {
       heading: 'Банковская информация компании',
@@ -563,6 +567,8 @@ const translations = {
       point1: 'Підтвердіть банківський рахунок, введений на попередньому кроці — він використовуватиметься для оплати наших послуг.',
       point2: 'Пройдіть особисту верифікацію. Щоб відкрити корпоративний акаунт, ви маєте бути власником бізнесу.',
       button: 'Перейти до верифікації через Plaid',
+      mismatchWarning: 'Якщо номери рахунків у Plaid не збігаються з введеними на попередньому кроці, система не пропустить вас далі і попросить проверити ще раз.',
+      backBtn: 'Назад до банківської інформації',
     },
     bankInfo: {
       heading: 'Банківська інформація компанії',
@@ -768,6 +774,8 @@ const translations = {
       point1: 'Confirme la cuenta bancaria ingresada en el paso anterior — se utilizará para pagar nuestros servicios.',
       point2: 'Complete la verificacion personal. Debe ser el propietario del negocio para abrir una cuenta empresarial.',
       button: 'Continuar para verificar con Plaid',
+      mismatchWarning: 'Si los números de cuenta en Plaid no coinciden con los ingresados en el paso anterior, el sistema no continuará y le pedirá que verifique nuevamente.',
+      backBtn: 'Volver a Información Bancaria',
     },
     bankInfo: {
       heading: 'Información Bancaria de la Empresa',
