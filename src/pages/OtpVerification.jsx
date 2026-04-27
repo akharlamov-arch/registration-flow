@@ -1,4 +1,6 @@
-import { useState, useRef } from 'react'
+import bannerTires from '../assets/banner-tires.jpg'
+import bannerFactoring from '../assets/banner-factoring.jpg'
+import bannerProtection from '../assets/banner-protection.jpg'
 import { useI18n } from '../context/I18nContext'
 import StepIndicator from '../components/StepIndicator'
 import PhoneInput from '../components/PhoneInput'
@@ -1687,19 +1689,19 @@ export default function OtpVerification() {
         title: t('allDone.service1Title'),
         desc: t('allDone.service1Desc'),
         href: 'https://itruckingservices.com/services/tire-discounts',
-        img: 'https://placehold.co/600x250/1e3a5f/e0f2fe?text=Tire+Discounts',
+        img: bannerTires,
       },
       {
         title: t('allDone.service2Title'),
         desc: t('allDone.service2Desc'),
         href: 'https://itruckingservices.com/services/freight-factoring',
-        img: 'https://placehold.co/600x250/14532d/dcfce7?text=Freight+Factoring',
+        img: bannerFactoring,
       },
       {
         title: t('allDone.service3Title'),
         desc: t('allDone.service3Desc'),
         href: 'https://itruckingservices.com/services/driver-business-support',
-        img: 'https://placehold.co/600x250/3b0764/faf5ff?text=Business+Protection',
+        img: bannerProtection,
       },
     ]
 
