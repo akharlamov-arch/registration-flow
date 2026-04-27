@@ -1789,9 +1789,9 @@ export default function OtpVerification() {
     }
 
     const handleSave = () => {
-      const errs = trucks.map(t => ({
-        truckNumber: !t.truckNumber.trim() ? t('contractSigned.errorTruckRequired') : undefined,
-        driverId: !t.driverId.trim() ? t('contractSigned.errorDriverIdRequired') : undefined,
+      const errs = trucks.map(truck => ({
+        truckNumber: !truck.truckNumber.trim() ? t('contractSigned.errorTruckRequired') : undefined,
+        driverId: !truck.driverId.trim() ? t('contractSigned.errorDriverIdRequired') : undefined,
       }))
       const hasErr = errs.some(e => e.truckNumber || e.driverId)
       if (hasErr) { setTruckErrors(errs); return }
