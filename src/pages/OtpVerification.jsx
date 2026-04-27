@@ -1734,9 +1734,6 @@ export default function OtpVerification() {
           <p className="text-gray-500 mt-3 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
             {t('contractSigned.subheading')}
           </p>
-          <p className="mt-4 inline-block text-xs text-blue-700 bg-blue-100 rounded-lg px-3 py-2">
-            {t('contractSigned.pinRecommendation')}
-          </p>
         </div>
 
         {/* Truck setup — prominent highlighted block */}
@@ -1753,6 +1750,9 @@ export default function OtpVerification() {
               <div>
                 <h2 className="text-base font-bold text-gray-900">{t('contractSigned.truckBlockTitle')}</h2>
                 <p className="text-sm text-gray-600 mt-0.5 leading-relaxed">{t('contractSigned.truckBlockDesc')}</p>
+                <p className="mt-2 text-xs text-blue-700 bg-blue-100 rounded-lg px-3 py-2">
+                  {t('contractSigned.pinRecommendation')}
+                </p>
               </div>
             </div>
 
@@ -1827,7 +1827,6 @@ export default function OtpVerification() {
                            transition-colors duration-200 cursor-pointer focus:outline-none"
               >
                 {t('contractSigned.addTruckBtn')}
-                <span className="text-xs opacity-60 font-normal">({trucks.length}/{MAX_TRUCKS})</span>
               </button>
             )}
 
