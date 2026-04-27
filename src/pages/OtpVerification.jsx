@@ -1720,7 +1720,7 @@ export default function OtpVerification() {
         </div>
 
         {/* Services block — edge-to-edge on mobile, constrained on desktop */}
-        <div className="-mx-4 sm:mx-0 bg-white sm:rounded-2xl sm:border sm:border-gray-100 sm:shadow-ds-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-ds-sm overflow-hidden">
 
           {/* Small centered label */}
           <div className="text-center pt-5 pb-3 px-4 border-b border-gray-100">
