@@ -189,7 +189,7 @@ const translations = {
       errorRoutingFormat: 'Routing number must be exactly 9 digits',
     },
     address: {
-      heading: 'Your Address',
+      heading: 'Billing Address',
       subheading: 'Enter your business or personal address. This information will be used for account setup and correspondence.',
       labelStreet1: 'Street Address 1',
       labelStreet2: 'Street Address 2',
@@ -460,7 +460,7 @@ const translations = {
       errorRoutingFormat: 'Номер роутинга должен содержать ровно 9 цифр',
     },
     address: {
-      heading: 'Ваш адрес',
+      heading: 'Адрес для выставления счёта',
       subheading: 'Введите адрес компании или личный адрес. Эта информация будет использована для настройки аккаунта и переписки.',
       labelStreet1: 'Адрес (строка 1)',
       labelStreet2: 'Адрес (строка 2)',
@@ -732,7 +732,7 @@ const translations = {
       errorRoutingFormat: 'Номер роутингу повинен містити рівно 9 цифр',
     },
     address: {
-      heading: 'Ваша адреса',
+      heading: 'Платіжна адреса',
       subheading: 'Введіть адресу компанії або особисту адресу. Ця інформація використовуватиметься для налаштування акаунту та листування.',
       labelStreet1: 'Адреса (рядок 1)',
       labelStreet2: 'Адреса (рядок 2)',
@@ -1004,7 +1004,7 @@ const translations = {
       errorRoutingFormat: 'El número de ruta debe tener exactamente 9 dígitos',
     },
     address: {
-      heading: 'Su Dirección',
+      heading: 'Dirección de Facturación',
       subheading: 'Ingrese la dirección de su empresa o personal. Esta información se utilizará para la configuración de la cuenta y la correspondencia.',
       labelStreet1: 'Dirección (línea 1)',
       labelStreet2: 'Dirección (línea 2)',
