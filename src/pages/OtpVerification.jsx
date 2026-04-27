@@ -72,6 +72,9 @@ export default function OtpVerification() {
   const [personalAddressOption, setPersonalAddressOption] = useState('')
   const [personalAddressForm, setPersonalAddressForm] = useState({ street1: '', street2: '', city: '', state: '', zip: '' })
   const [personalAddressErrors, setPersonalAddressErrors] = useState({})
+  const [billingContactOption, setBillingContactOption] = useState('')
+  const [billingContactForm, setBillingContactForm] = useState({ firstName: '', lastName: '', email: '', phone: '', title: '' })
+  const [billingContactErrors, setBillingContactErrors] = useState({})
 
   const updateBank = (key, val) => setBankForm(prev => ({ ...prev, [key]: val }))
   const clearBankError = (key) => setBankErrors(prev => { const n = { ...prev }; delete n[key]; return n })
@@ -176,6 +179,14 @@ export default function OtpVerification() {
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+        </svg>
+      ),
+    },
+    {
+      label: t('billingContact.stepLabel'),
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
         </svg>
       ),
     },
@@ -966,7 +977,7 @@ export default function OtpVerification() {
         return
       }
       window.scrollTo({ top: 0, behavior: 'smooth' })
-      // next step TBD
+      setStep('billingContact')
     }
 
     const AddressPreview = ({ form }) => (
@@ -1157,6 +1168,214 @@ export default function OtpVerification() {
             <button
               type="button"
               onClick={handlePersonalAddressSubmit}
+              className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                         bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                         transition-colors duration-200 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              {t('common.nextStep')}
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (step === 'billingContact') {
+    const updateBilling = (key, val) => setBillingContactForm(prev => ({ ...prev, [key]: val }))
+    const clearBillingError = (key) => setBillingContactErrors(prev => { const n = { ...prev }; delete n[key]; return n })
+    const billingInputClass = (err) => [
+      'w-full px-4 py-3 text-base sm:text-sm border rounded-xl',
+      'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400',
+      'transition-colors duration-200 bg-white text-gray-900',
+      err ? 'border-red-300 bg-red-50' : 'border-gray-200',
+    ].join(' ')
+
+    const handleBillingSubmit = () => {
+      const errs = {}
+      if (!billingContactOption) {
+        errs.option = t('billingContact.errorOptionRequired')
+      }
+      if (billingContactOption === 'other') {
+        if (!billingContactForm.firstName.trim()) errs.firstName = t('billingContact.errorFirstNameRequired')
+        if (!billingContactForm.lastName.trim()) errs.lastName = t('billingContact.errorLastNameRequired')
+        if (!billingContactForm.email.trim()) {
+          errs.email = t('billingContact.errorEmailRequired')
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingContactForm.email.trim())) {
+          errs.email = t('billingContact.errorEmailFormat')
+        }
+        if (!billingContactForm.phone.trim()) errs.phone = t('billingContact.errorPhoneRequired')
+      }
+      if (Object.keys(errs).length) {
+        setBillingContactErrors(errs)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      // next step TBD
+    }
+
+    const radioBase = 'flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors duration-200'
+    const radioSelected = 'border-primary bg-blue-50/40'
+    const radioIdle = 'border-gray-200 hover:border-gray-300 bg-white'
+
+    return (
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
+        <StepIndicator steps={BANK_STEPS} currentStep={5} />
+        <div className="text-center mb-8 sm:mb-10">
+          <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">{t('billingContact.heading')}</h1>
+          <p className="text-gray-500 mt-3 text-sm sm:text-base leading-relaxed max-w-xl mx-auto">
+            {t('billingContact.subheading')}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-10 max-w-3xl mx-auto">
+
+          <div className="space-y-3">
+
+            {/* Self */}
+            <label className={[radioBase, billingContactOption === 'self' ? radioSelected : radioIdle].join(' ')}>
+              <input
+                type="radio"
+                name="billingContactOption"
+                value="self"
+                checked={billingContactOption === 'self'}
+                onChange={() => { setBillingContactOption('self'); setBillingContactErrors({}) }}
+                className="mt-0.5 accent-primary flex-shrink-0"
+              />
+              <div>
+                <p className="text-sm font-medium text-gray-900">{t('billingContact.radioSelfLabel')}</p>
+                <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">{t('billingContact.radioSelfDesc')}</p>
+              </div>
+            </label>
+
+            {/* Someone else */}
+            <label className={[radioBase, billingContactOption === 'other' ? radioSelected : radioIdle].join(' ')}>
+              <input
+                type="radio"
+                name="billingContactOption"
+                value="other"
+                checked={billingContactOption === 'other'}
+                onChange={() => { setBillingContactOption('other'); setBillingContactErrors({}) }}
+                className="mt-0.5 accent-primary flex-shrink-0"
+              />
+              <div>
+                <p className="text-sm font-medium text-gray-900">{t('billingContact.radioOtherLabel')}</p>
+              </div>
+            </label>
+
+          </div>
+
+          {billingContactErrors.option && (
+            <p className="mt-3 text-xs text-red-500">{billingContactErrors.option}</p>
+          )}
+
+          {/* Other contact form */}
+          {billingContactOption === 'other' && (
+            <div className="mt-6 space-y-4 animate-fadeIn">
+
+              {/* First + Last name */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    {t('billingContact.labelFirstName')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    autoComplete="given-name"
+                    value={billingContactForm.firstName}
+                    onChange={e => { updateBilling('firstName', e.target.value); clearBillingError('firstName') }}
+                    placeholder={t('billingContact.placeholderFirstName')}
+                    className={billingInputClass(billingContactErrors.firstName)}
+                  />
+                  {billingContactErrors.firstName && <p className="mt-1.5 text-xs text-red-600">{billingContactErrors.firstName}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    {t('billingContact.labelLastName')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    autoComplete="family-name"
+                    value={billingContactForm.lastName}
+                    onChange={e => { updateBilling('lastName', e.target.value); clearBillingError('lastName') }}
+                    placeholder={t('billingContact.placeholderLastName')}
+                    className={billingInputClass(billingContactErrors.lastName)}
+                  />
+                  {billingContactErrors.lastName && <p className="mt-1.5 text-xs text-red-600">{billingContactErrors.lastName}</p>}
+                </div>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {t('billingContact.labelEmail')} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={billingContactForm.email}
+                  onChange={e => { updateBilling('email', e.target.value); clearBillingError('email') }}
+                  placeholder={t('billingContact.placeholderEmail')}
+                  className={billingInputClass(billingContactErrors.email)}
+                />
+                {billingContactErrors.email && <p className="mt-1.5 text-xs text-red-600">{billingContactErrors.email}</p>}
+              </div>
+
+              {/* Phone + Title */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    {t('billingContact.labelPhone')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    autoComplete="tel"
+                    value={billingContactForm.phone}
+                    onChange={e => { updateBilling('phone', e.target.value); clearBillingError('phone') }}
+                    placeholder={t('billingContact.placeholderPhone')}
+                    className={billingInputClass(billingContactErrors.phone)}
+                  />
+                  {billingContactErrors.phone && <p className="mt-1.5 text-xs text-red-600">{billingContactErrors.phone}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    {t('billingContact.labelTitle')}
+                  </label>
+                  <input
+                    type="text"
+                    autoComplete="organization-title"
+                    value={billingContactForm.title}
+                    onChange={e => updateBilling('title', e.target.value)}
+                    placeholder={t('billingContact.placeholderTitle')}
+                    className={billingInputClass(false)}
+                  />
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('personalAddress') }}
+              className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold
+                         text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
+                         transition-colors duration-200 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-gray-200"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
+              {t('billingContact.backBtn')}
+            </button>
+            <button
+              type="button"
+              onClick={handleBillingSubmit}
               className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                          bg-primary hover:bg-secondary rounded-md shadow-ds-sm
                          transition-colors duration-200 cursor-pointer
