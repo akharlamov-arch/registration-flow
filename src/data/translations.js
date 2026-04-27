@@ -16,6 +16,10 @@ const translations = {
       fileSelected: 'File selected',
       noFile: 'No file chosen',
       loading: 'Sending...',
+      phoneInvalid: 'Enter a valid 10-digit phone number',
+      uploadFailed: 'Upload failed. Please try again.',
+      submitError: 'Submission failed. Please try again.',
+      networkError: 'Network error. Please check your connection and try again.',
     },
     lead: {
       title: 'iTrucking — Apply Now',
@@ -247,6 +251,10 @@ const translations = {
       fileSelected: 'Файл выбран',
       noFile: 'Файл не выбран',
       loading: 'Отправка...',
+      phoneInvalid: 'Введите корректный 10-значный номер телефона',
+      uploadFailed: 'Не удалось загрузить файл. Попробуйте снова.',
+      submitError: 'Ошибка отправки. Пожалуйста, попробуйте снова.',
+      networkError: 'Ошибка сети. Проверьте соединение и попробуйте снова.',
     },
     lead: {
       title: 'iTrucking — Подать заявку',
@@ -479,6 +487,10 @@ const translations = {
       fileSelected: 'Файл обрано',
       noFile: 'Файл не обрано',
       loading: 'Надсилається...',
+      phoneInvalid: 'Введіть коректний 10-значний номер телефону',
+      uploadFailed: 'Не вдалося завантажити файл. Спробуйте ще раз.',
+      submitError: 'Помилка відправки. Будь ласка, спробуйте ще раз.',
+      networkError: 'Помилка мережі. Перевірте з\'єднання та спробуйте ще раз.',
     },
     lead: {
       title: 'iTrucking — Подати заявку',
@@ -711,6 +723,10 @@ const translations = {
       fileSelected: 'Archivo seleccionado',
       noFile: 'Ningún archivo',
       loading: 'Enviando...',
+      phoneInvalid: 'Ingresa un número de teléfono válido de 10 dígitos',
+      uploadFailed: 'Error al subir el archivo. Inténtelo de nuevo.',
+      submitError: 'Error al enviar. Por favor, inténtelo de nuevo.',
+      networkError: 'Error de red. Verifique su conexión e inténtelo de nuevo.',
     },
     lead: {
       title: 'iTrucking — Aplicar Ahora',

@@ -3,6 +3,7 @@ import { useI18n } from '../context/I18nContext'
 import StepIndicator from '../components/StepIndicator'
 import FormField from '../components/FormField'
 import PhoneInput from '../components/PhoneInput'
+import { createLead, generateOtpCode, uploadFuelInvoice } from '../api/leads'
 
 // ── Step icon definitions ──────────────────────────────────────────────────
 const CONTACT_STEP = {
@@ -111,6 +112,9 @@ export default function LeadForm() {
   const [loading, setLoading] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [errors, setErrors] = useState({})
+  const [uploadedFuelFile, setUploadedFuelFile] = useState(null)
+  const [fuelUploading, setFuelUploading] = useState(false)
+  const [fuelUploadError, setFuelUploadError] = useState('')
   const [modalErrors, setModalErrors] = useState({})
   const [form, setForm] = useState({
     // Step 1 — Contact
@@ -132,6 +136,7 @@ export default function LeadForm() {
     // Step Fuel
     usesFuelProgram: '',
     fuelDocument: null,
+    otpCode: '',
     // Step Referral
     refFirstName: '',
     refLastName: '',
@@ -179,6 +184,28 @@ export default function LeadForm() {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }))
   }
 
+  const handleFuelFileSelect = async (file) => {
+    if (!file) return
+    update('fuelDocument', file)
+    setFuelUploadError('')
+    setFuelUploading(true)
+    try {
+      const { ok, data } = await uploadFuelInvoice(file)
+      if (ok && data.success) {
+        setUploadedFuelFile({ field: 'fuelInvoice', filename: data.fileName })
+        if (errors.fuelDocument) setErrors((prev) => ({ ...prev, fuelDocument: '' }))
+      } else {
+        setUploadedFuelFile(null)
+        setFuelUploadError(t('common.uploadFailed'))
+      }
+    } catch {
+      setUploadedFuelFile(null)
+      setFuelUploadError(t('common.networkError'))
+    } finally {
+      setFuelUploading(false)
+    }
+  }
+
   // ── Validators ─────────────────────────────────────────────────────
   const validateContact = () => {
     const e = {}
@@ -189,7 +216,11 @@ export default function LeadForm() {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       e.email = t('common.invalidEmail')
     }
-    if (!form.phone.trim()) e.phone = t('common.required')
+    if (!form.phone.trim()) {
+      e.phone = t('common.required')
+    } else if (form.phone.replace(/\D/g, '').length !== 10) {
+      e.phone = t('common.phoneInvalid')
+    }
     return e
   }
 
@@ -214,7 +245,7 @@ export default function LeadForm() {
   const validateFuel = () => {
     const e = {}
     if (!form.usesFuelProgram) e.usesFuelProgram = t('lead.step3.selectRequired')
-    if (form.usesFuelProgram === 'yes' && !form.fuelDocument) e.fuelDocument = t('lead.step3.uploadRequired')
+    if (form.usesFuelProgram === 'yes' && !uploadedFuelFile) e.fuelDocument = t('lead.step3.uploadRequired')
     return e
   }
 
@@ -222,7 +253,11 @@ export default function LeadForm() {
     const e = {}
     if (!form.refFirstName.trim()) e.refFirstName = t('common.required')
     if (!form.refLastName.trim()) e.refLastName = t('common.required')
-    if (!form.refPhone.trim()) e.refPhone = t('common.required')
+    if (!form.refPhone.trim()) {
+      e.refPhone = t('common.required')
+    } else if (form.refPhone.replace(/\D/g, '').length !== 10) {
+      e.refPhone = t('common.phoneInvalid')
+    }
     return e
   }
 
@@ -239,9 +274,58 @@ export default function LeadForm() {
       setShowConfirmModal(true)
     } else if (contentKey === 'review') {
       setLoading(true)
-      await new Promise((r) => setTimeout(r, 800))
-      setLoading(false)
-      setSubmitted(true)
+      try {
+        let otpCode = form.otpCode
+        if (!otpCode) {
+          otpCode = generateOtpCode()
+          setForm((prev) => ({ ...prev, otpCode }))
+        }
+
+        const files = uploadedFuelFile ? { fuelInvoice: uploadedFuelFile } : {}
+
+        const payload = {
+          email:         form.email,
+          accountType:   form.accountType,
+          stepCompleted: isBusiness ? 6 : 5,
+          otpCode,
+          form: {
+            firstName:            form.firstName,
+            lastName:             form.lastName,
+            phone:                form.phone,
+            businessOwnerConfirm: form.ownerConfirmed,
+            fleetSize:            isBusiness ? Number(form.companyTrucks) : Number(form.personalTrucks),
+            companyName:          form.companyName,
+            businessType:         form.businessType,
+            companyTitle:         form.companyTitle,
+            dot:                  form.companyDOT,
+            mc:                   form.companyMC,
+            usedFuelProgram:      form.usesFuelProgram,
+            files,
+            refFirstName:         form.refFirstName,
+            refLastName:          form.refLastName,
+            refCompany:           form.refCompany,
+            refPhone:             form.refPhone,
+            refNotes:             form.refNote,
+            otpCode,
+          },
+        }
+        const { ok, status, data } = await createLead(payload)
+        if (ok) {
+          setSubmitted(true)
+        } else if (status === 422 && data.errors) {
+          const flat = {}
+          for (const [field, msgs] of Object.entries(data.errors)) {
+            flat[field] = Array.isArray(msgs) ? msgs[0] : msgs
+          }
+          setErrors(flat)
+        } else {
+          setErrors({ _form: data.error || t('common.submitError') })
+        }
+      } catch {
+        setErrors({ _form: t('common.networkError') })
+      } finally {
+        setLoading(false)
+      }
     } else {
       setStep((s) => s + 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -665,10 +749,7 @@ export default function LeadForm() {
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png,.heic,.doc,.docx"
                       className="sr-only"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] ?? null
-                        update('fuelDocument', file)
-                      }}
+                      onChange={(e) => handleFuelFileSelect(e.target.files?.[0] ?? null)}
                     />
                     {form.fuelDocument ? (
                       <>
@@ -693,7 +774,13 @@ export default function LeadForm() {
                     )}
                   </label>
 
-                  {errors.fuelDocument && (
+                  {fuelUploading && (
+                    <p className="text-xs text-gray-500 mt-1.5">{t('common.loading')}</p>
+                  )}
+                  {fuelUploadError && (
+                    <p className="text-xs text-red-500 mt-1.5">{fuelUploadError}</p>
+                  )}
+                  {!fuelUploading && !fuelUploadError && errors.fuelDocument && (
                     <p className="text-xs text-red-500 mt-1.5">{errors.fuelDocument}</p>
                   )}
                 </div>
@@ -849,6 +936,10 @@ export default function LeadForm() {
             </div>
           )
         })()}
+
+        {errors._form && (
+          <p className="text-sm text-red-600 text-center mt-4">{errors._form}</p>
+        )}
 
         <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-100">
           <button
