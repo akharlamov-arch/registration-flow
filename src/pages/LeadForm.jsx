@@ -663,7 +663,7 @@ export default function LeadForm() {
                   >
                     <input
                       type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
+                      accept=".pdf,.jpg,.jpeg,.png,.heic,.doc,.docx"
                       className="sr-only"
                       onChange={(e) => {
                         const file = e.target.files?.[0] ?? null
