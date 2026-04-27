@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react'
 import bannerTires from '../assets/banner-tires.jpg'
 import bannerFactoring from '../assets/banner-factoring.jpg'
 import bannerProtection from '../assets/banner-protection.jpg'
