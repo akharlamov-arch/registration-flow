@@ -2,6 +2,19 @@ import { useState } from 'react'
 import { useI18n } from '../context/I18nContext'
 import StepIndicator from '../components/StepIndicator'
 
+const US_STATES = [
+  ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],
+  ['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['FL','Florida'],['GA','Georgia'],
+  ['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],
+  ['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],
+  ['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],
+  ['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],
+  ['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],
+  ['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],
+  ['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],
+  ['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
+]
+
 // Placeholder — replace with real data from backend/context
 const PLACEHOLDER = {
   firstName: 'Michael',
@@ -85,9 +98,8 @@ export default function OtpVerification() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
     if (addressForm.mailingOption === 'different') {
       setStep('mailingAddress')
-    } else {
-      setStep('addressDone') // next step — TBD
     }
+    // else: next step TBD
   }
 
   const updateMailing = (key, val) => setMailingForm(prev => ({ ...prev, [key]: val }))
@@ -109,7 +121,7 @@ export default function OtpVerification() {
       return
     }
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    setStep('addressDone') // next step — TBD
+    // next step TBD
   }
 
   const BANK_STEPS = [
@@ -118,6 +130,15 @@ export default function OtpVerification() {
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+        </svg>
+      ),
+    },
+    {
+      label: t('address.stepLabel'),
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
         </svg>
       ),
     },
@@ -256,6 +277,7 @@ export default function OtpVerification() {
   if (step === 'address') {
     return (
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
+        <StepIndicator steps={BANK_STEPS} currentStep={2} />
         <div className="text-center mb-8 sm:mb-10">
           <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">{t('address.heading')}</h1>
           <p className="text-gray-500 mt-3 text-sm sm:text-base leading-relaxed max-w-md mx-auto">
@@ -317,14 +339,17 @@ export default function OtpVerification() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   {t('address.labelState')} <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   autoComplete="address-level1"
                   value={addressForm.state}
-                  onChange={e => { updateAddress('state', e.target.value.toUpperCase().slice(0, 2)); clearAddressError('state') }}
-                  placeholder={t('address.placeholderState')}
-                  className={addressInputClass(addressErrors.state)}
-                />
+                  onChange={e => { updateAddress('state', e.target.value); clearAddressError('state') }}
+                  className={addressInputClass(addressErrors.state) + ' appearance-none'}
+                >
+                  <option value="">{t('address.placeholderState')}</option>
+                  {US_STATES.map(([code, name]) => (
+                    <option key={code} value={code}>{code} — {name}</option>
+                  ))}
+                </select>
                 {addressErrors.state && <p className="mt-1.5 text-xs text-red-600">{addressErrors.state}</p>}
               </div>
               <div>
@@ -480,14 +505,17 @@ export default function OtpVerification() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   {t('address.labelState')} <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   autoComplete="address-level1"
                   value={mailingForm.state}
-                  onChange={e => { updateMailing('state', e.target.value.toUpperCase().slice(0, 2)); clearMailingError('state') }}
-                  placeholder={t('address.placeholderState')}
-                  className={mailingInputClass(mailingErrors.state)}
-                />
+                  onChange={e => { updateMailing('state', e.target.value); clearMailingError('state') }}
+                  className={mailingInputClass(mailingErrors.state) + ' appearance-none'}
+                >
+                  <option value="">{t('address.placeholderState')}</option>
+                  {US_STATES.map(([code, name]) => (
+                    <option key={code} value={code}>{code} — {name}</option>
+                  ))}
+                </select>
                 {mailingErrors.state && <p className="mt-1.5 text-xs text-red-600">{mailingErrors.state}</p>}
               </div>
               <div>
