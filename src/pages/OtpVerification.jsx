@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useI18n } from '../context/I18nContext'
 import StepIndicator from '../components/StepIndicator'
 
@@ -65,6 +65,10 @@ export default function OtpVerification() {
   const [showSsn, setShowSsn] = useState(false)
   const [showDl, setShowDl] = useState(false)
   const [showDlConfirm, setShowDlConfirm] = useState(false)
+  const [peekSsn, setPeekSsn] = useState(false)
+  const [peekDl, setPeekDl] = useState(false)
+  const [peekDlConfirm, setPeekDlConfirm] = useState(false)
+  const peekTimers = useRef({})
 
   const updateBank = (key, val) => setBankForm(prev => ({ ...prev, [key]: val }))
   const clearBankError = (key) => setBankErrors(prev => { const n = { ...prev }; delete n[key]; return n })
@@ -587,6 +591,13 @@ export default function OtpVerification() {
   }
 
   if (step === 'personalInfo') {
+    const triggerPeek = (field, setter, isVisible) => {
+      if (isVisible) return
+      clearTimeout(peekTimers.current[field])
+      setter(true)
+      peekTimers.current[field] = setTimeout(() => setter(false), 700)
+    }
+
     const personalInputClass = (err) => [
       'w-full px-4 py-3 pr-12 text-base sm:text-sm border rounded-xl',
       'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400',
@@ -663,11 +674,11 @@ export default function OtpVerification() {
               </label>
               <div className="relative">
                 <input
-                  type={showSsn ? 'text' : 'password'}
+                  type={showSsn || peekSsn ? 'text' : 'password'}
                   inputMode="numeric"
                   autoComplete="off"
                   value={personalForm.ssn}
-                  onChange={e => { updatePersonal('ssn', e.target.value.replace(/\D/g, '').slice(0, 9)); clearPersonalError('ssn') }}
+                  onChange={e => { updatePersonal('ssn', e.target.value.replace(/\D/g, '').slice(0, 9)); clearPersonalError('ssn'); triggerPeek('ssn', setPeekSsn, showSsn) }}
                   placeholder={t('personalInfo.placeholderSsn')}
                   className={personalInputClass(personalErrors.ssn)}
                 />
@@ -687,10 +698,10 @@ export default function OtpVerification() {
               </label>
               <div className="relative">
                 <input
-                  type={showDl ? 'text' : 'password'}
+                  type={showDl || peekDl ? 'text' : 'password'}
                   autoComplete="off"
                   value={personalForm.dlNumber}
-                  onChange={e => { updatePersonal('dlNumber', e.target.value); clearPersonalError('dlNumber') }}
+                  onChange={e => { updatePersonal('dlNumber', e.target.value); clearPersonalError('dlNumber'); triggerPeek('dl', setPeekDl, showDl) }}
                   placeholder={t('personalInfo.placeholderDl')}
                   className={personalInputClass(personalErrors.dlNumber)}
                 />
@@ -710,10 +721,10 @@ export default function OtpVerification() {
               </label>
               <div className="relative">
                 <input
-                  type={showDlConfirm ? 'text' : 'password'}
+                  type={showDlConfirm || peekDlConfirm ? 'text' : 'password'}
                   autoComplete="off"
                   value={personalForm.dlConfirm}
-                  onChange={e => { updatePersonal('dlConfirm', e.target.value); clearPersonalError('dlConfirm') }}
+                  onChange={e => { updatePersonal('dlConfirm', e.target.value); clearPersonalError('dlConfirm'); triggerPeek('dlConfirm', setPeekDlConfirm, showDlConfirm) }}
                   placeholder={t('personalInfo.placeholderDlConfirm')}
                   className={personalInputClass(personalErrors.dlConfirm)}
                 />
