@@ -118,6 +118,8 @@ export default function OtpVerification() {
   const [billingContactForm, setBillingContactForm] = useState({ firstName: '', lastName: '', email: '', phone: '', title: '' })
   const [billingContactErrors, setBillingContactErrors] = useState({})
   const [showTermsModal, setShowTermsModal] = useState(false)
+  const [trucks, setTrucks] = useState([{ truckNumber: '', driverId: '' }])
+  const [truckErrors, setTruckErrors] = useState([])
 
   const updateBank = (key, val) => setBankForm(prev => ({ ...prev, [key]: val }))
   const clearBankError = (key) => setBankErrors(prev => { const n = { ...prev }; delete n[key]; return n })
@@ -1640,7 +1642,8 @@ export default function OtpVerification() {
                   type="button"
                   onClick={() => {
                     setShowTermsModal(false)
-                    // TODO: final submit action
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                    setStep('contractSigned')
                   }}
                   className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                              bg-primary hover:bg-secondary rounded-md shadow-ds-sm
@@ -1674,6 +1677,174 @@ export default function OtpVerification() {
             </div>
           </div>
         )}
+      </main>
+    )
+  }
+
+  if (step === 'contractSigned') {
+    const MAX_TRUCKS = 50
+
+    const updateTruck = (idx, field, val) => {
+      setTrucks(prev => prev.map((t, i) => i === idx ? { ...t, [field]: val } : t))
+      setTruckErrors(prev => {
+        const next = [...prev]
+        if (next[idx]) { next[idx] = { ...next[idx], [field]: undefined } }
+        return next
+      })
+    }
+
+    const addTruck = () => {
+      if (trucks.length >= MAX_TRUCKS) return
+      setTrucks(prev => [...prev, { truckNumber: '', driverId: '' }])
+    }
+
+    const removeTruck = (idx) => {
+      setTrucks(prev => prev.filter((_, i) => i !== idx))
+      setTruckErrors(prev => prev.filter((_, i) => i !== idx))
+    }
+
+    const handleSave = () => {
+      const errs = trucks.map(t => ({
+        truckNumber: !t.truckNumber.trim() ? t('contractSigned.errorTruckRequired') : undefined,
+        driverId: !t.driverId.trim() ? t('contractSigned.errorDriverIdRequired') : undefined,
+      }))
+      const hasErr = errs.some(e => e.truckNumber || e.driverId)
+      if (hasErr) { setTruckErrors(errs); return }
+      // TODO: submit truck data to backend
+    }
+
+    const truckInputClass = (err) => [
+      'w-full px-3 py-2.5 text-sm border rounded-xl',
+      'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400',
+      'transition-colors duration-200 bg-white text-gray-900',
+      err ? 'border-red-300 bg-red-50' : 'border-gray-200',
+    ].join(' ')
+
+    return (
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
+
+        {/* Success header */}
+        <div className="text-center mb-10 sm:mb-12">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-5">
+            <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">{t('contractSigned.heading')}</h1>
+          <p className="text-gray-500 mt-3 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+            {t('contractSigned.subheading')}
+          </p>
+        </div>
+
+        {/* Truck setup — prominent highlighted block */}
+        <div className="max-w-3xl mx-auto">
+          <div className="rounded-2xl border-2 border-primary bg-blue-50/40 p-6 sm:p-8">
+
+            {/* Block header */}
+            <div className="flex items-start gap-3 mb-5">
+              <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-primary">
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-gray-900">{t('contractSigned.truckBlockTitle')}</h2>
+                <p className="text-sm text-gray-600 mt-0.5 leading-relaxed">{t('contractSigned.truckBlockDesc')}</p>
+              </div>
+            </div>
+
+            {/* Column labels */}
+            <div className="grid grid-cols-[1fr_1fr_2rem] gap-3 mb-2 px-1">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                {t('contractSigned.labelTruckNumber')}
+              </p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                {t('contractSigned.labelDriverId')}
+              </p>
+              <span />
+            </div>
+
+            {/* Truck rows */}
+            <div className="space-y-3">
+              {trucks.map((truck, idx) => (
+                <div key={idx} className="grid grid-cols-[1fr_1fr_2rem] gap-3 items-start">
+                  <div>
+                    <input
+                      type="text"
+                      value={truck.truckNumber}
+                      onChange={e => updateTruck(idx, 'truckNumber', e.target.value)}
+                      placeholder={t('contractSigned.placeholderTruckNumber')}
+                      className={truckInputClass(truckErrors[idx]?.truckNumber)}
+                      maxLength={30}
+                    />
+                    {truckErrors[idx]?.truckNumber && (
+                      <p className="mt-1 text-xs text-red-600">{truckErrors[idx].truckNumber}</p>
+                    )}
+                  </div>
+                  <div>
+                    <input
+                      type="text"
+                      value={truck.driverId}
+                      onChange={e => updateTruck(idx, 'driverId', e.target.value)}
+                      placeholder={t('contractSigned.placeholderDriverId')}
+                      className={truckInputClass(truckErrors[idx]?.driverId)}
+                      maxLength={20}
+                    />
+                    {truckErrors[idx]?.driverId && (
+                      <p className="mt-1 text-xs text-red-600">{truckErrors[idx].driverId}</p>
+                    )}
+                  </div>
+                  <div className="pt-0.5">
+                    {trucks.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeTruck(idx)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none"
+                        aria-label="Remove truck"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Add truck */}
+            {trucks.length < MAX_TRUCKS && (
+              <button
+                type="button"
+                onClick={addTruck}
+                className="mt-4 flex items-center gap-1.5 text-sm font-medium text-primary hover:text-secondary
+                           transition-colors duration-200 cursor-pointer focus:outline-none"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                {t('contractSigned.addTruckBtn')}
+                <span className="text-xs text-gray-400 font-normal ml-1">({trucks.length}/{MAX_TRUCKS})</span>
+              </button>
+            )}
+
+            {/* Save button */}
+            <button
+              type="button"
+              onClick={handleSave}
+              className="mt-6 w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                         bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                         transition-colors duration-200 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {t('contractSigned.saveBtn')}
+            </button>
+          </div>
+        </div>
+
       </main>
     )
   }
