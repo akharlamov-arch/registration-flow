@@ -117,6 +117,7 @@ export default function OtpVerification() {
   const [billingContactOption, setBillingContactOption] = useState('')
   const [billingContactForm, setBillingContactForm] = useState({ firstName: '', lastName: '', email: '', phone: '', title: '' })
   const [billingContactErrors, setBillingContactErrors] = useState({})
+  const [showTermsModal, setShowTermsModal] = useState(false)
 
   const updateBank = (key, val) => setBankForm(prev => ({ ...prev, [key]: val }))
   const clearBankError = (key) => setBankErrors(prev => { const n = { ...prev }; delete n[key]; return n })
@@ -1581,10 +1582,7 @@ export default function OtpVerification() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              // TODO: submit logic
-              window.scrollTo({ top: 0, behavior: 'smooth' })
-            }}
+            onClick={() => setShowTermsModal(true)}
             className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                        bg-primary hover:bg-secondary rounded-md shadow-ds-sm
                        transition-colors duration-200 cursor-pointer
@@ -1596,6 +1594,81 @@ export default function OtpVerification() {
             {t('finalReview.submitBtn')}
           </button>
         </div>
+
+        {/* Terms & Conditions Modal */}
+        {showTermsModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+            onClick={(e) => e.target === e.currentTarget && setShowTermsModal(false)}
+          >
+            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 sm:p-8 space-y-5">
+
+              {/* Header */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-blue-50">
+                    <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-lg font-bold text-gray-900">{t('finalReview.modalTitle')}</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(false)}
+                  className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+                  aria-label="Close"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Body */}
+              <p className="text-sm text-gray-600 leading-relaxed">
+                {t('finalReview.modalBody1')}
+                <span className="text-primary underline underline-offset-2 decoration-primary cursor-pointer hover:text-secondary">
+                  {t('finalReview.modalTermsLink')}
+                </span>
+                {t('finalReview.modalBody2')}
+              </p>
+
+              {/* Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                <a
+                  href="tel:+19162694606"
+                  className="flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold
+                             text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
+                             transition-colors duration-200
+                             focus:outline-none focus:ring-2 focus:ring-gray-200"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                  </svg>
+                  {t('finalReview.modalCallBtn')}
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTermsModal(false)
+                    // TODO: final submit action
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                             bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                             transition-colors duration-200 cursor-pointer
+                             focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {t('finalReview.modalAgreeBtn')}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
       </main>
     )
   }
