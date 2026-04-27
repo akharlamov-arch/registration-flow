@@ -732,8 +732,10 @@ export default function OtpVerification() {
                 {t('personalInfo.labelDlFile')}
               </label>
               <label className={[
-                'flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors duration-200',
-                personalForm.dlFile ? 'border-primary bg-blue-50/40' : 'border-gray-200 hover:border-gray-300 bg-gray-50/60',
+                'flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed cursor-pointer transition-colors duration-200',
+                personalForm.dlFile
+                  ? 'border-gray-400 bg-gray-50'
+                  : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50',
               ].join(' ')}>
                 <input
                   type="file"
@@ -741,17 +743,28 @@ export default function OtpVerification() {
                   className="sr-only"
                   onChange={e => updatePersonal('dlFile', e.target.files[0] ?? null)}
                 />
-                <svg className={`w-5 h-5 flex-shrink-0 ${personalForm.dlFile ? 'text-primary' : 'text-gray-400'}`}
-                     fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
-                </svg>
-                <span className="text-sm text-gray-600">
-                  {personalForm.dlFile
-                    ? personalForm.dlFile.name
-                    : t('personalInfo.uploadBtn')}
-                </span>
+                {personalForm.dlFile ? (
+                  <>
+                    <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round"
+                            d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-sm font-medium text-gray-700">{personalForm.dlFile.name}</p>
+                    <p className="text-xs text-gray-400">{t('personalInfo.tapToChange')}</p>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round"
+                            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                    <p className="text-sm font-medium text-gray-700">{t('personalInfo.uploadBtn')}</p>
+                    <p className="text-xs text-gray-400">{t('personalInfo.uploadHint')}</p>
+                  </>
+                )}
               </label>
-              <p className="mt-1.5 text-xs text-gray-400">{t('personalInfo.uploadHint')}</p>
             </div>
 
             {/* Owner match notice */}
