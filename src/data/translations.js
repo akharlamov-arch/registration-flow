@@ -320,6 +320,7 @@ const translations = {
       modalCallNote: 'If you have questions before signing, feel free to call us.',
     },
     registration: {
+      title: 'iTrucking — Verify Your Account',
       heading: 'Complete Your Registration',
       subheading: 'Your application has been approved. Please complete the registration process below.',
       step1: {
@@ -687,7 +688,7 @@ const translations = {
       modalCallNote: 'Если у вас есть вопросы перед подписанием договора, вы можете позвонить нам, нажав на кнопку ниже.',
     },
     registration: {
-      title: 'iTrucking — Завершить регистрацию',
+      title: 'iTrucking — Verify Your Account',
       heading: 'Завершите регистрацию',
       subheading: 'Ваша заявка одобрена. Пожалуйста, завершите процесс регистрации.',
       step1: {
@@ -1055,7 +1056,7 @@ const translations = {
       modalCallNote: 'Якщо у вас є запитання перед підписанням договору, ви можете позвонити нам, натиснувши на кнопку нижче.',
     },
     registration: {
-      title: 'iTrucking — Завершити реєстрацію',
+      title: 'iTrucking — Verify Your Account',
       heading: 'Завершіть реєстрацію',
       subheading: 'Вашу заявку схвалено. Будь ласка, завершіть процес реєстрації.',
       step1: {
@@ -1423,7 +1424,7 @@ const translations = {
       modalCallNote: 'Si tiene preguntas antes de firmar el contrato, puede llamarnos haciendo clic en el botón.',
     },
     registration: {
-      title: 'iTrucking — Completar Registro',
+      title: 'iTrucking — Verify Your Account',
       heading: 'Complete su Registro',
       subheading: 'Su solicitud ha sido aprobada. Por favor complete el proceso de registro.',
       step1: {
