@@ -112,7 +112,7 @@ export default function OtpVerification() {
     setStep('addressDone') // next step — TBD
   }
 
-
+  const BANK_STEPS = [
     {
       label: t('bankInfo.stepLabel'),
       icon: (
