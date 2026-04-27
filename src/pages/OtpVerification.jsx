@@ -1726,9 +1726,9 @@ export default function OtpVerification() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-ds-sm overflow-hidden">
 
           {/* Small centered label */}
-          <div className="text-center pt-5 pb-3 px-4 border-b border-gray-100">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">{t('allDone.servicesTitle')}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{t('allDone.servicesSubtitle')}</p>
+          <div className="text-center px-6 py-5 bg-blue-600">
+            <p className="text-sm font-semibold text-white">{t('allDone.servicesTitle')}</p>
+            <p className="text-xs text-blue-100 mt-1">{t('allDone.servicesSubtitle')}</p>
           </div>
 
           {/* Cards — stacked on mobile, horizontal rows on desktop */}
