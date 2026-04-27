@@ -45,6 +45,8 @@ export default function OtpVerification() {
   const [bankErrors, setBankErrors] = useState({})
   const [addressForm, setAddressForm] = useState({ street1: '', street2: '', city: '', state: '', zip: '', mailingOption: '' })
   const [addressErrors, setAddressErrors] = useState({})
+  const [mailingForm, setMailingForm] = useState({ street1: '', street2: '', city: '', state: '', zip: '' })
+  const [mailingErrors, setMailingErrors] = useState({})
 
   const updateBank = (key, val) => setBankForm(prev => ({ ...prev, [key]: val }))
   const clearBankError = (key) => setBankErrors(prev => { const n = { ...prev }; delete n[key]; return n })
@@ -88,7 +90,29 @@ export default function OtpVerification() {
     }
   }
 
-  const BANK_STEPS = [
+  const updateMailing = (key, val) => setMailingForm(prev => ({ ...prev, [key]: val }))
+  const clearMailingError = (key) => setMailingErrors(prev => { const n = { ...prev }; delete n[key]; return n })
+
+  const handleMailingSubmit = () => {
+    const errs = {}
+    if (!mailingForm.street1.trim()) errs.street1 = t('address.errorStreet1Required')
+    if (!mailingForm.city.trim()) errs.city = t('address.errorCityRequired')
+    if (!mailingForm.state.trim()) errs.state = t('address.errorStateRequired')
+    if (!mailingForm.zip.trim()) {
+      errs.zip = t('address.errorZipRequired')
+    } else if (!/^\d{5}(-\d{4})?$/.test(mailingForm.zip.trim())) {
+      errs.zip = t('address.errorZipFormat')
+    }
+    if (Object.keys(errs).length) {
+      setMailingErrors(errs)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setStep('addressDone') // next step — TBD
+  }
+
+
     {
       label: t('bankInfo.stepLabel'),
       icon: (
@@ -372,6 +396,135 @@ export default function OtpVerification() {
             <button
               type="button"
               onClick={handleAddressSubmit}
+              className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                         bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                         transition-colors duration-200 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              {t('address.nextBtn')}
+            </button>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (step === 'mailingAddress') {
+    const mailingInputClass = (err) => [
+      'w-full px-4 py-3 text-base sm:text-sm border rounded-xl',
+      'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400',
+      'transition-colors duration-200 bg-white text-gray-900',
+      err ? 'border-red-300 bg-red-50' : 'border-gray-200',
+    ].join(' ')
+
+    return (
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
+        <div className="text-center mb-8 sm:mb-10">
+          <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">{t('mailingAddress.heading')}</h1>
+          <p className="text-gray-500 mt-3 text-sm sm:text-base leading-relaxed max-w-md mx-auto">
+            {t('mailingAddress.subheading')}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-10 max-w-3xl mx-auto">
+          <div className="space-y-5">
+
+            {/* Street Address 1 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                {t('address.labelStreet1')} <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                autoComplete="address-line1"
+                value={mailingForm.street1}
+                onChange={e => { updateMailing('street1', e.target.value); clearMailingError('street1') }}
+                placeholder={t('address.placeholderStreet1')}
+                className={mailingInputClass(mailingErrors.street1)}
+              />
+              {mailingErrors.street1 && <p className="mt-1.5 text-xs text-red-600">{mailingErrors.street1}</p>}
+            </div>
+
+            {/* Street Address 2 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                {t('address.labelStreet2')}
+              </label>
+              <input
+                type="text"
+                autoComplete="address-line2"
+                value={mailingForm.street2}
+                onChange={e => updateMailing('street2', e.target.value)}
+                placeholder={t('address.placeholderStreet2')}
+                className={mailingInputClass(false)}
+              />
+            </div>
+
+            {/* City / State / ZIP */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {t('address.labelCity')} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  autoComplete="address-level2"
+                  value={mailingForm.city}
+                  onChange={e => { updateMailing('city', e.target.value); clearMailingError('city') }}
+                  placeholder={t('address.placeholderCity')}
+                  className={mailingInputClass(mailingErrors.city)}
+                />
+                {mailingErrors.city && <p className="mt-1.5 text-xs text-red-600">{mailingErrors.city}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {t('address.labelState')} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  autoComplete="address-level1"
+                  value={mailingForm.state}
+                  onChange={e => { updateMailing('state', e.target.value.toUpperCase().slice(0, 2)); clearMailingError('state') }}
+                  placeholder={t('address.placeholderState')}
+                  className={mailingInputClass(mailingErrors.state)}
+                />
+                {mailingErrors.state && <p className="mt-1.5 text-xs text-red-600">{mailingErrors.state}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  {t('address.labelZip')} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  autoComplete="postal-code"
+                  inputMode="numeric"
+                  value={mailingForm.zip}
+                  onChange={e => { updateMailing('zip', e.target.value); clearMailingError('zip') }}
+                  placeholder={t('address.placeholderZip')}
+                  className={mailingInputClass(mailingErrors.zip)}
+                />
+                {mailingErrors.zip && <p className="mt-1.5 text-xs text-red-600">{mailingErrors.zip}</p>}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('address') }}
+              className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold
+                         text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
+                         transition-colors duration-200 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-gray-200"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
+              {t('address.backBtn')}
+            </button>
+            <button
+              type="button"
+              onClick={handleMailingSubmit}
               className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                          bg-primary hover:bg-secondary rounded-md shadow-ds-sm
                          transition-colors duration-200 cursor-pointer

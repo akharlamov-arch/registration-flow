@@ -211,6 +211,10 @@ const translations = {
       errorZipFormat: 'ZIP code must be 5 digits',
       errorMailingOption: 'Please select a mailing option',
     },
+    mailingAddress: {
+      heading: 'Mailing Address',
+      subheading: 'Enter the address where you would like to receive mail and official correspondence.',
+    },
     registration: {
       heading: 'Complete Your Registration',
       subheading: 'Your application has been approved. Please complete the registration process below.',
@@ -441,6 +445,10 @@ const translations = {
       errorZipRequired: 'Укажите почтовый индекс',
       errorZipFormat: 'Почтовый индекс должен содержать 5 цифр',
       errorMailingOption: 'Пожалуйста, выберите вариант доставки почты',
+    },
+    mailingAddress: {
+      heading: 'Почтовый адрес',
+      subheading: 'Укажите адрес, на который вы хотите получать почту и официальную корреспонденцию.',
     },
     registration: {
       title: 'iTrucking — Завершить регистрацию',
@@ -674,6 +682,10 @@ const translations = {
       errorZipFormat: 'Поштовий індекс повинен містити 5 цифр',
       errorMailingOption: 'Будь ласка, оберіть варіант доставки пошти',
     },
+    mailingAddress: {
+      heading: 'Поштова адреса',
+      subheading: 'Вкажіть адресу, на яку ви бажаєте отримувати пошту та офіційну кореспонденцію.',
+    },
     registration: {
       title: 'iTrucking — Завершити реєстрацію',
       heading: 'Завершіть реєстрацію',
@@ -905,6 +917,10 @@ const translations = {
       errorZipRequired: 'El código postal es obligatorio',
       errorZipFormat: 'El código postal debe tener 5 dígitos',
       errorMailingOption: 'Por favor seleccione una opción de correo',
+    },
+    mailingAddress: {
+      heading: 'Dirección Postal',
+      subheading: 'Ingrese la dirección donde desea recibir correo y correspondencia oficial.',
     },
     registration: {
       title: 'iTrucking — Completar Registro',
