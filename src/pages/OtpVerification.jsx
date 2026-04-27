@@ -102,17 +102,25 @@ export default function OtpVerification() {
       errs.zip = t('address.errorZipFormat')
     }
     if (!addressForm.mailingOption) errs.mailingOption = t('address.errorMailingOption')
-    if (Object.keys(errs).length) {
+    const mailingErrs = {}
+    if (addressForm.mailingOption === 'different') {
+      if (!mailingForm.street1.trim()) mailingErrs.street1 = t('address.errorStreet1Required')
+      if (!mailingForm.city.trim()) mailingErrs.city = t('address.errorCityRequired')
+      if (!mailingForm.state.trim()) mailingErrs.state = t('address.errorStateRequired')
+      if (!mailingForm.zip.trim()) {
+        mailingErrs.zip = t('address.errorZipRequired')
+      } else if (!/^\d{5}(-\d{4})?$/.test(mailingForm.zip.trim())) {
+        mailingErrs.zip = t('address.errorZipFormat')
+      }
+    }
+    if (Object.keys(errs).length || Object.keys(mailingErrs).length) {
       setAddressErrors(errs)
+      setMailingErrors(mailingErrs)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    if (addressForm.mailingOption === 'different') {
-      setStep('mailingAddress')
-    } else {
-      setStep('personalInfo')
-    }
+    setStep('personalInfo')
   }
 
   const updateMailing = (key, val) => setMailingForm(prev => ({ ...prev, [key]: val }))
@@ -420,7 +428,7 @@ export default function OtpVerification() {
                       name="mailingOption"
                       value={opt.value}
                       checked={addressForm.mailingOption === opt.value}
-                      onChange={() => { updateAddress('mailingOption', opt.value); clearAddressError('mailingOption') }}
+                      onChange={() => { updateAddress('mailingOption', opt.value); clearAddressError('mailingOption'); setMailingErrors({}) }}
                       className="w-4 h-4 accent-primary flex-shrink-0"
                     />
                     <span className="text-sm font-medium text-gray-800">{opt.label}</span>
@@ -431,6 +439,91 @@ export default function OtpVerification() {
                 <p className="mt-2 text-xs text-red-600">{addressErrors.mailingOption}</p>
               )}
             </div>
+
+            {/* Inline mailing address form */}
+            {addressForm.mailingOption === 'different' && (
+              <div className="animate-fadeIn space-y-4 pt-2 border-t border-gray-100">
+                <p className="text-sm font-semibold text-gray-800">{t('mailingAddress.heading')}</p>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    {t('address.labelStreet1')} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    autoComplete="address-line1"
+                    value={mailingForm.street1}
+                    onChange={e => { updateMailing('street1', e.target.value); clearMailingError('street1') }}
+                    placeholder={t('address.placeholderStreet1')}
+                    className={addressInputClass(mailingErrors.street1)}
+                  />
+                  {mailingErrors.street1 && <p className="mt-1.5 text-xs text-red-600">{mailingErrors.street1}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    {t('address.labelStreet2')}
+                  </label>
+                  <input
+                    type="text"
+                    autoComplete="address-line2"
+                    value={mailingForm.street2}
+                    onChange={e => updateMailing('street2', e.target.value)}
+                    placeholder={t('address.placeholderStreet2')}
+                    className={addressInputClass(false)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      {t('address.labelCity')} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      autoComplete="address-level2"
+                      value={mailingForm.city}
+                      onChange={e => { updateMailing('city', e.target.value); clearMailingError('city') }}
+                      placeholder={t('address.placeholderCity')}
+                      className={addressInputClass(mailingErrors.city)}
+                    />
+                    {mailingErrors.city && <p className="mt-1.5 text-xs text-red-600">{mailingErrors.city}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      {t('address.labelState')} <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      autoComplete="address-level1"
+                      value={mailingForm.state}
+                      onChange={e => { updateMailing('state', e.target.value); clearMailingError('state') }}
+                      className={addressInputClass(mailingErrors.state) + ' appearance-none'}
+                    >
+                      <option value="">{t('address.placeholderState')}</option>
+                      {US_STATES.map(([code, name]) => (
+                        <option key={code} value={code}>{code} — {name}</option>
+                      ))}
+                    </select>
+                    {mailingErrors.state && <p className="mt-1.5 text-xs text-red-600">{mailingErrors.state}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      {t('address.labelZip')} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      autoComplete="postal-code"
+                      inputMode="numeric"
+                      value={mailingForm.zip}
+                      onChange={e => { updateMailing('zip', e.target.value); clearMailingError('zip') }}
+                      placeholder={t('address.placeholderZip')}
+                      className={addressInputClass(mailingErrors.zip)}
+                    />
+                    {mailingErrors.zip && <p className="mt-1.5 text-xs text-red-600">{mailingErrors.zip}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
@@ -642,7 +735,7 @@ export default function OtpVerification() {
       setStep('personalAddress')
     }
 
-    const backStep = addressForm.mailingOption === 'different' ? 'mailingAddress' : 'address'
+    const backStep = 'address'
 
     const EyeIcon = ({ show }) => show ? (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
