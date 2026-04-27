@@ -135,7 +135,7 @@ export default function OtpVerification() {
                   <path d="M3 10h18v2H3v-2zm2-5h14v3H5V5zm-1 9h16v6H4v-6zm6 1h4v4h-4v-4z" />
                 </svg>
               </div>
-              <p className="text-base sm:text-lg font-semibold text-gray-900 leading-snug pt-1">
+              <p className="text-sm sm:text-base font-medium text-gray-700 leading-relaxed">
                 {t('plaidStub.point1')}
               </p>
             </div>
@@ -148,7 +148,7 @@ export default function OtpVerification() {
                   <path d="M13 9h6M13 12h6M6.5 16c1.1-1.4 3-2 4.6-2 1.2 0 2.5.3 3.5 1" />
                 </svg>
               </div>
-              <p className="text-base sm:text-lg font-semibold text-gray-900 leading-snug pt-1">
+              <p className="text-sm sm:text-base font-medium text-gray-700 leading-relaxed">
                 {t('plaidStub.point2')}
               </p>
             </div>
