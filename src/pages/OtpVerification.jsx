@@ -1687,31 +1687,19 @@ export default function OtpVerification() {
         title: t('allDone.service1Title'),
         desc: t('allDone.service1Desc'),
         href: 'https://itruckingservices.com/services/tire-discounts',
-        icon: (
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        ),
+        img: 'https://placehold.co/600x250/1e3a5f/e0f2fe?text=Tire+Discounts',
       },
       {
         title: t('allDone.service2Title'),
         desc: t('allDone.service2Desc'),
         href: 'https://itruckingservices.com/services/freight-factoring',
-        icon: (
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
-          </svg>
-        ),
+        img: 'https://placehold.co/600x250/14532d/dcfce7?text=Freight+Factoring',
       },
       {
         title: t('allDone.service3Title'),
         desc: t('allDone.service3Desc'),
         href: 'https://itruckingservices.com/services/driver-business-support',
-        icon: (
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-          </svg>
-        ),
+        img: 'https://placehold.co/600x250/3b0764/faf5ff?text=Business+Protection',
       },
     ]
 
@@ -1719,7 +1707,7 @@ export default function OtpVerification() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
 
         {/* Thank you header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 mb-6">
             <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1731,32 +1719,41 @@ export default function OtpVerification() {
           </p>
         </div>
 
-        {/* Services block */}
-        <div className="max-w-3xl mx-auto">
-          <div className="mb-6">
-            <h2 className="text-lg font-bold text-gray-900">{t('allDone.servicesTitle')}</h2>
-            <p className="text-sm text-gray-500 mt-1">{t('allDone.servicesSubtitle')}</p>
+        {/* Services block — edge-to-edge on mobile, constrained on desktop */}
+        <div className="-mx-4 sm:mx-0 bg-white sm:rounded-2xl sm:border sm:border-gray-100 sm:shadow-ds-sm overflow-hidden">
+
+          {/* Small centered label */}
+          <div className="text-center pt-5 pb-3 px-4 border-b border-gray-100">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">{t('allDone.servicesTitle')}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{t('allDone.servicesSubtitle')}</p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-3">
+
+          {/* Cards — stacked on mobile, 3-col on desktop */}
+          <div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
             {services.map((svc) => (
               <a
                 key={svc.href}
                 href={svc.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-col bg-white rounded-2xl border border-gray-100 shadow-ds-sm
-                           p-5 hover:border-primary hover:shadow-ds-md transition-all duration-200"
+                className="group flex flex-col hover:bg-gray-50 transition-colors duration-200"
               >
-                <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-blue-50
-                               text-primary group-hover:bg-primary group-hover:text-white
-                               transition-colors duration-200 mb-4">
-                  {svc.icon}
+                {/* Horizontal banner image */}
+                <div className="w-full overflow-hidden" style={{ aspectRatio: '2.4/1' }}>
+                  <img
+                    src={svc.img}
+                    alt={svc.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
                 </div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-1.5">{svc.title}</h3>
-                <p className="text-xs text-gray-500 leading-relaxed flex-1">{svc.desc}</p>
-                <span className="mt-4 text-xs font-semibold text-primary group-hover:underline">
-                  {t('allDone.learnMore')}
-                </span>
+                {/* Text */}
+                <div className="p-4 flex flex-col flex-1">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-1">{svc.title}</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed flex-1">{svc.desc}</p>
+                  <span className="mt-3 text-xs font-semibold text-primary group-hover:underline">
+                    {t('allDone.learnMore')}
+                  </span>
+                </div>
               </a>
             ))}
           </div>
