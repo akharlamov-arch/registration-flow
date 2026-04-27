@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useI18n } from '../context/I18nContext'
 import StepIndicator from '../components/StepIndicator'
+import PhoneInput from '../components/PhoneInput'
 
 const US_STATES = [
   ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],
@@ -186,7 +187,7 @@ export default function OtpVerification() {
       label: t('billingContact.stepLabel'),
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
         </svg>
       ),
     },
@@ -1331,11 +1332,10 @@ export default function OtpVerification() {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     {t('billingContact.labelPhone')} <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="tel"
+                  <PhoneInput
                     autoComplete="tel"
                     value={billingContactForm.phone}
-                    onChange={e => { updateBilling('phone', e.target.value); clearBillingError('phone') }}
+                    onChange={val => { updateBilling('phone', val); clearBillingError('phone') }}
                     placeholder={t('billingContact.placeholderPhone')}
                     className={billingInputClass(billingContactErrors.phone)}
                   />
