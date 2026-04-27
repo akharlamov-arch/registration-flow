@@ -35,6 +35,7 @@ export default function OtpVerification() {
   const [loading, setLoading] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const [modalConsent, setModalConsent] = useState(false)
 
   const handleSubmit = async () => {
     if (!code.trim()) {
@@ -47,6 +48,73 @@ export default function OtpVerification() {
     setLoading(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
     setStep('review')
+  }
+
+  if (step === 'plaid') {
+    return (
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="flex justify-center mb-5">
+            <div className="relative h-16 w-28">
+              <div className="absolute left-0 top-0 w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-ds-sm border-4 border-white z-10">
+                <span className="text-white font-black text-lg tracking-tight">IT</span>
+              </div>
+              <div className="absolute right-0 top-0 w-16 h-16 rounded-full bg-gray-950 flex items-center justify-center shadow-ds-sm border-4 border-white">
+                <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                  <path d="M12 3L19 7V15L12 19L5 15V7L12 3Z" />
+                  <path d="M5 7L12 11L19 7" />
+                  <path d="M12 11V19" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900 max-w-2xl mx-auto">
+            {t('plaidStub.heading')}
+          </h1>
+          <p className="text-gray-500 mt-3 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+            {t('plaidStub.subheading')}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-10 max-w-3xl mx-auto">
+          <div className="space-y-4 mb-8">
+            <div className="flex items-start gap-4 rounded-xl border border-gray-100 bg-gray-50/70 p-4 sm:p-5">
+              <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                <svg className="w-6 h-6 text-gray-900" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M3 10h18v2H3v-2zm2-5h14v3H5V5zm-1 9h16v6H4v-6zm6 1h4v4h-4v-4z" />
+                </svg>
+              </div>
+              <p className="text-base sm:text-lg font-semibold text-gray-900 leading-snug pt-1">
+                {t('plaidStub.point1')}
+              </p>
+            </div>
+
+            <div className="flex items-start gap-4 rounded-xl border border-gray-100 bg-gray-50/70 p-4 sm:p-5">
+              <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                <svg className="w-6 h-6 text-gray-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <circle cx="8.5" cy="10" r="1.7" />
+                  <path d="M13 9h6M13 12h6M6.5 16c1.1-1.4 3-2 4.6-2 1.2 0 2.5.3 3.5 1" />
+                </svg>
+              </div>
+              <p className="text-base sm:text-lg font-semibold text-gray-900 leading-snug pt-1">
+                {t('plaidStub.point2')}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                       bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                       transition-colors duration-200 cursor-pointer
+                       focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            {t('plaidStub.button')}
+          </button>
+        </div>
+      </main>
+    )
   }
 
   if (step === 'review') {
@@ -146,9 +214,9 @@ export default function OtpVerification() {
 
           <button
             type="button"
-            onClick={() => setShowModal(true)}
+            onClick={() => { setModalConsent(marketingConsent); setShowModal(true) }}
             className="w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
-                       bg-primary hover:bg-secondary rounded-xl shadow-ds-sm
+                       bg-primary hover:bg-secondary rounded-md shadow-ds-sm
                        transition-colors duration-200 cursor-pointer
                        focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
@@ -185,14 +253,14 @@ export default function OtpVerification() {
                 {t('accountReview.modalBody')}
               </p>
 
-              {/* Marketing consent (shown only if not already checked) */}
+              {/* Marketing consent (shown only if not already checked on the page) */}
               {!marketingConsent && (
                 <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-xl bg-gray-50 border border-gray-200">
                   <div className="mt-0.5 flex-shrink-0">
                     <input
                       type="checkbox"
-                      checked={marketingConsent}
-                      onChange={(e) => setMarketingConsent(e.target.checked)}
+                      checked={modalConsent}
+                      onChange={(e) => setModalConsent(e.target.checked)}
                       className="w-4 h-4 rounded border-gray-300 accent-primary cursor-pointer"
                     />
                   </div>
@@ -206,9 +274,14 @@ export default function OtpVerification() {
               <div className="flex flex-col sm:flex-row gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={() => { /* TODO: proceed to next step */ setShowModal(false) }}
+                  onClick={() => {
+                    setMarketingConsent(modalConsent)
+                    setShowModal(false)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                    setStep('plaid')
+                  }}
                   className="flex-1 flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold text-white
-                             bg-primary hover:bg-secondary rounded-xl transition-colors duration-200
+                             bg-primary hover:bg-secondary rounded-md transition-colors duration-200
                              focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer"
                 >
                   {t('accountReview.modalConfirm')}
@@ -216,7 +289,7 @@ export default function OtpVerification() {
                 <a
                   href="tel:+19162694606"
                   className="flex-1 flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold
-                             text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl
+                             text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
                              transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24"
@@ -239,13 +312,6 @@ export default function OtpVerification() {
 
       {/* Heading */}
       <div className="text-center mb-8 sm:mb-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 mb-5">
-          <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24"
-               stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round"
-                  d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-          </svg>
-        </div>
         <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">
           {t('otp.heading').split('iTrucking').map((part, i, arr) =>
             i < arr.length - 1
@@ -319,7 +385,7 @@ export default function OtpVerification() {
           onClick={handleSubmit}
           disabled={loading}
           className="w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
-                     bg-primary hover:bg-secondary rounded-xl shadow-ds-sm
+                     bg-primary hover:bg-secondary rounded-md shadow-ds-sm
                      transition-colors duration-200 cursor-pointer
                      focus:outline-none focus:ring-2 focus:ring-primary/30
                      disabled:opacity-70 disabled:cursor-not-allowed"
