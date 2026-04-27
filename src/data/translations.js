@@ -151,7 +151,7 @@ const translations = {
     plaidStub: {
       heading: 'Connect your account with Plaid',
       subheading: 'The easiest and safest way to verify your bank account and personal information.',
-      point1: 'Please provide the bank account you will use to pay for the services.',
+      point1: 'Confirm the bank account you entered in the previous step — this account will be used to pay for our services.',
       point2: 'Complete personal verification. You must be the business owner to open a company account.',
       button: 'Continue to verify with Plaid',
     },
@@ -355,7 +355,7 @@ const translations = {
     plaidStub: {
       heading: 'Подключите аккаунт через Plaid',
       subheading: 'Самый простой и безопасный способ подтвердить банковский счёт и личные данные.',
-      point1: 'Укажите банковский счёт, который вы будете использовать для оплаты услуг.',
+      point1: 'Подтвердите банковский счёт, введённый на предыдущем шаге — он будет использоваться для оплаты наших услуг.',
       point2: 'Пройдите личную верификацию. Для открытия корпоративного аккаунта вы должны быть владельцем бизнеса.',
       button: 'Перейти к верификации через Plaid',
     },
@@ -560,7 +560,7 @@ const translations = {
     plaidStub: {
       heading: 'Підключіть акаунт через Plaid',
       subheading: 'Найпростіший і найбезпечніший спосіб підтвердити банківський рахунок і особисті дані.',
-      point1: 'Вкажіть банківський рахунок, який ви будете використовувати для оплати послуг.',
+      point1: 'Підтвердіть банківський рахунок, введений на попередньому кроці — він використовуватиметься для оплати наших послуг.',
       point2: 'Пройдіть особисту верифікацію. Щоб відкрити корпоративний акаунт, ви маєте бути власником бізнесу.',
       button: 'Перейти до верифікації через Plaid',
     },
@@ -765,7 +765,7 @@ const translations = {
     plaidStub: {
       heading: 'Conecte su cuenta con Plaid',
       subheading: 'La forma mas facil y segura de verificar su cuenta bancaria e informacion personal.',
-      point1: 'Proporcione la cuenta bancaria que utilizara para pagar los servicios.',
+      point1: 'Confirme la cuenta bancaria ingresada en el paso anterior — se utilizará para pagar nuestros servicios.',
       point2: 'Complete la verificacion personal. Debe ser el propietario del negocio para abrir una cuenta empresarial.',
       button: 'Continuar para verificar con Plaid',
     },
