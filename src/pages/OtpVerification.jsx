@@ -632,6 +632,7 @@ export default function OtpVerification() {
       } else if (personalForm.dlConfirm !== personalForm.dlNumber) {
         errs.dlConfirm = t('personalInfo.errorDlMismatch')
       }
+      if (!personalForm.dlFile) errs.dlFile = t('personalInfo.errorDlFileRequired')
       if (Object.keys(errs).length) {
         setPersonalErrors(errs)
         window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -751,19 +752,21 @@ export default function OtpVerification() {
             {/* DL File Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                {t('personalInfo.labelDlFile')}
+                {t('personalInfo.labelDlFile')} <span className="text-red-500">*</span>
               </label>
               <label className={[
                 'flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed cursor-pointer transition-colors duration-200',
-                personalForm.dlFile
-                  ? 'border-gray-400 bg-gray-50'
-                  : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50',
+                personalErrors.dlFile
+                  ? 'border-red-300 bg-red-50'
+                  : personalForm.dlFile
+                    ? 'border-gray-400 bg-gray-50'
+                    : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50',
               ].join(' ')}>
                 <input
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png,.heic,.doc,.docx"
                   className="sr-only"
-                  onChange={e => updatePersonal('dlFile', e.target.files[0] ?? null)}
+                  onChange={e => { updatePersonal('dlFile', e.target.files[0] ?? null); setPersonalErrors(prev => { const n = { ...prev }; delete n.dlFile; return n }) }}
                 />
                 {personalForm.dlFile ? (
                   <>
@@ -787,6 +790,7 @@ export default function OtpVerification() {
                   </>
                 )}
               </label>
+              {personalErrors.dlFile && <p className="mt-1.5 text-xs text-red-600">{personalErrors.dlFile}</p>}
             </div>
 
             {/* Owner match notice */}

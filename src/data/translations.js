@@ -239,6 +239,7 @@ const translations = {
       errorDlRequired: 'Driver License Number is required',
       errorDlConfirmRequired: 'Please re-enter your Driver License Number',
       errorDlMismatch: 'Driver License Numbers do not match',
+      errorDlFileRequired: 'Please attach a photo or scan of your Driver License',
     },
     personalAddress: {
       heading: 'Personal Address',
@@ -509,6 +510,7 @@ const translations = {
       errorDlRequired: 'Укажите номер водительского удостоверения',
       errorDlConfirmRequired: 'Повторите номер водительского удостоверения',
       errorDlMismatch: 'Номера водительского удостоверения не совпадают',
+      errorDlFileRequired: 'Пожалуйста, прикрепите фото или скан водительского удостоверения',
     },
     personalAddress: {
       heading: 'Домашний адрес',
@@ -780,6 +782,7 @@ const translations = {
       errorDlRequired: 'Вкажіть номер водійського посвідчення',
       errorDlConfirmRequired: 'Повторіть номер водійського посвідчення',
       errorDlMismatch: 'Номери водійського посвідчення не збігаються',
+      errorDlFileRequired: 'Будь ласка, додайте фото або скан водійського посвідчення',
     },
     personalAddress: {
       heading: 'Домашня адреса',
@@ -1051,6 +1054,7 @@ const translations = {
       errorDlRequired: 'Ingrese el número de licencia',
       errorDlConfirmRequired: 'Reingrese el número de licencia',
       errorDlMismatch: 'Los números de licencia no coinciden',
+      errorDlFileRequired: 'Por favor, adjunte una foto o escaneo de su Licencia de Conducir',
     },
     personalAddress: {
       heading: 'Dirección Personal',
