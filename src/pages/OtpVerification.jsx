@@ -13,7 +13,7 @@ const PLACEHOLDER = {
   companyTitle: 'Owner / Operator',
   companyTrucks: '12',
   companyDOT: '3847291',
-  companyMC: 'MC-920184',
+  companyMC: '920184',
   usesFuelProgram: 'Yes',
 }
 
