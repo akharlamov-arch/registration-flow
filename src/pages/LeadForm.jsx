@@ -289,19 +289,21 @@ export default function LeadForm() {
     // DS: py-16 (space-3xl) top/bottom — "large sections 48px+ gaps"
     <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
 
-      {/* DS: heading 32px+ (text-ds-h1), text-ds-text */}
-      <div className="text-center mb-6 sm:mb-10">
-        <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">
-          {t('lead.heading').split('iTrucking').map((part, i, arr) =>
-            i < arr.length - 1
-              ? <span key={i}>{part}<span className="text-red-600">iTrucking</span></span>
-              : <span key={i}>{part}</span>
-          )}
-        </h1>
-        <p className="text-gray-500 mt-3 text-sm sm:text-base mx-auto leading-relaxed">
-          {t('lead.subheading')}
-        </p>
-      </div>
+      {/* DS: heading 32px+ (text-ds-h1), text-ds-text — shown only on first step */}
+      {contentKey === 'contact' && (
+        <div className="text-center mb-6 sm:mb-10">
+          <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">
+            {t('lead.heading').split('iTrucking').map((part, i, arr) =>
+              i < arr.length - 1
+                ? <span key={i}>{part}<span className="text-red-600">iTrucking</span></span>
+                : <span key={i}>{part}</span>
+            )}
+          </h1>
+          <p className="text-gray-500 mt-3 text-sm sm:text-base mx-auto leading-relaxed">
+            {t('lead.subheading')}
+          </p>
+        </div>
+      )}
 
       <StepIndicator steps={activeSteps} currentStep={indicatorStep} />
 
