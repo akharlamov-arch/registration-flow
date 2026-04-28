@@ -1810,81 +1810,72 @@ export default function OtpVerification() {
           <div className="rounded-2xl border-2 border-primary bg-blue-50/40 p-6 sm:p-8">
 
             {/* Block header */}
-            <div className="flex items-start gap-3 mb-5">
-              <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-primary">
+            <div className="relative mb-5">
+              <div className="absolute top-0 right-0 flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-primary">
                 <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-bold text-gray-900">{t('contractSigned.truckBlockTitle')}</h2>
-                <p className="text-sm text-gray-600 mt-0.5 leading-relaxed">{t('contractSigned.truckBlockDesc')}</p>
-                <p className="mt-2 text-xs text-blue-700 bg-blue-100 rounded-lg px-3 py-2">
-                  {t('contractSigned.pinRecommendation')}
-                </p>
-              </div>
-            </div>
-
-            {/* Column labels */}
-            <div className="grid grid-cols-[1fr_1fr_2rem] gap-3 mb-2 px-1">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                {t('contractSigned.labelTruckNumber')}
+              <h2 className="text-base font-bold text-gray-900 pr-14">{t('contractSigned.truckBlockTitle')}</h2>
+              <p className="text-sm text-gray-600 mt-0.5 leading-relaxed pr-14">{t('contractSigned.truckBlockDesc')}</p>
+              <p className="mt-3 text-xs text-blue-700 bg-blue-100 rounded-lg px-3 py-2">
+                {t('contractSigned.pinRecommendation')}
               </p>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                {t('contractSigned.labelDriverId')}
-              </p>
-              <span />
             </div>
 
             {/* Truck rows */}
             <div className="space-y-3">
               {trucks.map((truck, idx) => (
-                <div key={idx} className="grid grid-cols-[1fr_1fr_2rem] gap-3 items-start">
-                  <div>
-                    <input
-                      type="text"
-                      value={truck.truckNumber}
-                      onChange={e => updateTruck(idx, 'truckNumber', e.target.value)}
-                      placeholder={t('contractSigned.placeholderTruckNumber')}
-                      className={truckInputClass(truckErrors[idx]?.truckNumber)}
-                      maxLength={30}
-                    />
-                    {truckErrors[idx]?.truckNumber && (
-                      <p className="mt-1 text-xs text-red-600">{truckErrors[idx].truckNumber}</p>
-                    )}
-                  </div>
-                  <div>
-                    <input
-                      type="text"
-                      value={truck.driverId}
-                      onChange={e => updateTruck(idx, 'driverId', e.target.value)}
-                      placeholder={t('contractSigned.placeholderDriverId')}
-                      className={truckInputClass(truckErrors[idx]?.driverId)}
-                      maxLength={20}
-                    />
-                    {truckErrors[idx]?.driverId && (
-                      <p className="mt-1 text-xs text-red-600">{truckErrors[idx].driverId}</p>
-                    )}
-                  </div>
-                  <div className="pt-0.5">
-                    {trucks.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeTruck(idx)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none"
-                        aria-label="Remove truck"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
+                <div key={idx} className="relative bg-white rounded-xl border border-gray-200 p-3">
+                  {trucks.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeTruck(idx)}
+                      className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none"
+                      aria-label="Remove truck"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                  <div className="space-y-2">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                        {t('contractSigned.labelTruckNumber')}
+                      </p>
+                      <input
+                        type="text"
+                        value={truck.truckNumber}
+                        onChange={e => updateTruck(idx, 'truckNumber', e.target.value)}
+                        placeholder={t('contractSigned.placeholderTruckNumber')}
+                        className={truckInputClass(truckErrors[idx]?.truckNumber)}
+                        maxLength={30}
+                      />
+                      {truckErrors[idx]?.truckNumber && (
+                        <p className="mt-1 text-xs text-red-600">{truckErrors[idx].truckNumber}</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                        {t('contractSigned.labelDriverId')}
+                      </p>
+                      <input
+                        type="text"
+                        value={truck.driverId}
+                        onChange={e => updateTruck(idx, 'driverId', e.target.value)}
+                        placeholder={t('contractSigned.placeholderDriverId')}
+                        className={truckInputClass(truckErrors[idx]?.driverId)}
+                        maxLength={20}
+                      />
+                      {truckErrors[idx]?.driverId && (
+                        <p className="mt-1 text-xs text-red-600">{truckErrors[idx].driverId}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-
-            {/* PIN recommendation note */}
 
             {/* Add truck */}
             {trucks.length < MAX_TRUCKS && (
