@@ -46,6 +46,14 @@ body {
   background-color: #FAFAFA;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
+p, li, label, span {
+  text-wrap: pretty;
+}
+
 /* ============================================================
    STEP ANIMATION  (200ms — within DS 200-300ms range)
 ============================================================ */
