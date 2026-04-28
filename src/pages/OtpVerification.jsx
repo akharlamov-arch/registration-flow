@@ -2313,9 +2313,6 @@ export default function OtpVerification() {
           <p className="text-xs text-blue-700 leading-relaxed">{t('otp.otpHint')}</p>
         </div>
 
-        <p className="text-xs text-gray-400 text-center mt-4 leading-relaxed">
-          {t('otp.noCode')}
-        </p>
       </div>
     </main>
   )
