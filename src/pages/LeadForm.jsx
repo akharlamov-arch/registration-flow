@@ -393,7 +393,9 @@ export default function LeadForm() {
                   'flex items-start gap-4 p-5 rounded-lg border-2 cursor-pointer transition-colors duration-200',
                   form.accountType === 'personal'
                     ? 'border-gray-900 bg-gray-50'
-                    : 'border-gray-200 hover:border-gray-300',
+                    : errors.accountType
+                      ? 'border-red-400 bg-red-50/40 hover:border-red-500'
+                      : 'border-gray-200 hover:border-gray-300',
                 ].join(' ')}
               >
                 <input
@@ -420,7 +422,9 @@ export default function LeadForm() {
                   'flex items-start gap-4 p-5 rounded-lg border-2 cursor-pointer transition-colors duration-200',
                   form.accountType === 'business'
                     ? 'border-gray-900 bg-gray-50'
-                    : 'border-gray-200 hover:border-gray-300',
+                    : errors.accountType
+                      ? 'border-red-400 bg-red-50/40 hover:border-red-500'
+                      : 'border-gray-200 hover:border-gray-300',
                 ].join(' ')}
               >
                 <input
@@ -607,7 +611,9 @@ export default function LeadForm() {
                   'flex items-start gap-4 p-5 rounded-lg border-2 cursor-pointer transition-colors duration-200',
                   form.usesFuelProgram === 'yes'
                     ? 'border-gray-900 bg-gray-50'
-                    : 'border-gray-200 hover:border-gray-300',
+                    : errors.usesFuelProgram
+                      ? 'border-red-400 bg-red-50/40 hover:border-red-500'
+                      : 'border-gray-200 hover:border-gray-300',
                 ].join(' ')}
               >
                 <input
@@ -629,7 +635,9 @@ export default function LeadForm() {
                   'flex items-start gap-4 p-5 rounded-lg border-2 cursor-pointer transition-colors duration-200',
                   form.usesFuelProgram === 'no'
                     ? 'border-gray-900 bg-gray-50'
-                    : 'border-gray-200 hover:border-gray-300',
+                    : errors.usesFuelProgram
+                      ? 'border-red-400 bg-red-50/40 hover:border-red-500'
+                      : 'border-gray-200 hover:border-gray-300',
                 ].join(' ')}
               >
                 <input
