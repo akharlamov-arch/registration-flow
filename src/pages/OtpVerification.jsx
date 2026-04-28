@@ -479,7 +479,9 @@ export default function OtpVerification() {
                       'flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors duration-150',
                       addressForm.mailingOption === opt.value
                         ? 'border-primary bg-blue-50/60 ring-1 ring-primary/20'
-                        : 'border-gray-200 bg-gray-50/60 hover:bg-gray-100/60',
+                        : addressErrors.mailingOption
+                          ? 'border-red-400 bg-red-50/40 hover:bg-red-50/60'
+                          : 'border-gray-200 bg-gray-50/60 hover:bg-gray-100/60',
                     ].join(' ')}
                   >
                     <input
@@ -1036,7 +1038,7 @@ export default function OtpVerification() {
 
     const radioBase = 'flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors duration-200'
     const radioSelected = 'border-primary bg-blue-50/40'
-    const radioIdle = 'border-gray-200 hover:border-gray-300 bg-white'
+    const radioIdle = personalAddressErrors.option ? 'border-red-400 bg-red-50/40 hover:border-red-500' : 'border-gray-200 hover:border-gray-300 bg-white'
 
     return (
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
@@ -1268,7 +1270,7 @@ export default function OtpVerification() {
 
     const radioBase = 'flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors duration-200'
     const radioSelected = 'border-primary bg-blue-50/40'
-    const radioIdle = 'border-gray-200 hover:border-gray-300 bg-white'
+    const radioIdle = billingContactErrors.option ? 'border-red-400 bg-red-50/40 hover:border-red-500' : 'border-gray-200 hover:border-gray-300 bg-white'
 
     return (
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
