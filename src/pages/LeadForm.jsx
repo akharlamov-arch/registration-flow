@@ -579,11 +579,12 @@ export default function LeadForm() {
                     type="text"
                     value={form.companyMC}
                     onChange={(e) => update('companyMC', e.target.value)}
-                    placeholder="MC-123456"
+                    placeholder="123456"
                     className={inputClass}
                   />
                 </FormField>
               </div>
+              <p className="text-xs text-gray-400 mt-1">{t('lead.stepBusiness.dotMcHint')}</p>
             </div>
           </div>
         )}

@@ -68,6 +68,7 @@ const translations = {
         trucksRequired: 'Please enter a valid number',
         dot: 'Company DOT',
         mc: 'Company MC',
+        dotMcHint: 'If you have a DOT or MC number, enter it below. If not — just skip this field, it\'s optional.',
       },
       step3: {
         title: 'Are you currently using another fuel discount program?',
@@ -432,6 +433,7 @@ const translations = {
         trucksRequired: 'Пожалуйста, введите корректное число',
         dot: 'Company DOT',
         mc: 'Company MC',
+        dotMcHint: 'Если у вас есть номер DOT или MC, внесите его ниже. Если нет — просто пропустите это поле, оно необязательно.',
       },
       step3: {
         title: 'Пользуетесь ли вы сейчас другой топливной скидочной программой?',
@@ -796,6 +798,7 @@ const translations = {
         trucksRequired: 'Будь ласка, введіть правильне число',
         dot: 'Company DOT',
         mc: 'Company MC',
+        dotMcHint: 'Якщо у вас є номер DOT або MC, вкажіть його нижче. Якщо немає — просто пропустіть це поле, воно необов’язкове.',
       },
       step3: {
         title: 'Чи користуєтесь ви зараз іншою програмою паливних знижок?',
@@ -1160,6 +1163,7 @@ const translations = {
         trucksRequired: 'Por favor ingrese un número válido',
         dot: 'DOT de la Empresa',
         mc: 'MC de la Empresa',
+        dotMcHint: 'Si tiene número DOT o MC, intróduzca abajo. Si no tiene — simplemente omita este campo, es opcional.',
       },
       step3: {
         title: '¿Está utilizando actualmente otro programa de descuento de combustible?',
