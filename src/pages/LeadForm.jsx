@@ -89,19 +89,22 @@ function ReviewRow({ label, value }) {
 }
 
 // DS: focus:ring-2 focus:ring-primary/30 (keyboard nav) + 200ms transition
-const inputClass = [
-  'w-full px-4 py-3 text-base sm:text-sm border border-gray-200 rounded-xl',
+const inputClass = (hasError) => [
+  'w-full px-4 py-3 text-base sm:text-sm border rounded-xl',
   'text-gray-900 placeholder:text-gray-400',
-  'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400',
-  'transition-colors duration-200',
-  'bg-white',
+  'focus:outline-none focus:ring-2 focus:border-gray-400 transition-colors duration-200 bg-white',
+  hasError
+    ? 'border-red-400 focus:ring-red-200'
+    : 'border-gray-200 focus:ring-gray-300',
 ].join(' ')
 
-const selectClass = [
-  'w-full px-4 py-3 text-base sm:text-sm border border-gray-200 rounded-xl',
+const selectClass = (hasError) => [
+  'w-full px-4 py-3 text-base sm:text-sm border rounded-xl',
   'text-gray-900',
-  'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400',
-  'transition-colors duration-200 bg-white appearance-none cursor-pointer',
+  'focus:outline-none focus:ring-2 focus:border-gray-400 transition-colors duration-200 bg-white appearance-none cursor-pointer',
+  hasError
+    ? 'border-red-400 focus:ring-red-200'
+    : 'border-gray-200 focus:ring-gray-300',
 ].join(' ')
 
 export default function LeadForm() {
@@ -416,7 +419,7 @@ export default function LeadForm() {
                     onChange={(e) => update('firstName', e.target.value)}
                     placeholder={t('lead.step1.firstNamePlaceholder')}
                     autoComplete="given-name"
-                    className={inputClass}
+                    className={inputClass(!!errors.firstName)}
                     aria-invalid={!!errors.firstName}
                   />
                 </FormField>
@@ -429,7 +432,7 @@ export default function LeadForm() {
                     onChange={(e) => update('lastName', e.target.value)}
                     placeholder={t('lead.step1.lastNamePlaceholder')}
                     autoComplete="family-name"
-                    className={inputClass}
+                    className={inputClass(!!errors.lastName)}
                     aria-invalid={!!errors.lastName}
                   />
                 </FormField>
@@ -445,7 +448,7 @@ export default function LeadForm() {
                     onChange={(e) => update('email', e.target.value)}
                     placeholder={t('lead.step1.emailPlaceholder')}
                     autoComplete="email"
-                    className={inputClass}
+                    className={inputClass(!!errors.email)}
                     aria-invalid={!!errors.email}
                   />
                 </FormField>
@@ -455,7 +458,7 @@ export default function LeadForm() {
                     id="phone"
                     value={form.phone}
                     onChange={(val) => update('phone', val)}
-                    className={inputClass}
+                    className={inputClass(!!errors.phone)}
                     aria-invalid={!!errors.phone}
                   />
                 </FormField>
@@ -479,7 +482,9 @@ export default function LeadForm() {
                   'flex items-start gap-4 p-5 rounded-lg border-2 cursor-pointer transition-colors duration-200',
                   form.accountType === 'personal'
                     ? 'border-gray-900 bg-gray-50'
-                    : 'border-gray-200 hover:border-gray-300',
+                    : errors.accountType
+                      ? 'border-red-400 bg-red-50/40 hover:border-red-500'
+                      : 'border-gray-200 hover:border-gray-300',
                 ].join(' ')}
               >
                 <input
@@ -506,7 +511,9 @@ export default function LeadForm() {
                   'flex items-start gap-4 p-5 rounded-lg border-2 cursor-pointer transition-colors duration-200',
                   form.accountType === 'business'
                     ? 'border-gray-900 bg-gray-50'
-                    : 'border-gray-200 hover:border-gray-300',
+                    : errors.accountType
+                      ? 'border-red-400 bg-red-50/40 hover:border-red-500'
+                      : 'border-gray-200 hover:border-gray-300',
                 ].join(' ')}
               >
                 <input
@@ -584,7 +591,7 @@ export default function LeadForm() {
                   onChange={(e) => update('companyName', e.target.value)}
                   placeholder={t('lead.stepBusiness.companyNamePlaceholder')}
                   autoComplete="organization"
-                  className={inputClass}
+                  className={inputClass(!!errors.companyName)}
                   aria-invalid={!!errors.companyName}
                 />
               </FormField>
@@ -596,7 +603,7 @@ export default function LeadForm() {
                     <select
                       value={form.businessType}
                       onChange={(e) => update('businessType', e.target.value)}
-                      className={selectClass + (errors.businessType ? ' border-red-300' : '')}
+                      className={selectClass(!!errors.businessType)}
                       aria-invalid={!!errors.businessType}
                     >
                       <option value="">{t('common.selectPlaceholder')}</option>
@@ -617,7 +624,7 @@ export default function LeadForm() {
                     <select
                       value={form.companyTitle}
                       onChange={(e) => update('companyTitle', e.target.value)}
-                      className={selectClass + (errors.companyTitle ? ' border-red-300' : '')}
+                      className={selectClass(!!errors.companyTitle)}
                       aria-invalid={!!errors.companyTitle}
                     >
                       <option value="">{t('common.selectPlaceholder')}</option>
@@ -636,8 +643,8 @@ export default function LeadForm() {
                 </FormField>
               </div>
 
-              {/* Trucks + DOT + MC */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Trucks */}
+              <div className="grid grid-cols-1 gap-4">
                 <FormField label={t('lead.stepBusiness.trucks')} required error={errors.companyTrucks}>
                   <input
                     type="text"
@@ -645,18 +652,22 @@ export default function LeadForm() {
                     value={form.companyTrucks}
                     onChange={(e) => update('companyTrucks', e.target.value.replace(/\D/g, ''))}
                     placeholder="5"
-                    className={inputClass}
+                    className={inputClass(!!errors.companyTrucks)}
                     aria-invalid={!!errors.companyTrucks}
                   />
                 </FormField>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">{t('lead.stepBusiness.dotMcHint')}</p>
 
+              {/* DOT + MC */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField label={t('lead.stepBusiness.dot')} optional>
                   <input
                     type="text"
                     value={form.companyDOT}
                     onChange={(e) => update('companyDOT', e.target.value)}
                     placeholder="1234567"
-                    className={inputClass}
+                    className={inputClass(false)}
                   />
                 </FormField>
 
@@ -665,8 +676,8 @@ export default function LeadForm() {
                     type="text"
                     value={form.companyMC}
                     onChange={(e) => update('companyMC', e.target.value)}
-                    placeholder="MC-123456"
-                    className={inputClass}
+                    placeholder="123456"
+                    className={inputClass(false)}
                   />
                 </FormField>
               </div>
@@ -689,7 +700,9 @@ export default function LeadForm() {
                   'flex items-start gap-4 p-5 rounded-lg border-2 cursor-pointer transition-colors duration-200',
                   form.usesFuelProgram === 'yes'
                     ? 'border-gray-900 bg-gray-50'
-                    : 'border-gray-200 hover:border-gray-300',
+                    : errors.usesFuelProgram
+                      ? 'border-red-400 bg-red-50/40 hover:border-red-500'
+                      : 'border-gray-200 hover:border-gray-300',
                 ].join(' ')}
               >
                 <input
@@ -711,7 +724,9 @@ export default function LeadForm() {
                   'flex items-start gap-4 p-5 rounded-lg border-2 cursor-pointer transition-colors duration-200',
                   form.usesFuelProgram === 'no'
                     ? 'border-gray-900 bg-gray-50'
-                    : 'border-gray-200 hover:border-gray-300',
+                    : errors.usesFuelProgram
+                      ? 'border-red-400 bg-red-50/40 hover:border-red-500'
+                      : 'border-gray-200 hover:border-gray-300',
                 ].join(' ')}
               >
                 <input
@@ -809,7 +824,7 @@ export default function LeadForm() {
                     onChange={(e) => update('refFirstName', e.target.value)}
                     placeholder={t('lead.step4.firstNamePlaceholder')}
                     autoComplete="off"
-                    className={inputClass}
+                    className={inputClass(!!errors.refFirstName)}
                     aria-invalid={!!errors.refFirstName}
                   />
                 </FormField>
@@ -820,7 +835,7 @@ export default function LeadForm() {
                     onChange={(e) => update('refLastName', e.target.value)}
                     placeholder={t('lead.step4.lastNamePlaceholder')}
                     autoComplete="off"
-                    className={inputClass}
+                    className={inputClass(!!errors.refLastName)}
                     aria-invalid={!!errors.refLastName}
                   />
                 </FormField>
@@ -835,7 +850,7 @@ export default function LeadForm() {
                     onChange={(e) => update('refCompany', e.target.value)}
                     placeholder={t('lead.step4.companyPlaceholder')}
                     autoComplete="off"
-                    className={inputClass}
+                    className={inputClass(!!errors.refCompany)}
                     aria-invalid={!!errors.refCompany}
                   />
                 </FormField>
@@ -843,7 +858,7 @@ export default function LeadForm() {
                   <PhoneInput
                     value={form.refPhone}
                     onChange={(val) => update('refPhone', val)}
-                    className={inputClass}
+                    className={inputClass(!!errors.refPhone)}
                     aria-invalid={!!errors.refPhone}
                   />
                 </FormField>
@@ -857,7 +872,7 @@ export default function LeadForm() {
                   placeholder={t('lead.step4.notePlaceholder')}
                   rows={3}
                   className={[
-                    inputClass,
+                    inputClass(false),
                     'resize-none',
                   ].join(' ')}
                 />

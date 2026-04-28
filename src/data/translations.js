@@ -72,6 +72,7 @@ const translations = {
         trucksRequired: 'Please enter a valid number',
         dot: 'Company DOT',
         mc: 'Company MC',
+        dotMcHint: 'If you have a DOT or MC number, enter it below. If not — just skip this field, it\'s optional.',
       },
       step3: {
         title: 'Are you currently using another fuel discount program?',
@@ -123,6 +124,7 @@ const translations = {
       digitLabel: 'Digit',
       errorIncomplete: 'Please enter the full 6-digit code',
       continueBtn: 'Continue to Account Setup',
+      otpHint: 'This code is one-time use. If you don\'t finish Account Setup in one session, a new code will be sent to your email so you can continue right where you left off.',
       noCode: "Didn't receive a code? Contact your iTrucking representative.",
       prepareTitle: 'Before you continue, please have the following ready:',
       prepareItem1: 'Driver License',
@@ -440,6 +442,7 @@ const translations = {
         trucksRequired: 'Пожалуйста, введите корректное число',
         dot: 'Company DOT',
         mc: 'Company MC',
+        dotMcHint: 'Если у вас есть номер DOT или MC, внесите его ниже. Если нет — просто пропустите это поле, оно необязательно.',
       },
       step3: {
         title: 'Пользуетесь ли вы сейчас другой топливной скидочной программой?',
@@ -491,6 +494,7 @@ const translations = {
       digitLabel: 'Цифра',
       errorIncomplete: 'Пожалуйста, введите полный 6-значный код',
       continueBtn: 'Перейти к настройке аккаунта',
+      otpHint: 'Этот код одноразовый. Если вы не завершите настройку аккаунта за один раз, на ваш email придёт новый код — вы сможете продолжить с того места, где остановились.',
       noCode: 'Не получили код? Свяжитесь со своим представителем iTrucking.',
       prepareTitle: 'Перед продолжением подготовьте:',
       prepareItem1: 'Водительское удостоверение (Driver License)',
@@ -808,6 +812,7 @@ const translations = {
         trucksRequired: 'Будь ласка, введіть правильне число',
         dot: 'Company DOT',
         mc: 'Company MC',
+        dotMcHint: 'Якщо у вас є номер DOT або MC, вкажіть його нижче. Якщо немає — просто пропустіть це поле, воно необов’язкове.',
       },
       step3: {
         title: 'Чи користуєтесь ви зараз іншою програмою паливних знижок?',
@@ -859,6 +864,7 @@ const translations = {
       digitLabel: 'Цифра',
       errorIncomplete: 'Будь ласка, введіть повний 6-цифровий код',
       continueBtn: 'Перейти до налаштування акаунту',
+      otpHint: 'Цей код одноразовий. Якщо ви не завершите налаштування акаунту за один раз, на вашу пошту надійде новий код — ви зможете продовжити з того місця, де зупинились.',
       noCode: 'Не отримали код? Зверніться до свого представника iTrucking.',
       prepareTitle: 'Перед продовженням підготуйте:',
       prepareItem1: 'Водійське посвідчення (Driver License)',
@@ -1176,6 +1182,7 @@ const translations = {
         trucksRequired: 'Por favor ingrese un número válido',
         dot: 'DOT de la Empresa',
         mc: 'MC de la Empresa',
+        dotMcHint: 'Si tiene número DOT o MC, intróduzca abajo. Si no tiene — simplemente omita este campo, es opcional.',
       },
       step3: {
         title: '¿Está utilizando actualmente otro programa de descuento de combustible?',
@@ -1227,6 +1234,7 @@ const translations = {
       digitLabel: 'Dígito',
       errorIncomplete: 'Por favor ingrese el código completo de 6 dígitos',
       continueBtn: 'Continuar a la Configuración de Cuenta',
+      otpHint: 'Este código es de un solo uso. Si no completa la Configuración de Cuenta en una sola sesión, recibirá un nuevo código en su correo para continuar desde donde lo dejó.',
       noCode: '¿No recibió el código? Contacte a su representante de iTrucking.',
       prepareTitle: 'Antes de continuar, tenga listos:',
       prepareItem1: 'Licencia de Conducir (Driver License)',

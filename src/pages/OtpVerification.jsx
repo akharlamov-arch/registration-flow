@@ -887,7 +887,9 @@ export default function OtpVerification() {
                       'flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors duration-150',
                       addressForm.mailingOption === opt.value
                         ? 'border-primary bg-blue-50/60 ring-1 ring-primary/20'
-                        : 'border-gray-200 bg-gray-50/60 hover:bg-gray-100/60',
+                        : addressErrors.mailingOption
+                          ? 'border-red-400 bg-red-50/40 hover:bg-red-50/60'
+                          : 'border-gray-200 bg-gray-50/60 hover:bg-gray-100/60',
                     ].join(' ')}
                   >
                     <input
@@ -1451,7 +1453,7 @@ export default function OtpVerification() {
 
     const radioBase = 'flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors duration-200'
     const radioSelected = 'border-primary bg-blue-50/40'
-    const radioIdle = 'border-gray-200 hover:border-gray-300 bg-white'
+    const radioIdle = personalAddressErrors.option ? 'border-red-400 bg-red-50/40 hover:border-red-500' : 'border-gray-200 hover:border-gray-300 bg-white'
 
     return (
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
@@ -1684,7 +1686,7 @@ export default function OtpVerification() {
 
     const radioBase = 'flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors duration-200'
     const radioSelected = 'border-primary bg-blue-50/40'
-    const radioIdle = 'border-gray-200 hover:border-gray-300 bg-white'
+    const radioIdle = billingContactErrors.option ? 'border-red-400 bg-red-50/40 hover:border-red-500' : 'border-gray-200 hover:border-gray-300 bg-white'
 
     return (
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
@@ -2077,23 +2079,6 @@ export default function OtpVerification() {
                   </svg>
                   {t('finalReview.modalAgreeBtn')}
                 </button>
-                <div className="flex flex-col items-center gap-1.5">
-                  <a
-                    href="tel:+19162694606"
-                    className="w-full flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold
-                               text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
-                               transition-colors duration-200
-                               focus:outline-none focus:ring-2 focus:ring-gray-200"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-                    </svg>
-                    {t('finalReview.modalCallBtn')}
-                  </a>
-                  <p className="text-xs text-gray-400 text-center leading-relaxed px-1">
-                    {t('finalReview.modalCallNote')}
-                  </p>
-                </div>
               </div>
 
             </div>
@@ -2323,37 +2308,27 @@ export default function OtpVerification() {
           <div className="rounded-2xl border-2 border-primary bg-blue-50/40 p-6 sm:p-8">
 
             {/* Block header */}
-            <div className="flex items-start gap-3 mb-5">
-              <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-primary">
+            <div className="relative mb-5">
+              <div className="absolute top-0 right-0 flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-primary">
                 <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
                 </svg>
               </div>
-              <div>
-                <h2 className="text-base font-bold text-gray-900">{t('contractSigned.truckBlockTitle')}</h2>
-                <p className="text-sm text-gray-600 mt-0.5 leading-relaxed">{t('contractSigned.truckBlockDesc')}</p>
-                <p className="mt-2 text-xs text-blue-700 bg-blue-100 rounded-lg px-3 py-2">
-                  {t('contractSigned.pinRecommendation')}
-                </p>
-              </div>
-            </div>
-
-            {/* Column labels */}
-            <div className="grid grid-cols-[1fr_1fr_2rem] gap-3 mb-2 px-1">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                {t('contractSigned.labelTruckNumber')}
+              <h2 className="text-base font-bold text-gray-900 pr-14">{t('contractSigned.truckBlockTitle')}</h2>
+              <p className="text-sm text-gray-600 mt-0.5 leading-relaxed pr-14">{t('contractSigned.truckBlockDesc')}</p>
+              <p className="mt-3 text-xs text-blue-700 bg-blue-100 rounded-lg px-3 py-2">
+                {t('contractSigned.pinRecommendation')}
               </p>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                {t('contractSigned.labelDriverId')}
-              </p>
-              <span />
             </div>
 
             {/* Truck rows */}
             <div className="space-y-3">
               {trucks.map((truck, idx) => (
-                <div key={idx} className="grid grid-cols-[1fr_1fr_2rem] gap-3 items-start">
-                  <div>
+                <div key={idx} className="flex items-start gap-3">
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                      {t('contractSigned.labelTruckNumber')}
+                    </p>
                     <input
                       type="text"
                       value={truck.truckNumber}
@@ -2366,7 +2341,10 @@ export default function OtpVerification() {
                       <p className="mt-1 text-xs text-red-600">{truckErrors[idx].truckNumber}</p>
                     )}
                   </div>
-                  <div>
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                      {t('contractSigned.labelDriverId')}
+                    </p>
                     <input
                       type="text"
                       value={truck.driverId}
@@ -2379,8 +2357,8 @@ export default function OtpVerification() {
                       <p className="mt-1 text-xs text-red-600">{truckErrors[idx].driverId}</p>
                     )}
                   </div>
-                  <div className="pt-0.5">
-                    {trucks.length > 1 && (
+                  {trucks.length > 1 && (
+                    <div className="pt-6">
                       <button
                         type="button"
                         onClick={() => removeTruck(idx)}
@@ -2391,13 +2369,11 @@ export default function OtpVerification() {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-
-            {/* PIN recommendation note */}
 
             {/* Add truck */}
             {trucks.length < MAX_TRUCKS && (
@@ -2641,20 +2617,6 @@ export default function OtpVerification() {
             </p>
           </div>
 
-          <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
-            <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round"
-                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-            </svg>
-            <p className="text-sm text-red-800 leading-relaxed">
-              {t('accountReview.errorNotice')}{' '}
-              <a href="tel:+19162694606" className="font-semibold whitespace-nowrap hover:underline">
-                (916) 269-4606
-              </a>
-            </p>
-          </div>
-
           {/* Marketing consent */}
           <label className="flex items-start gap-3 cursor-pointer group">
             <div className="mt-0.5 flex-shrink-0">
@@ -2744,19 +2706,6 @@ export default function OtpVerification() {
                 >
                   {t('accountReview.modalConfirm')}
                 </button>
-                <a
-                  href="tel:+19162694606"
-                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold
-                             text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
-                             transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                       stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round"
-                          d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-                  </svg>
-                  {t('accountReview.modalContact')}
-                </a>
               </div>
             </div>
           </div>
@@ -2907,9 +2856,13 @@ export default function OtpVerification() {
           )}
         </button>
 
-        <p className="text-xs text-gray-400 text-center mt-4 leading-relaxed">
-          {t('otp.noCode')}
-        </p>
+        <div className="flex items-start gap-2.5 mt-5 rounded-xl bg-blue-50 border border-blue-200 px-4 py-3">
+          <svg className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+          </svg>
+          <p className="text-xs text-blue-700 leading-relaxed">{t('otp.otpHint')}</p>
+        </div>
+
       </div>
 
       {/* Disclaimer modal — shown once after successful OTP verification */}
