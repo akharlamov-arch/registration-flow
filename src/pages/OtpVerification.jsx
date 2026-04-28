@@ -1826,53 +1826,53 @@ export default function OtpVerification() {
             {/* Truck rows */}
             <div className="space-y-3">
               {trucks.map((truck, idx) => (
-                <div key={idx} className="relative bg-white rounded-xl border border-gray-200 p-3">
-                  {trucks.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeTruck(idx)}
-                      className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none"
-                      aria-label="Remove truck"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  )}
-                  <div className="space-y-2">
-                    <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                        {t('contractSigned.labelTruckNumber')}
-                      </p>
-                      <input
-                        type="text"
-                        value={truck.truckNumber}
-                        onChange={e => updateTruck(idx, 'truckNumber', e.target.value)}
-                        placeholder={t('contractSigned.placeholderTruckNumber')}
-                        className={truckInputClass(truckErrors[idx]?.truckNumber)}
-                        maxLength={30}
-                      />
-                      {truckErrors[idx]?.truckNumber && (
-                        <p className="mt-1 text-xs text-red-600">{truckErrors[idx].truckNumber}</p>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                        {t('contractSigned.labelDriverId')}
-                      </p>
-                      <input
-                        type="text"
-                        value={truck.driverId}
-                        onChange={e => updateTruck(idx, 'driverId', e.target.value)}
-                        placeholder={t('contractSigned.placeholderDriverId')}
-                        className={truckInputClass(truckErrors[idx]?.driverId)}
-                        maxLength={20}
-                      />
-                      {truckErrors[idx]?.driverId && (
-                        <p className="mt-1 text-xs text-red-600">{truckErrors[idx].driverId}</p>
-                      )}
-                    </div>
+                <div key={idx} className="flex items-start gap-3">
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                      {t('contractSigned.labelTruckNumber')}
+                    </p>
+                    <input
+                      type="text"
+                      value={truck.truckNumber}
+                      onChange={e => updateTruck(idx, 'truckNumber', e.target.value)}
+                      placeholder={t('contractSigned.placeholderTruckNumber')}
+                      className={truckInputClass(truckErrors[idx]?.truckNumber)}
+                      maxLength={30}
+                    />
+                    {truckErrors[idx]?.truckNumber && (
+                      <p className="mt-1 text-xs text-red-600">{truckErrors[idx].truckNumber}</p>
+                    )}
                   </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                      {t('contractSigned.labelDriverId')}
+                    </p>
+                    <input
+                      type="text"
+                      value={truck.driverId}
+                      onChange={e => updateTruck(idx, 'driverId', e.target.value)}
+                      placeholder={t('contractSigned.placeholderDriverId')}
+                      className={truckInputClass(truckErrors[idx]?.driverId)}
+                      maxLength={20}
+                    />
+                    {truckErrors[idx]?.driverId && (
+                      <p className="mt-1 text-xs text-red-600">{truckErrors[idx].driverId}</p>
+                    )}
+                  </div>
+                  {trucks.length > 1 && (
+                    <div className="pt-6">
+                      <button
+                        type="button"
+                        onClick={() => removeTruck(idx)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none"
+                        aria-label="Remove truck"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
