@@ -1,10 +1,23 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import bannerTires from '../assets/banner-tires.jpg'
 import bannerFactoring from '../assets/banner-factoring.jpg'
 import bannerProtection from '../assets/banner-protection.jpg'
 import { useI18n } from '../context/I18nContext'
 import StepIndicator from '../components/StepIndicator'
 import PhoneInput from '../components/PhoneInput'
+import {
+  verifyOtp, requestNewCode, updateLead, uploadDocument,
+  generateContract, getSignEmbedUrl, setFuelCards,
+  getPlaidLinkToken, getPlaidCombinedLinkToken, exchangePlaidToken,
+  plaidConfig,
+} from '../api/leads'
+import {
+  mapLeadFromApi, mapAddressesFromApi, mapBankFromApi,
+  mapBillingContactFromApi, mapFilesFromApi, getResumeStep,
+  mapPlaidExchangeResult, buildUpdateLeadPayload, buildUploadDocumentFormData,
+  buildContractPayload, buildSignEmbedPayload, buildFuelCardsPayload,
+  isValidOtp, validateUploadFile,
+} from '../api/leadMappers'
 
 // ── Review helpers (same design as LeadForm review step) ───────────────────
 function ReviewSection({ title, onEdit, editLabel, children }) {
@@ -60,25 +73,6 @@ const US_STATES = [
   ['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
 ]
 
-// Placeholder — replace with real data from backend/context
-const PLACEHOLDER = {
-  firstName: 'Michael',
-  lastName: 'Torres',
-  email: 'michael.torres@translogixfreight.com',
-  phone: '+1 (916) 555-0184',
-  accountType: 'Business',
-  companyName: 'TransLogix Freight LLC',
-  businessType: 'LLC',
-  companyTitle: 'Owner / Operator',
-  companyTrucks: '12',
-  companyDOT: '3847291',
-  companyMC: '920184',
-  usesFuelProgram: 'Yes',
-  plaidVerificationStatus: 'Verified ✓',
-  plaidSelectedAccount: 'Checking ••••4521',
-  plaidBankName: 'Bank of America',
-  plaidAccountType: 'Business Checking',
-}
 
 function Row({ label, value }) {
   if (!value) return null
@@ -99,7 +93,7 @@ export default function OtpVerification() {
   const [marketingConsent, setMarketingConsent] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [modalConsent, setModalConsent] = useState(false)
-  const [bankForm, setBankForm] = useState({ accountNumber: '', confirmAccountNumber: '', routingNumber: '', bankScreenshot: null })
+  const [bankForm, setBankForm] = useState({ name: '', accountType: '', routingNumber: '', accountNumberMasked: '', accountNumberMaskedConfirm: '' })
   const [bankErrors, setBankErrors] = useState({})
   const [addressForm, setAddressForm] = useState({ street1: '', street2: '', city: '', state: '', zip: '', mailingOption: '' })
   const [addressErrors, setAddressErrors] = useState({})
@@ -123,6 +117,56 @@ export default function OtpVerification() {
   const [showTermsModal, setShowTermsModal] = useState(false)
   const [trucks, setTrucks] = useState([{ truckNumber: '', driverId: '' }])
   const [truckErrors, setTruckErrors] = useState([])
+
+  // ── Auth & session ──────────────────────────────────────────────────────
+  const [sessionToken, setSessionToken] = useState(null)
+  const [otpCode, setOtpCode]           = useState('')
+  const [lead, setLead]                 = useState(null)
+  const [documentId, setDocumentId]     = useState(null)
+
+  // ── OTP email recovery ──────────────────────────────────────────────────
+  const [pendingMessage, setPendingMessage]       = useState('')
+  const [showEmailRecovery, setShowEmailRecovery] = useState(false)
+  const [recoveryEmail, setRecoveryEmail]         = useState('')
+  const [recoverySending, setRecoverySending]     = useState(false)
+  const [recoverySent, setRecoverySent]           = useState(false)
+
+  // ── Disclaimer modal (shown after OTP success, before review) ───────────
+  const [disclaimerVisible, setDisclaimerVisible] = useState(false)
+
+  // ── Plaid ───────────────────────────────────────────────────────────────
+  const [plaid, setPlaid] = useState({
+    status: 'not_started',
+    linkToken: '',
+    linkSessionId: '',
+    selectedAccount: null,
+    institution: null,
+    requestId: null,
+    requiresManualBankInput: false,
+    combinedProbe: { enabled: false, mode: 'standard', idvEvents: [], lastOutcome: null },
+  })
+  const plaidHandlerRef = useRef(null)
+
+  // ── Document uploads (voidCheck, driverLicenseScan) ─────────────────────
+  const [uploadStatus, setUploadStatus] = useState({
+    voidCheck:         { type: '', message: '' },
+    driverLicenseScan: { type: '', message: '' },
+  })
+  const [uploadInFlight, setUploadInFlight] = useState({
+    voidCheck: false,
+    driverLicenseScan: false,
+  })
+  const [uploadedFiles, setUploadedFiles] = useState({})
+  const [voidCheckFile, setVoidCheckFile] = useState(null)
+
+  // ── Contract / signing ──────────────────────────────────────────────────
+  const [submitting, setSubmitting]               = useState(false)
+  const [submitError, setSubmitError]             = useState('')
+  const [contractEmbedUrl, setContractEmbedUrl]   = useState(null)
+  const [loadingContract, setLoadingContract]     = useState(false)
+  const [contractError, setContractError]         = useState(null)
+  const [fuelCardsSubmitting, setFuelCardsSubmitting] = useState(false)
+  const [fuelCardsError, setFuelCardsError]       = useState('')
 
   const updateBank = (key, val) => setBankForm(prev => ({ ...prev, [key]: val }))
   const clearBankError = (key) => setBankErrors(prev => { const n = { ...prev }; delete n[key]; return n })
@@ -170,6 +214,7 @@ export default function OtpVerification() {
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
+    saveProgress(6)
     window.scrollTo({ top: 0, behavior: 'smooth' })
     setStep('personalInfo')
   }
@@ -192,9 +237,253 @@ export default function OtpVerification() {
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
+    saveProgress(6)
     window.scrollTo({ top: 0, behavior: 'smooth' })
     setStep('personalInfo')
   }
+
+  // ── Step mapping ────────────────────────────────────────────────────────
+  const mapObsoleteStepToString = (n) => {
+    const map = {
+      2: 'review', 3: 'plaid', 4: 'address', 5: 'address',
+      6: 'personalInfo', 7: 'personalAddress', 8: 'billingContact',
+      9: 'finalReview', 10: 'contractSigning', 11: 'contractSigned', 12: 'allDone',
+    }
+    return map[n] ?? 'review'
+  }
+
+  // ── Form assembly (React state slices → API shape) ───────────────────────
+  const assembleFormForApi = () => ({
+    firstName: lead?.firstName || '',
+    lastName:  lead?.lastName  || '',
+    email:     lead?.email     || '',
+    phone:     lead?.phone     || '',
+    companyAddress: {
+      line1: addressForm.street1,
+      line2: addressForm.street2 || '',
+      city:  addressForm.city,
+      state: addressForm.state,
+      zip:   addressForm.zip,
+    },
+    mailingAddressChoice: addressForm.mailingOption === 'different' ? 'other' : 'same-as-company',
+    mailingAddress: addressForm.mailingOption === 'different'
+      ? { line1: mailingForm.street1, line2: mailingForm.street2 || '',
+          city: mailingForm.city, state: mailingForm.state, zip: mailingForm.zip }
+      : null,
+    bank: bankForm,
+    personal: {
+      ssnLast4Masked: personalForm.ssn ? '•••••' + personalForm.ssn.slice(-4) : '',
+      driverLicenseNumber: personalForm.dlNumber,
+    },
+    personalAddressChoice:
+      personalAddressOption === 'business' ? 'same-as-business'
+      : personalAddressOption === 'mailing' ? 'same-as-mailing'
+      : 'other',
+    personalAddress: personalAddressOption === 'new'
+      ? { line1: personalAddressForm.street1, line2: personalAddressForm.street2 || '',
+          city: personalAddressForm.city, state: personalAddressForm.state, zip: personalAddressForm.zip }
+      : null,
+    billingChoice: billingContactOption,
+    billingContact: billingContactOption === 'other'
+      ? { name:  `${billingContactForm.firstName} ${billingContactForm.lastName}`.trim(),
+          role:  billingContactForm.title,
+          email: billingContactForm.email }
+      : {},
+    files: uploadedFiles,
+    acceptTerms: false,
+  })
+
+  // ── saveProgress (fire-and-forget) ───────────────────────────────────────
+  const saveProgress = (nextStep) => {
+    if (!otpCode) return
+    updateLead(buildUpdateLeadPayload(assembleFormForApi(), otpCode, sessionToken, plaid, nextStep))
+      .catch((err) => console.error('saveProgress failed', err))
+  }
+
+  // ── Plaid verification ───────────────────────────────────────────────────
+  const handlePlaidEvent = (eventName, metadata) => {
+    if (!plaid.combinedProbe.enabled || !eventName) return
+    if (String(eventName).startsWith('IDENTITY_VERIFICATION_')) {
+      setPlaid(prev => ({
+        ...prev,
+        combinedProbe: {
+          ...prev.combinedProbe,
+          idvEvents: [...prev.combinedProbe.idvEvents, {
+            eventName,
+            linkSessionId: metadata?.link_session_id || null,
+            viewName: metadata?.view_name || null,
+            timestamp: metadata?.timestamp || new Date().toISOString(),
+          }],
+          lastOutcome:
+            eventName === 'IDENTITY_VERIFICATION_PASS_SESSION'    ? 'idv_passed'
+            : eventName === 'IDENTITY_VERIFICATION_FAIL_SESSION'  ? 'idv_failed'
+            : eventName === 'IDENTITY_VERIFICATION_PENDING_REVIEW_SESSION' ? 'idv_pending_review'
+            : prev.combinedProbe.lastOutcome,
+        },
+      }))
+    }
+  }
+
+  const handlePlaidSuccess = async (publicToken, metadata) => {
+    const selectedAccount = metadata?.accounts?.[0] || null
+    if (!selectedAccount?.id) {
+      setPlaid(prev => ({ ...prev, status: 'error' }))
+      return
+    }
+    try {
+      const { ok, data } = await exchangePlaidToken({
+        verificationCode: otpCode,
+        sessionToken,
+        publicToken,
+        accountId: selectedAccount.id,
+        metadata,
+      })
+      if (!ok || !data?.success) {
+        setPlaid(prev => ({ ...prev, status: 'error' }))
+        return
+      }
+      const result = mapPlaidExchangeResult(data, metadata, selectedAccount)
+      setPlaid(prev => ({ ...prev, ...result }))
+      setBankForm(prev => ({ ...prev, name: result.bankUpdates.name, accountType: result.bankUpdates.accountType }))
+
+      saveProgress(result.requiresManualBankInput ? 3 : 4)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setStep(result.requiresManualBankInput ? 'bankInfo' : 'address')
+    } catch {
+      setPlaid(prev => ({ ...prev, status: 'error' }))
+    }
+  }
+
+  const startPlaidVerification = async () => {
+    if (plaid.status === 'in_progress') return
+    setPlaid(prev => ({ ...prev, status: 'in_progress' }))
+    try {
+      const useCombined = plaidConfig.combinedLinkEnabled
+      const fetcher = useCombined ? getPlaidCombinedLinkToken : getPlaidLinkToken
+      const { ok, data } = await fetcher({
+        verificationCode: otpCode,
+        sessionToken,
+        mode: useCombined ? 'single_session_probe' : 'standard',
+      })
+      if (!ok || !data?.success || !data?.link_token) {
+        throw new Error(data?.message || t('otp.errorPlaidUnavailable'))
+      }
+      setPlaid(prev => ({
+        ...prev,
+        linkToken: data.link_token,
+        requestId: data.request_id || null,
+        combinedProbe: { ...prev.combinedProbe, enabled: useCombined, mode: data.mode || prev.combinedProbe.mode },
+      }))
+      if (!window.Plaid?.create) throw new Error(t('otp.errorPlaidUnavailable'))
+      plaidHandlerRef.current?.destroy()
+      plaidHandlerRef.current = window.Plaid.create({
+        token: data.link_token,
+        onSuccess: handlePlaidSuccess,
+        onEvent:   handlePlaidEvent,
+        onExit: (err) => {
+          if (plaid.status === 'verified') return
+          setPlaid(prev => ({ ...prev, status: err ? 'error' : 'not_started' }))
+        },
+      })
+      plaidHandlerRef.current.open()
+    } catch (err) {
+      setPlaid(prev => ({ ...prev, status: 'error' }))
+      console.error('startPlaidVerification failed', err)
+    }
+  }
+
+  // ── Document uploads ─────────────────────────────────────────────────────
+  const handleDocumentUpload = async (key, file) => {
+    const validation = validateUploadFile(file)
+    if (!validation.ok) {
+      const msg = validation.reason === 'size' ? t('common.fileTooLarge') : t('common.fileTypeInvalid')
+      setUploadStatus(prev => ({ ...prev, [key]: { type: 'error', message: msg } }))
+      return
+    }
+    setUploadInFlight(prev => ({ ...prev, [key]: true }))
+    setUploadStatus(prev => ({ ...prev, [key]: { type: '', message: '' } }))
+    try {
+      const formData = buildUploadDocumentFormData(key, file, otpCode, sessionToken)
+      const { ok, data } = await uploadDocument(formData)
+      if (ok && data.success) {
+        setUploadedFiles(prev => ({ ...prev, [key]: { field: key, filename: data.fileName } }))
+        setUploadStatus(prev => ({ ...prev, [key]: { type: 'success', message: t('common.uploadSuccess') } }))
+      } else {
+        setUploadStatus(prev => ({ ...prev, [key]: { type: 'error', message: t('common.uploadFailed') } }))
+      }
+    } catch {
+      setUploadStatus(prev => ({ ...prev, [key]: { type: 'error', message: t('common.networkError') } }))
+    } finally {
+      setUploadInFlight(prev => ({ ...prev, [key]: false }))
+    }
+  }
+
+  const handleVoidCheckSelect = (file) => {
+    if (!file || uploadInFlight.voidCheck) return
+    setVoidCheckFile(file)
+    handleDocumentUpload('voidCheck', file)
+  }
+
+  const handleDlFileSelect = (file) => {
+    if (!file || uploadInFlight.driverLicenseScan) return
+    setPersonalForm(prev => ({ ...prev, dlFile: file }))
+    setPersonalErrors(prev => { const n = { ...prev }; delete n.dlFile; return n })
+    handleDocumentUpload('driverLicenseScan', file)
+  }
+
+  // ── Contract & signing ───────────────────────────────────────────────────
+  const loadContractEmbed = async (docId) => {
+    const id = docId ?? documentId
+    if (!id) { setContractError(t('finalReview.errorNoDocumentId')); return }
+    setLoadingContract(true)
+    setContractEmbedUrl(null)
+    setContractError(null)
+    try {
+      const { ok, data } = await getSignEmbedUrl(buildSignEmbedPayload(otpCode, sessionToken, id))
+      if (ok && data.success && data.sign_url) {
+        setContractEmbedUrl(data.sign_url)
+      } else {
+        setContractError(data.message || t('finalReview.errorEmbedFailed'))
+      }
+    } catch {
+      setContractError(t('common.networkError'))
+    } finally {
+      setLoadingContract(false)
+    }
+  }
+
+  const acceptTermsAndSubmit = async () => {
+    setShowTermsModal(false)
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      const { ok, data } = await generateContract(
+        buildContractPayload(assembleFormForApi(), otpCode, sessionToken)
+      )
+      if (!ok) {
+        setSubmitError(data.message || t('finalReview.errorContractFailed'))
+        return
+      }
+      const docId = data.document_id
+      setDocumentId(docId)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setStep('contractSigning')
+      loadContractEmbed(docId)
+    } catch {
+      setSubmitError(t('common.networkError'))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // ── URL-based OTP auto-submit (deep-link support) ─────────────────────────
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const codeFromUrl = params.get('code')
+    if (codeFromUrl && isValidOtp(codeFromUrl)) {
+      setCode(codeFromUrl.toUpperCase())
+    }
+  }, [])
 
   const BANK_STEPS = [
     {
@@ -242,13 +531,15 @@ export default function OtpVerification() {
 
   const handleBankSubmit = () => {
     const errs = {}
-    if (!bankForm.accountNumber.trim()) {
-      errs.accountNumber = t('bankInfo.errorAccountRequired')
-    } else if (!/^\d+$/.test(bankForm.accountNumber)) {
-      errs.accountNumber = t('bankInfo.errorAccountDigits')
+    const acct = bankForm.accountNumberMasked.replace(/\D/g, '')
+    if (!acct) {
+      errs.accountNumberMasked = t('bankInfo.errorAccountRequired')
+    } else if (!/^\d{5,17}$/.test(acct)) {
+      errs.accountNumberMasked = t('bankInfo.errorAccountDigits')
     }
-    if (bankForm.confirmAccountNumber !== bankForm.accountNumber) {
-      errs.confirmAccountNumber = t('bankInfo.errorAccountMismatch')
+    const acctConfirm = bankForm.accountNumberMaskedConfirm.replace(/\D/g, '')
+    if (acctConfirm !== acct) {
+      errs.accountNumberMaskedConfirm = t('bankInfo.errorAccountMismatch')
     }
     if (!bankForm.routingNumber.trim()) {
       errs.routingNumber = t('bankInfo.errorRoutingRequired')
@@ -260,21 +551,104 @@ export default function OtpVerification() {
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
+    saveProgress(3)
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    setStep('plaid')
+    setStep(plaidConfig.step5Enabled ? 'plaid' : 'address')
   }
 
   const handleSubmit = async () => {
-    if (!code.trim()) {
+    const otp = code.trim().toUpperCase()
+    if (!isValidOtp(otp)) {
       setError(t('otp.errorIncomplete'))
       return
     }
     setLoading(true)
-    // In production: validate OTP against backend here
-    await new Promise((r) => setTimeout(r, 800))
-    setLoading(false)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    setStep('review')
+    setError('')
+    setPendingMessage('')
+    try {
+      const { ok, data } = await verifyOtp(otp)
+
+      if (data.pending === true) {
+        setPendingMessage(t('otp.pendingMessage'))
+        return
+      }
+      if (!ok || !data.success) {
+        setError(t('otp.errorInvalid'))
+        if (data.code === 'OTP_INVALID_OR_USED') {
+          setCode('')
+          setShowEmailRecovery(true)
+        }
+        return
+      }
+      if (!data.lead) {
+        setError(t('otp.errorLeadMissing'))
+        return
+      }
+
+      const apiLead = data.lead
+      const mapped  = mapLeadFromApi(apiLead)
+      setLead(mapped)
+      setOtpCode(otp)
+      setSessionToken(data.session_token || null)
+      if (data.document_id) setDocumentId(data.document_id)
+
+      const addrSlice = mapAddressesFromApi(apiLead)
+      setAddressForm({
+        street1: addrSlice.companyAddress.line1,
+        street2: addrSlice.companyAddress.line2,
+        city:    addrSlice.companyAddress.city,
+        state:   addrSlice.companyAddress.state,
+        zip:     addrSlice.companyAddress.zip,
+        mailingOption: addrSlice.mailingAddressChoice === 'other' ? 'different' : 'same',
+      })
+      if (addrSlice.mailingAddressChoice === 'other') {
+        setMailingForm({
+          street1: addrSlice.mailingAddress.line1,
+          street2: addrSlice.mailingAddress.line2,
+          city:    addrSlice.mailingAddress.city,
+          state:   addrSlice.mailingAddress.state,
+          zip:     addrSlice.mailingAddress.zip,
+        })
+      }
+
+      const { bank: bankData, plaidState } = mapBankFromApi(apiLead)
+      setBankForm(bankData)
+      setPlaid(prev => ({ ...prev, ...plaidState }))
+
+      const { billingChoice, billingContact } = mapBillingContactFromApi(apiLead, mapped.email)
+      setBillingContactOption(billingChoice)
+      const nameParts = (billingContact.name || '').split(' ')
+      setBillingContactForm({
+        firstName: nameParts[0] || '',
+        lastName:  nameParts.slice(1).join(' ') || '',
+        email:     billingContact.email,
+        phone:     '',
+        title:     billingContact.role || '',
+      })
+
+      const { files: apiFiles, uploadStatus: apiUploadStatus } = mapFilesFromApi(apiLead)
+      setUploadedFiles(apiFiles)
+      setUploadStatus(prev => ({ ...prev, ...apiUploadStatus }))
+
+      const resumeStep = getResumeStep(data)
+      const targetStep = mapObsoleteStepToString(resumeStep)
+      setDisclaimerVisible(true)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setStep(targetStep)
+      if (resumeStep === 10) loadContractEmbed(data.document_id)
+    } catch {
+      setError(t('common.networkError'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRequestNewCode = async () => {
+    if (recoverySending || !recoveryEmail.trim()) return
+    setRecoverySending(true)
+    await requestNewCode(recoveryEmail.trim())
+    setRecoverySending(false)
+    setRecoverySent(true)
   }
 
   if (step === 'plaid') {
@@ -340,6 +714,10 @@ export default function OtpVerification() {
             </div>
           </div>
 
+          {plaid.status === 'error' && (
+            <p className="text-sm text-red-600 text-center">{t('otp.errorPlaidFlowFailed')}</p>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               type="button"
@@ -354,16 +732,46 @@ export default function OtpVerification() {
               </svg>
               {t('plaidStub.backBtn')}
             </button>
-            <button
-              type="button"
-              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('address') }}
-              className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
-                         bg-primary hover:bg-secondary rounded-md shadow-ds-sm
-                         transition-colors duration-200 cursor-pointer
-                         focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              {t('plaidStub.button')}
-            </button>
+            {plaid.status === 'verified' ? (
+              <button
+                type="button"
+                onClick={() => { saveProgress(4); window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('address') }}
+                className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                           bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                           transition-colors duration-200 cursor-pointer
+                           focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                {t('common.nextStep')}
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={startPlaidVerification}
+                disabled={plaid.status === 'in_progress'}
+                className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                           bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                           transition-colors duration-200 cursor-pointer
+                           focus:outline-none focus:ring-2 focus:ring-primary/30
+                           disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {plaid.status === 'in_progress' ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    {t('plaidStub.connecting')}
+                  </>
+                ) : plaid.status === 'error' ? (
+                  t('plaidStub.retryBtn')
+                ) : (
+                  t('plaidStub.button')
+                )}
+              </button>
+            )}
           </div>
         </div>
       </main>
@@ -784,12 +1192,13 @@ export default function OtpVerification() {
       } else if (personalForm.dlConfirm !== personalForm.dlNumber) {
         errs.dlConfirm = t('personalInfo.errorDlMismatch')
       }
-      if (!personalForm.dlFile) errs.dlFile = t('personalInfo.errorDlFileRequired')
+      if (!uploadedFiles.driverLicenseScan) errs.dlFile = t('personalInfo.errorDlFileRequired')
       if (Object.keys(errs).length) {
         setPersonalErrors(errs)
         window.scrollTo({ top: 0, behavior: 'smooth' })
         return
       }
+      saveProgress(7)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       setStep('personalAddress')
     }
@@ -918,16 +1327,18 @@ export default function OtpVerification() {
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png,.heic,.doc,.docx"
                   className="sr-only"
-                  onChange={e => { updatePersonal('dlFile', e.target.files[0] ?? null); setPersonalErrors(prev => { const n = { ...prev }; delete n.dlFile; return n }) }}
+                  onChange={e => handleDlFileSelect(e.target.files?.[0] ?? null)}
                 />
-                {personalForm.dlFile ? (
+                {uploadInFlight.driverLicenseScan ? (
+                  <p className="text-sm text-gray-500">{t('common.loading')}</p>
+                ) : uploadedFiles.driverLicenseScan ? (
                   <>
-                    <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24"
+                    <svg className="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24"
                          stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round"
                             d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p className="text-sm font-medium text-gray-700">{personalForm.dlFile.name}</p>
+                    <p className="text-sm font-medium text-gray-700">{uploadedFiles.driverLicenseScan.filename}</p>
                     <p className="text-xs text-gray-400">{t('personalInfo.tapToChange')}</p>
                   </>
                 ) : (
@@ -943,6 +1354,9 @@ export default function OtpVerification() {
                 )}
               </label>
               {personalErrors.dlFile && <p className="mt-1.5 text-xs text-red-600">{personalErrors.dlFile}</p>}
+              {uploadStatus.driverLicenseScan.type === 'error' && (
+                <p className="mt-1.5 text-xs text-red-600">{uploadStatus.driverLicenseScan.message}</p>
+              )}
             </div>
 
             {/* Owner match notice */}
@@ -1024,6 +1438,7 @@ export default function OtpVerification() {
         window.scrollTo({ top: 0, behavior: 'smooth' })
         return
       }
+      saveProgress(8)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       setStep('billingContact')
     }
@@ -1262,6 +1677,7 @@ export default function OtpVerification() {
         window.scrollTo({ top: 0, behavior: 'smooth' })
         return
       }
+      saveProgress(9)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       setStep('finalReview')
     }
@@ -1585,13 +2001,18 @@ export default function OtpVerification() {
             </svg>
             {t('finalReview.backBtn')}
           </button>
+          {submitError && (
+            <p className="text-sm text-red-600 text-center">{submitError}</p>
+          )}
           <button
             type="button"
-            onClick={() => setShowTermsModal(true)}
+            onClick={() => { setSubmitError(''); setShowTermsModal(true) }}
+            disabled={submitting}
             className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                        bg-primary hover:bg-secondary rounded-md shadow-ds-sm
                        transition-colors duration-200 cursor-pointer
-                       focus:outline-none focus:ring-2 focus:ring-primary/30"
+                       focus:outline-none focus:ring-2 focus:ring-primary/30
+                       disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1643,15 +2064,13 @@ export default function OtpVerification() {
               <div className="flex flex-col sm:flex-row gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowTermsModal(false)
-                    window.scrollTo({ top: 0, behavior: 'smooth' })
-                    setStep('contractSigned')
-                  }}
+                  onClick={acceptTermsAndSubmit}
+                  disabled={submitting}
                   className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                              bg-primary hover:bg-secondary rounded-md shadow-ds-sm
                              transition-colors duration-200 cursor-pointer
-                             focus:outline-none focus:ring-2 focus:ring-primary/30"
+                             focus:outline-none focus:ring-2 focus:ring-primary/30
+                             disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1678,6 +2097,68 @@ export default function OtpVerification() {
               </div>
 
             </div>
+          </div>
+        )}
+      </main>
+    )
+  }
+
+  if (step === 'contractSigning') {
+    return (
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">{t('contractSigning.heading')}</h1>
+          <p className="text-gray-500 mt-3 text-sm leading-relaxed max-w-xl mx-auto">
+            {t('contractSigning.subheading')}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 overflow-hidden">
+          {loadingContract ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <svg className="w-8 h-8 animate-spin text-primary" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <p className="text-sm text-gray-500">{t('contractSigning.loading')}</p>
+            </div>
+          ) : contractError ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <p className="text-sm text-red-600">{contractError}</p>
+              <button
+                type="button"
+                onClick={() => loadContractEmbed()}
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-secondary rounded-md
+                           transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                {t('contractSigning.retryBtn')}
+              </button>
+            </div>
+          ) : contractEmbedUrl ? (
+            <iframe
+              src={contractEmbedUrl}
+              title="Contract signing"
+              className="w-full"
+              style={{ height: '70vh', border: 'none' }}
+            />
+          ) : null}
+        </div>
+
+        {contractEmbedUrl && (
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('contractSigned') }}
+              className="inline-flex items-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                         bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                         transition-colors duration-200 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {t('contractSigning.doneBtn')}
+            </button>
           </div>
         )}
       </main>
@@ -1788,15 +2269,30 @@ export default function OtpVerification() {
       setTruckErrors(prev => prev.filter((_, i) => i !== idx))
     }
 
-    const handleSave = () => {
+    const handleSave = async () => {
       const errs = trucks.map(truck => ({
         truckNumber: !truck.truckNumber.trim() ? t('contractSigned.errorTruckRequired') : undefined,
-        driverId: !truck.driverId.trim() ? t('contractSigned.errorDriverIdRequired') : undefined,
+        driverId:    !truck.driverId.trim()    ? t('contractSigned.errorDriverIdRequired') : undefined,
       }))
       const hasErr = errs.some(e => e.truckNumber || e.driverId)
       if (hasErr) { setTruckErrors(errs); return }
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      setStep('allDone')
+
+      setFuelCardsSubmitting(true)
+      setFuelCardsError('')
+      try {
+        const fuelCards = trucks.map(tr => ({ unit: tr.truckNumber, driver_id: tr.driverId }))
+        const { ok, data } = await setFuelCards(buildFuelCardsPayload(otpCode, sessionToken, fuelCards))
+        if (!ok || data.success === false) {
+          setFuelCardsError(data.message || t('contractSigned.errorSaveFailed'))
+          return
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        setStep('allDone')
+      } catch {
+        setFuelCardsError(t('common.networkError'))
+      } finally {
+        setFuelCardsSubmitting(false)
+      }
     }
 
     const truckInputClass = (err) => [
@@ -1916,14 +2412,20 @@ export default function OtpVerification() {
               </button>
             )}
 
+            {fuelCardsError && (
+              <p className="mt-4 text-sm text-red-600 text-center">{fuelCardsError}</p>
+            )}
+
             {/* Save button */}
             <button
               type="button"
               onClick={handleSave}
+              disabled={fuelCardsSubmitting}
               className="mt-6 w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                          bg-primary hover:bg-secondary rounded-md shadow-ds-sm
                          transition-colors duration-200 cursor-pointer
-                         focus:outline-none focus:ring-2 focus:ring-primary/30"
+                         focus:outline-none focus:ring-2 focus:ring-primary/30
+                         disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1973,12 +2475,12 @@ export default function OtpVerification() {
                 <input
                   type="text"
                   inputMode="numeric"
-                  value={bankForm.accountNumber}
-                  onChange={(e) => { updateBank('accountNumber', e.target.value.replace(/\D/g, '')); clearBankError('accountNumber') }}
+                  value={bankForm.accountNumberMasked}
+                  onChange={(e) => { updateBank('accountNumberMasked', e.target.value.replace(/\D/g, '')); clearBankError('accountNumberMasked') }}
                   placeholder="000000000000"
-                  className={bankInputClass(bankErrors.accountNumber)}
+                  className={bankInputClass(bankErrors.accountNumberMasked)}
                 />
-                {bankErrors.accountNumber && <p className="text-xs text-red-500 mt-1.5">{bankErrors.accountNumber}</p>}
+                {bankErrors.accountNumberMasked && <p className="text-xs text-red-500 mt-1.5">{bankErrors.accountNumberMasked}</p>}
               </div>
 
               {/* Confirm Account Number */}
@@ -1989,12 +2491,12 @@ export default function OtpVerification() {
                 <input
                   type="text"
                   inputMode="numeric"
-                  value={bankForm.confirmAccountNumber}
-                  onChange={(e) => { updateBank('confirmAccountNumber', e.target.value.replace(/\D/g, '')); clearBankError('confirmAccountNumber') }}
+                  value={bankForm.accountNumberMaskedConfirm}
+                  onChange={(e) => { updateBank('accountNumberMaskedConfirm', e.target.value.replace(/\D/g, '')); clearBankError('accountNumberMaskedConfirm') }}
                   placeholder="000000000000"
-                  className={bankInputClass(bankErrors.confirmAccountNumber)}
+                  className={bankInputClass(bankErrors.accountNumberMaskedConfirm)}
                 />
-                {bankErrors.confirmAccountNumber && <p className="text-xs text-red-500 mt-1.5">{bankErrors.confirmAccountNumber}</p>}
+                {bankErrors.accountNumberMaskedConfirm && <p className="text-xs text-red-500 mt-1.5">{bankErrors.accountNumberMaskedConfirm}</p>}
               </div>
 
               {/* Routing Number */}
@@ -2013,10 +2515,55 @@ export default function OtpVerification() {
                 {bankErrors.routingNumber && <p className="text-xs text-red-500 mt-1.5">{bankErrors.routingNumber}</p>}
               </div>
 
+              {/* Void check upload (required when not Plaid-verified) */}
+              {!plaid.selectedAccount && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    {t('bankInfo.labelVoidCheck')} <span className="text-red-500">*</span>
+                  </label>
+                  <label className={[
+                    'flex flex-col items-center justify-center gap-2 p-5 rounded-lg border-2 border-dashed cursor-pointer transition-colors duration-200',
+                    uploadStatus.voidCheck.type === 'success'
+                      ? 'border-green-400 bg-green-50'
+                      : uploadStatus.voidCheck.type === 'error'
+                        ? 'border-red-300 bg-red-50'
+                        : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50',
+                  ].join(' ')}>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.heic"
+                      className="sr-only"
+                      onChange={(e) => handleVoidCheckSelect(e.target.files?.[0] ?? null)}
+                    />
+                    {uploadInFlight.voidCheck ? (
+                      <p className="text-sm text-gray-500">{t('common.loading')}</p>
+                    ) : uploadStatus.voidCheck.type === 'success' ? (
+                      <p className="text-sm font-medium text-green-700">{voidCheckFile?.name || t('common.fileSelected')}</p>
+                    ) : (
+                      <p className="text-sm font-medium text-gray-700">{t('bankInfo.uploadVoidCheck')}</p>
+                    )}
+                  </label>
+                  {uploadStatus.voidCheck.type === 'error' && (
+                    <p className="text-xs text-red-500 mt-1.5">{uploadStatus.voidCheck.message}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Plaid verified badge */}
+              {plaid.selectedAccount && (
+                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+                  <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-xs font-semibold text-green-700">
+                    {plaid.institution?.name} ••••{plaid.selectedAccount.mask}
+                  </p>
+                </div>
+              )}
+
             </div>
           </div>
 
-          {/* Confirm with Plaid button */}
           <button
             type="button"
             onClick={handleBankSubmit}
@@ -2054,28 +2601,28 @@ export default function OtpVerification() {
                 <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
                   {t('accountReview.sectionContact')}
                 </h2>
-                <Row label={t('accountReview.labelName')}        value={`${PLACEHOLDER.firstName} ${PLACEHOLDER.lastName}`} />
-                <Row label={t('accountReview.labelEmail')}       value={PLACEHOLDER.email} />
-                <Row label={t('accountReview.labelPhone')}       value={PLACEHOLDER.phone} />
-                <Row label={t('accountReview.labelAccountType')} value={PLACEHOLDER.accountType} />
+                <Row label={t('accountReview.labelName')}        value={lead ? `${lead.firstName} ${lead.lastName}` : ''} />
+                <Row label={t('accountReview.labelEmail')}       value={lead?.email} />
+                <Row label={t('accountReview.labelPhone')}       value={lead?.phone} />
+                <Row label={t('accountReview.labelAccountType')} value={lead?.accountType} />
               </div>
               {/* Right column: Business */}
               <div>
                 <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 mt-6 sm:mt-0">
                   {t('accountReview.sectionBusiness')}
                 </h2>
-                <Row label={t('accountReview.labelCompany')}  value={PLACEHOLDER.companyName} />
-                <Row label={t('accountReview.labelBizType')}  value={PLACEHOLDER.businessType} />
-                <Row label={t('accountReview.labelTitle')}    value={PLACEHOLDER.companyTitle} />
-                <Row label={t('accountReview.labelTrucks')}   value={PLACEHOLDER.companyTrucks} />
+                <Row label={t('accountReview.labelCompany')}  value={lead?.companyName} />
+                <Row label={t('accountReview.labelBizType')}  value={lead?.businessType} />
+                <Row label={t('accountReview.labelTitle')}    value={lead?.companyTitle} />
+                <Row label={t('accountReview.labelTrucks')}   value={lead?.fleetSize != null ? String(lead.fleetSize) : ''} />
                 <div className="flex gap-4 py-2 border-b border-gray-100">
                   <div className="flex-1">
                     <span className="text-xs text-gray-400">{t('accountReview.labelDOT')}</span>
-                    <p className="text-sm font-medium text-gray-900">{PLACEHOLDER.companyDOT}</p>
+                    <p className="text-sm font-medium text-gray-900">{lead?.dot || '—'}</p>
                   </div>
                   <div className="flex-1">
                     <span className="text-xs text-gray-400">{t('accountReview.labelMC')}</span>
-                    <p className="text-sm font-medium text-gray-900">{PLACEHOLDER.companyMC}</p>
+                    <p className="text-sm font-medium text-gray-900">{lead?.mc || '—'}</p>
                   </div>
                 </div>
               </div>
@@ -2290,6 +2837,46 @@ export default function OtpVerification() {
           </div>
         </div>
 
+        {pendingMessage && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+            <p className="text-sm text-amber-800 text-center">{pendingMessage}</p>
+          </div>
+        )}
+
+        {/* Email recovery (shown when OTP is invalid/used) */}
+        {showEmailRecovery && (
+          <div className="mb-6 space-y-3">
+            <p className="text-sm text-gray-600 text-center">{t('otp.recoveryPrompt')}</p>
+            {recoverySent ? (
+              <p className="text-sm text-green-700 text-center font-medium">{t('otp.recoverySent')}</p>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={recoveryEmail}
+                  onChange={e => setRecoveryEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleRequestNewCode()}
+                  placeholder={t('otp.recoveryPlaceholder')}
+                  className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-xl
+                             focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400
+                             transition-colors duration-200 bg-white text-gray-900"
+                />
+                <button
+                  type="button"
+                  onClick={handleRequestNewCode}
+                  disabled={recoverySending || !recoveryEmail.trim()}
+                  className="px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-secondary
+                             rounded-xl transition-colors duration-200 cursor-pointer
+                             focus:outline-none focus:ring-2 focus:ring-primary/30
+                             disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {recoverySending ? t('common.loading') : t('otp.recoverySendBtn')}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Continue button */}
         <button
           type="button"
@@ -2324,6 +2911,36 @@ export default function OtpVerification() {
           {t('otp.noCode')}
         </p>
       </div>
+
+      {/* Disclaimer modal — shown once after successful OTP verification */}
+      {disclaimerVisible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 sm:p-8 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-blue-50">
+                <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round"
+                        d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">{t('otp.disclaimerTitle')}</h2>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">{t('otp.disclaimerLine1')}</p>
+            <p className="text-sm text-gray-600 leading-relaxed">{t('otp.disclaimerLine2')}</p>
+            <p className="text-sm text-gray-600 leading-relaxed">{t('otp.disclaimerLine3')}</p>
+            <button
+              type="button"
+              onClick={() => setDisclaimerVisible(false)}
+              className="w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                         bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                         transition-colors duration-200 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              {t('otp.disclaimerCta')}
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
