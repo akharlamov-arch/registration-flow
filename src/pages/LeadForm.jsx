@@ -550,8 +550,8 @@ export default function LeadForm() {
                 </FormField>
               </div>
 
-              {/* Trucks + DOT + MC */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Trucks */}
+              <div className="grid grid-cols-1 gap-4">
                 <FormField label={t('lead.stepBusiness.trucks')} required error={errors.companyTrucks}>
                   <input
                     type="text"
@@ -563,7 +563,11 @@ export default function LeadForm() {
                     aria-invalid={!!errors.companyTrucks}
                   />
                 </FormField>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">{t('lead.stepBusiness.dotMcHint')}</p>
 
+              {/* DOT + MC */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField label={t('lead.stepBusiness.dot')} optional>
                   <input
                     type="text"
@@ -584,7 +588,6 @@ export default function LeadForm() {
                   />
                 </FormField>
               </div>
-              <p className="text-xs text-gray-400 mt-1">{t('lead.stepBusiness.dotMcHint')}</p>
             </div>
           </div>
         )}
