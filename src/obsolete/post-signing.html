@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Post Signing</title>
+  <link rel="stylesheet" href="./assets/style.css">
+  <!--
+    Iframe-escape: after the contract signing provider finishes, it redirects
+    the return_url inside the signing iframe rather than in the top window.
+    This causes post-signing.html to render inside the iframe with no
+    responsive styles or proper viewport. The script below detects that
+    condition and immediately navigates the top-level window to this URL,
+    so the page loads stand-alone with full layout.
+  -->
+  <script>
+    (function () {
+      if (window.self !== window.top) {
+        try {
+          window.top.location.replace(window.self.location.href);
+        } catch (e) {
+          // Cross-origin guard: if top is on a different origin (shouldn't
+          // happen in production — the signing provider's frameorigin param
+          // points back to registration.itrucking.pro) we can't access
+          // window.top.location, so fall through and render in place.
+        }
+      }
+    })();
+  </script>
+</head>
+<body>
+<div class="w-embed w-script">
+
+  <!-- Load Alpine first -->
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script>
+    window.APP_CONFIG = {
+      validateSessionUrl: '/api/leads/validate-session?sessionToken=',
+      completeSigningUrl: '/api/leads/complete-signing',
+      storeFuelCardsUrl: '/api/leads/set_fuel_cards'
+    };
+  </script>
+  <div class="page-shell" x-data="postSigningForm()">
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none">
+      <symbol id="logo" viewBox="0 0 232 30" fill="none">
+        <g clip-path="url(#clip0_24_430)">
+          <path d="M4.02871 19.3462L0 30H10.6313L14.66 19.3462H4.02871Z" fill="#D42C00" />
+          <path d="M26.2891 30H32.4949C35.1585 30 37.5445 28.3491 38.4883 25.853L40.9489 19.3462H30.3176L26.2891 30Z"
+            fill="#D42C00" />
+          <path
+            d="M15.7704 -1.90735e-06C13.1068 -1.90735e-06 10.7209 1.6508 9.77691 4.1469L7.31641 10.6537H20.4609L13.1452 30H23.7765L31.092 10.6537H44.2365L48.2652 -1.90735e-06H15.7704Z"
+            fill="#D42C00" />
+          <path d="M56.4198 11.0062H60.6809V24.7875H56.4198V11.0062ZM56.3926 5.15929H60.7081V8.94723H56.3926V5.15929Z"
+            fill="#231E20" />
+          <path d="M71.6077 9.07962H64.5879V5.15929H83.1071V9.07962H76.1146V24.7875H71.6077V9.07962Z" fill="#231E20" />
+          <path
+            d="M96.7925 14.5363C99.2234 14.5363 100.316 13.9536 100.316 11.7285C100.316 9.45051 99.2778 8.86775 96.7377 8.86775H91.5208V14.5363H96.7925ZM96.0549 18.2712H91.5208V24.7875H87.1504V5.15929H96.9289C103.293 5.15929 104.823 7.80814 104.823 11.5696C104.823 14.2714 103.922 16.7614 100.562 17.7944L104.577 24.7875H99.7969L96.0549 18.2712Z"
+            fill="#231E20" />
+          <path
+            d="M109.465 17.2912V5.15931H113.944V16.7349C113.944 19.6487 114.682 21.3175 118.779 21.3175C122.849 21.3175 123.641 19.7546 123.641 16.7349V5.15931H127.984V17.2912C127.984 21.0525 127.247 25.1583 118.725 25.1583C110.175 25.1583 109.465 21.0525 109.465 17.2912Z"
+            fill="#231E20" />
+          <path
+            d="M132.301 14.9601C132.301 7.91406 136.262 4.84134 142.981 4.84134C146.669 4.84134 149.018 5.79498 150.93 7.6757L147.843 10.6689C146.614 9.50337 145.166 8.81471 142.954 8.81471C138.638 8.81471 136.808 10.9338 136.808 15.0131C136.808 18.9599 138.338 21.2114 142.981 21.2114C145.603 21.2114 146.86 20.3638 148.116 19.2247L151.066 22.0326C149.455 23.6484 147.297 25.0788 142.708 25.0788C135.142 25.0788 132.301 21.4499 132.301 14.9601Z"
+            fill="#231E20" />
+          <path
+            d="M163.057 16.2316L160.189 19.5162V24.7875H155.764V5.15929H160.189V14.0331L167.864 5.15929H172.808L165.952 12.9205L173.792 24.7875H168.738L163.057 16.2316Z"
+            fill="#231E20" />
+          <path d="M178.463 5.15931H182.915V24.7875H178.463V5.15931Z" fill="#231E20" />
+          <path
+            d="M188.896 5.15931H193.731L203.046 17.5296V5.15931H207.307V24.7875H203.21L193.185 11.5431V24.7875H188.896V5.15931Z"
+            fill="#231E20" />
+          <path
+            d="M211.924 14.9601C211.924 7.8611 215.748 4.84137 222.576 4.84137C226.673 4.84137 229.159 6.00688 230.771 7.62275L227.712 10.616C226.674 9.66235 225.335 8.81474 222.549 8.81474C218.124 8.81474 216.403 10.9338 216.403 15.0131C216.403 19.3042 217.605 21.4234 222.494 21.4234C226.428 21.4234 227.575 20.1519 227.575 17.3971V16.9732H221.921V13.3708H232V16.5759C232 22.165 229.706 25.0788 222.276 25.0788C214.191 25.0788 211.924 21.4763 211.924 14.9601Z"
+            fill="#231E20" />
+        </g>
+        <defs>
+          <clipPath id="clip0_24_430">
+            <rect width="232" height="30" fill="white" />
+          </clipPath>
+        </defs>
+      </symbol>
+    </svg>
+
+    <!-- Logo and Hero -->
+    <svg class="page-logo">
+      <use href="#logo"></use>
+    </svg>
+
+    <div class="card">
+
+      <!-- Loading state -->
+      <div x-cloak x-show="pageState === 'loading'" class="page-loading">
+        <svg class="page-loading-spinner" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="#535353" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+        </svg>
+        <p class="page-loading-text">Validating your session...</p>
+      </div>
+
+      <!-- Error state -->
+      <div x-cloak x-show="pageState === 'error'" class="page-error">
+        <span class="page-error-icon">⚠️</span>
+        <p class="page-error-title">Access Denied</p>
+        <p class="page-error-message" x-text="pageError"></p>
+        <a href="/" class="page-error-link">Return to Registration</a>
+      </div>
+
+      <!-- Step 1: Fuel Cards Choice -->
+      <div x-cloak x-show="pageState === 'ready' && step === 1">
+        <div class="fuel-layout">
+          <div class="fuel-done">
+            <div class="fuel-done-header">
+              <span class="fuel-done-icon"><svg xmlns="http://www.w3.org/2000/svg" width="3" height="3" viewBox="0 0 3 3" fill="none">
+  <path d="M1.77447 2.44048C1.59777 2.44061 1.42825 2.3706 1.30314 2.24581L0.187141 1.12981C0.0657025 1.00407 -0.00149374 0.835674 2.52018e-05 0.660876C0.00154415 0.486078 0.0716585 0.318869 0.195264 0.195264C0.318869 0.0716585 0.486078 0.00154415 0.660876 2.52018e-05C0.835674 -0.00149374 1.00407 0.0657025 1.12981 0.187141L2.24581 1.30247C2.33902 1.39571 2.40249 1.51449 2.4282 1.64379C2.45391 1.77309 2.44071 1.90711 2.39026 2.02891C2.33981 2.15071 2.25439 2.25482 2.14478 2.32808C2.03517 2.40133 1.90631 2.44045 1.77447 2.44048Z" fill="#23AF6F"/>
+</svg></span>
+              <p class="fuel-done-title">Done. Thanks for signing.</p>
+            </div>
+            <p class="fuel-done-sub">We will review the information you provided, sign the contract on our end, and
+              send you the fuel cards.</p>
+          </div>
+
+          <div class="fuel-section">
+            <div class="fuel-section-header">
+              <p class="fuel-section-title">Would you like to add info about fuel cards?</p>
+              <p class="fuel-section-sub">This is optional — you can always provide it later.</p>
+            </div>
+
+            <div class="billing-choices" style="margin-top:20px;">
+              <label class="billing-choice">
+                <input type="radio" x-model="addFuelCards" value="no">
+                <span class="radio-dot" aria-hidden="true"></span>
+                <span>No, skip for now</span>
+              </label>
+              <label class="billing-choice">
+                <input type="radio" x-model="addFuelCards" value="yes">
+                <span class="radio-dot" aria-hidden="true"></span>
+                <span>Yes, add fuel card info</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="review-bottom">
+            <div class="review-divider"></div>
+            <p class="review-bottom-note">You'll review and sign the contract later in the process</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Fuel Card Inputs -->
+      <div x-cloak x-show="pageState === 'ready' && step === 2">
+        <div class="fuel-layout">
+          <div class="fuel-section">
+            <div class="fuel-section-header">
+              <p class="fuel-section-title">Add fuel card info</p>
+              <p class="fuel-section-sub">Please enter the information below.</p>
+            </div>
+
+            <p class="fuel-section-note">Please provide the following information for each card (optional)</p>
+
+            <!-- Desktop layout: side-by-side columns -->
+            <div class="fuel-columns fuel-columns-desktop">
+              <div class="fuel-col">
+                <div class="fuel-col-header">
+                  <p class="fuel-col-title">Unit number</p>
+                  <p class="fuel-col-help">The unit number shown on your truck</p>
+                </div>
+                <template x-for="(row, idx) in fuelCardsData" :key="'desktop-unit-'+idx">
+                  <input class="form-input" type="text" x-model="fuelCardsData[idx].unit"
+                    placeholder="Unit #">
+                </template>
+              </div>
+
+              <div class="fuel-col">
+                <div class="fuel-col-header">
+                  <p class="fuel-col-title">Driver ID</p>
+                  <p class="fuel-col-help">We recommend using 6 digits of the driver's date of birth in format MMDDYY</p>
+                </div>
+                <template x-for="(row, idx) in fuelCardsData" :key="'desktop-driver-'+idx">
+                  <div class="fuel-input-row">
+                    <input class="form-input" type="text" x-model="fuelCardsData[idx].driver_id"
+                      placeholder="Driver ID" inputmode="numeric">
+                    <button x-show="fuelCardsData.length > 1" class="fuel-remove" @click="removeFuelCardRow(idx)" type="button" title="Remove row">&times;</button>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Mobile layout: paired rows -->
+            <div class="fuel-columns-mobile">
+              <template x-for="(row, idx) in fuelCardsData" :key="'mobile-pair-'+idx">
+                <div class="fuel-card-pair">
+                  <div class="fuel-card-pair-header">
+                    <p class="fuel-card-pair-title">Card <span x-text="idx + 1"></span></p>
+                    <button x-show="fuelCardsData.length > 1" class="fuel-remove" @click="removeFuelCardRow(idx)" type="button" title="Remove card">&times;</button>
+                  </div>
+                  <div class="fuel-card-pair-field">
+                    <p class="fuel-card-pair-label">Unit number</p>
+                    <input class="form-input" type="text" x-model="fuelCardsData[idx].unit" placeholder="Unit #">
+                  </div>
+                  <div class="fuel-card-pair-field">
+                    <p class="fuel-card-pair-label">Driver ID</p>
+                    <input class="form-input" type="text" x-model="fuelCardsData[idx].driver_id" placeholder="Driver ID" inputmode="numeric">
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <p class="fuel-add" @click="addFuelCardRow()">+ Add more</p>
+
+            <template x-if="errors.fuelCards">
+              <div class="fuel-error" x-text="errors.fuelCards"></div>
+            </template>
+          </div>
+
+          <div class="review-bottom">
+            <div class="review-divider"></div>
+            <p class="review-bottom-note">You'll review and sign the contract later in the process</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Confirmation -->
+      <div x-cloak x-show="pageState === 'ready' && step === 3">
+        <div class="confirm-layout">
+          <div class="confirm-card">
+            <div class="confirm-head">
+              <p class="confirm-title">Done. Thanks for signing.</p>
+              <p class="confirm-subtitle">We will review the information you provided, sign the contract on our end, and
+                send you the fuel cards.</p>
+            </div>
+
+            <div class="confirm-media">Media placeholder</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Step 1 action -->
+    <div x-cloak x-show="pageState === 'ready' && step === 1" class="page-actions page-actions-end">
+      <button class="primary review-next" @click="goNext()">Next</button>
+    </div>
+
+    <!-- Step 2 submit action -->
+    <div x-cloak x-show="pageState === 'ready' && step === 2" class="page-actions">
+      <button class="secondary-filled review-next" @click="step = 1">Back</button>
+      <button class="primary review-next" @click="submitFuelCards()" :disabled="fuelCardsSubmitting">
+        <span x-show="!fuelCardsSubmitting">Submit</span>
+        <span x-show="fuelCardsSubmitting" style="display:inline-flex; align-items:center; gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+          </svg>
+          Submitting...
+        </span>
+      </button>
+    </div>
+
+    <script src="./assets/shared.js"></script>
+    <script src="./assets/post-signing.js"></script>
+
+  </div><!-- end page-shell -->
+
+</div><!-- end w-embed -->
+
+</body>
+</html>

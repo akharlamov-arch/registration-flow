@@ -182,10 +182,8 @@ export function getResumeStep(json) {
 
 /**
  * Converts a successful Plaid exchange API response into the Plaid state slice.
- *
- * NOTE: requiresManualBankInput is forced to true as a temporary workaround for a
- * Plaid tokenized-account issue (see index.js line 1297). Remove this override once
- * the underlying issue is resolved and standard routing/account numbers flow through.
+ * requiresManualBankInput is true when the backend returns a tokenized account
+ * number that requires the user to enter routing/account details manually.
  */
 export function mapPlaidExchangeResult(data, metadata, selectedAccount) {
   const p = data?.plaid || {}
@@ -194,7 +192,7 @@ export function mapPlaidExchangeResult(data, metadata, selectedAccount) {
     status:       'verified',
     linkSessionId: metadata?.link_session_id || '',
     requestId:    p.request_id || null,
-    requiresManualBankInput: true, // forced override — see note above
+    requiresManualBankInput: data?.requires_manual_bank_input ?? false,
     institution: {
       name: p.institution_name || metadata?.institution?.name || '',
     },

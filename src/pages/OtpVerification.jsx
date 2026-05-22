@@ -1,24 +1,21 @@
 import { useState, useRef, useEffect } from 'react'
-import bannerTires from '../assets/banner-tires.jpg'
-import bannerFactoring from '../assets/banner-factoring.jpg'
-import bannerProtection from '../assets/banner-protection.jpg'
+import { useSearchParams } from 'react-router-dom'
 import { useI18n } from '../context/I18nContext'
 import StepIndicator from '../components/StepIndicator'
 import PhoneInput from '../components/PhoneInput'
 import {
   verifyOtp, requestNewCode, updateLead, uploadDocument,
-  generateContract, getSignEmbedUrl, setFuelCards,
+  generateContract, getSignEmbedUrl,
   getPlaidLinkToken, getPlaidCombinedLinkToken, exchangePlaidToken,
-  plaidConfig,
+  plaidConfig, validateSession,
 } from '../api/leads'
 import {
   mapLeadFromApi, mapAddressesFromApi, mapBankFromApi,
   mapBillingContactFromApi, mapFilesFromApi, getResumeStep,
   mapPlaidExchangeResult, buildUpdateLeadPayload, buildUploadDocumentFormData,
-  buildContractPayload, buildSignEmbedPayload, buildFuelCardsPayload,
+  buildContractPayload, buildSignEmbedPayload,
   isValidOtp, validateUploadFile,
 } from '../api/leadMappers'
-
 // ── Review helpers (same design as LeadForm review step) ───────────────────
 function ReviewSection({ title, onEdit, editLabel, children }) {
   return (
@@ -86,15 +83,19 @@ function Row({ label, value }) {
 
 export default function OtpVerification() {
   const { t } = useI18n()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [step, setStep] = useState('otp')
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [codePrefilled, setCodePrefilled] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [modalConsent, setModalConsent] = useState(false)
   const [bankForm, setBankForm] = useState({ name: '', accountType: '', routingNumber: '', accountNumberMasked: '', accountNumberMaskedConfirm: '' })
   const [bankErrors, setBankErrors] = useState({})
+  const [bankVerifying, setBankVerifying] = useState(false)
+  const [bankVerificationStatus, setBankVerificationStatus] = useState(null)
   const [addressForm, setAddressForm] = useState({ street1: '', street2: '', city: '', state: '', zip: '', mailingOption: '' })
   const [addressErrors, setAddressErrors] = useState({})
   const [mailingForm, setMailingForm] = useState({ street1: '', street2: '', city: '', state: '', zip: '' })
@@ -115,18 +116,22 @@ export default function OtpVerification() {
   const [billingContactForm, setBillingContactForm] = useState({ firstName: '', lastName: '', email: '', phone: '', title: '' })
   const [billingContactErrors, setBillingContactErrors] = useState({})
   const [showTermsModal, setShowTermsModal] = useState(false)
-  const [trucks, setTrucks] = useState([{ truckNumber: '', driverId: '' }])
-  const [truckErrors, setTruckErrors] = useState([])
+  const [preparingContract, setPreparingContract] = useState(false)
+  const [preparingPhase, setPreparingPhase] = useState(1)
 
   // ── Auth & session ──────────────────────────────────────────────────────
   const [sessionToken, setSessionToken] = useState(null)
   const [otpCode, setOtpCode]           = useState('')
+  // Refs so async callbacks (loadContractEmbed) always read the latest values
+  // even when called from a stale closure (e.g. verifyOtp before re-render).
+  const sessionTokenRef = useRef(null)
+  const otpCodeRef      = useRef('')
   const [lead, setLead]                 = useState(null)
   const [documentId, setDocumentId]     = useState(null)
 
   // ── OTP email recovery ──────────────────────────────────────────────────
   const [pendingMessage, setPendingMessage]       = useState('')
-  const [showEmailRecovery, setShowEmailRecovery] = useState(false)
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false)
   const [recoveryEmail, setRecoveryEmail]         = useState('')
   const [recoverySending, setRecoverySending]     = useState(false)
   const [recoverySent, setRecoverySent]           = useState(false)
@@ -146,6 +151,9 @@ export default function OtpVerification() {
     combinedProbe: { enabled: false, mode: 'standard', idvEvents: [], lastOutcome: null },
   })
   const plaidHandlerRef = useRef(null)
+  const [plaidBypassAvailable, setPlaidBypassAvailable] = useState(false)
+  const [plaidManualFallback, setPlaidManualFallback]   = useState(false)
+  const [plaidAttempted, setPlaidAttempted]             = useState(false)
 
   // ── Document uploads (voidCheck, driverLicenseScan) ─────────────────────
   const [uploadStatus, setUploadStatus] = useState({
@@ -165,10 +173,8 @@ export default function OtpVerification() {
   const [contractEmbedUrl, setContractEmbedUrl]   = useState(null)
   const [loadingContract, setLoadingContract]     = useState(false)
   const [contractError, setContractError]         = useState(null)
-  const [fuelCardsSubmitting, setFuelCardsSubmitting] = useState(false)
-  const [fuelCardsError, setFuelCardsError]       = useState('')
 
-  const updateBank = (key, val) => setBankForm(prev => ({ ...prev, [key]: val }))
+  const updateBank = (key, val) => { setBankForm(prev => ({ ...prev, [key]: val })); setBankVerificationStatus(null) }
   const clearBankError = (key) => setBankErrors(prev => { const n = { ...prev }; delete n[key]; return n })
   const bankInputClass = (err) => [
     'w-full px-4 py-3 text-base sm:text-sm border rounded-xl',
@@ -245,7 +251,7 @@ export default function OtpVerification() {
   // ── Step mapping ────────────────────────────────────────────────────────
   const mapObsoleteStepToString = (n) => {
     const map = {
-      2: 'review', 3: 'plaid', 4: 'address', 5: 'address',
+      2: 'review', 3: 'address', 4: 'address', 5: 'address',
       6: 'personalInfo', 7: 'personalAddress', 8: 'billingContact',
       9: 'finalReview', 10: 'contractSigning', 11: 'contractSigned', 12: 'allDone',
     }
@@ -287,7 +293,8 @@ export default function OtpVerification() {
     billingContact: billingContactOption === 'other'
       ? { name:  `${billingContactForm.firstName} ${billingContactForm.lastName}`.trim(),
           role:  billingContactForm.title,
-          email: billingContactForm.email }
+          email: billingContactForm.email,
+          phone: billingContactForm.phone }
       : {},
     files: uploadedFiles,
     acceptTerms: false,
@@ -295,7 +302,9 @@ export default function OtpVerification() {
 
   // ── saveProgress (fire-and-forget) ───────────────────────────────────────
   const saveProgress = (nextStep) => {
-    if (!otpCode) return
+    // When arriving via an invite link the OTP code is never set; the session
+    // token alone is sufficient for the server to identify the lead.
+    if (!otpCode && !sessionToken) return
     updateLead(buildUpdateLeadPayload(assembleFormForApi(), otpCode, sessionToken, plaid, nextStep))
       .catch((err) => console.error('saveProgress failed', err))
   }
@@ -340,15 +349,16 @@ export default function OtpVerification() {
       })
       if (!ok || !data?.success) {
         setPlaid(prev => ({ ...prev, status: 'error' }))
+        if (data?.bypass_available) setPlaidBypassAvailable(true)
         return
       }
       const result = mapPlaidExchangeResult(data, metadata, selectedAccount)
       setPlaid(prev => ({ ...prev, ...result }))
       setBankForm(prev => ({ ...prev, name: result.bankUpdates.name, accountType: result.bankUpdates.accountType }))
 
-      saveProgress(result.requiresManualBankInput ? 3 : 4)
+      saveProgress(5)
       window.scrollTo({ top: 0, behavior: 'smooth' })
-      setStep(result.requiresManualBankInput ? 'bankInfo' : 'address')
+      setStep('address')
     } catch {
       setPlaid(prev => ({ ...prev, status: 'error' }))
     }
@@ -356,6 +366,7 @@ export default function OtpVerification() {
 
   const startPlaidVerification = async () => {
     if (plaid.status === 'in_progress') return
+    setPlaidAttempted(true)
     setPlaid(prev => ({ ...prev, status: 'in_progress' }))
     try {
       const useCombined = plaidConfig.combinedLinkEnabled
@@ -434,55 +445,189 @@ export default function OtpVerification() {
   // ── Contract & signing ───────────────────────────────────────────────────
   const loadContractEmbed = async (docId) => {
     const id = docId ?? documentId
-    if (!id) { setContractError(t('finalReview.errorNoDocumentId')); return }
+    if (!id) {
+      setContractError(t('finalReview.errorNoDocumentId'))
+      setPreparingContract(false)
+      return
+    }
     setLoadingContract(true)
     setContractEmbedUrl(null)
     setContractError(null)
     try {
-      const { ok, data } = await getSignEmbedUrl(buildSignEmbedPayload(otpCode, sessionToken, id))
+      const { ok, data } = await getSignEmbedUrl(buildSignEmbedPayload(otpCodeRef.current, sessionTokenRef.current, id))
       if (ok && data.success && data.sign_url) {
         setContractEmbedUrl(data.sign_url)
+        setPreparingContract(false)
       } else {
         setContractError(data.message || t('finalReview.errorEmbedFailed'))
+        setPreparingContract(false)
       }
     } catch {
       setContractError(t('common.networkError'))
+      setPreparingContract(false)
     } finally {
       setLoadingContract(false)
     }
   }
 
   const acceptTermsAndSubmit = async () => {
-    setShowTermsModal(false)
-    setSubmitting(true)
+    setPreparingContract(true)
+    setPreparingPhase(1)
     setSubmitError('')
     try {
       const { ok, data } = await generateContract(
         buildContractPayload(assembleFormForApi(), otpCode, sessionToken)
       )
       if (!ok) {
+        setPreparingContract(false)
+        setShowTermsModal(false)
         setSubmitError(data.message || t('finalReview.errorContractFailed'))
         return
       }
       const docId = data.document_id
       setDocumentId(docId)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setPreparingPhase(2)
+      setShowTermsModal(false)
       setStep('contractSigning')
-      loadContractEmbed(docId)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      await loadContractEmbed(docId)
     } catch {
+      setPreparingContract(false)
+      setShowTermsModal(false)
       setSubmitError(t('common.networkError'))
-    } finally {
-      setSubmitting(false)
     }
   }
 
-  // ── URL-based OTP auto-submit (deep-link support) ─────────────────────────
+  // ── Plaid bypass redirect: when backend allows bypass, skip Plaid entirely ──
+  // If plaidBypassAvailable becomes true while on the plaid step (e.g. after
+  // OTP verify, session restore, or a failed Plaid exchange), redirect the user
+  // straight to the manual bank entry form instead of showing the Plaid stub.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const codeFromUrl = params.get('code')
+    if (step === 'plaid' && plaidBypassAvailable) {
+      setPlaidManualFallback(true)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      setStep('bankInfo')
+    }
+  }, [step, plaidBypassAvailable]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── URL-based OTP prefill (deep-link support) ────────────────────────────
+  useEffect(() => {
+    const codeFromUrl = searchParams.get('code')
     if (codeFromUrl && isValidOtp(codeFromUrl)) {
       setCode(codeFromUrl.toUpperCase())
+      setCodePrefilled(true)
+      setSearchParams({}, { replace: true })
     }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Pre-approved invite: session token passed via URL ───────────────────
+  // When a prospect redeems a pre-approved invite the backend issues a session
+  // token immediately (no OTP step). LeadForm.jsx navigates here with
+  // ?sessionToken=<token> so we can auto-validate and skip the OTP screen.
+  useEffect(() => {
+    const token = searchParams.get('sessionToken')
+    if (!token) return
+
+    // Remove the token from the address bar before any async work to avoid
+    // leaking it via Referer headers or browser history sharing.
+    setSearchParams({}, { replace: true })
+
+    setLoading(true)
+    setError('')
+
+    validateSession(token)
+      .then(({ ok, data }) => {
+        if (!ok || !data.success) {
+          setError(t('otp.errorInvalid'))
+          return
+        }
+        if (!data.lead) {
+          setError(t('otp.errorLeadMissing'))
+          return
+        }
+
+        const apiLead = data.lead
+        const mapped  = mapLeadFromApi(apiLead)
+        setLead(mapped)
+        setSessionToken(token)
+        sessionTokenRef.current = token
+        if (data.document_id) setDocumentId(data.document_id)
+
+        const addrSlice = mapAddressesFromApi(apiLead)
+        setAddressForm({
+          street1: addrSlice.companyAddress.line1,
+          street2: addrSlice.companyAddress.line2,
+          city:    addrSlice.companyAddress.city,
+          state:   addrSlice.companyAddress.state,
+          zip:     addrSlice.companyAddress.zip,
+          mailingOption: addrSlice.mailingAddressChoice === 'other' ? 'different' : 'same',
+        })
+        if (addrSlice.mailingAddressChoice === 'other') {
+          setMailingForm({
+            street1: addrSlice.mailingAddress.line1,
+            street2: addrSlice.mailingAddress.line2,
+            city:    addrSlice.mailingAddress.city,
+            state:   addrSlice.mailingAddress.state,
+            zip:     addrSlice.mailingAddress.zip,
+          })
+        }
+
+        const { bank: bankData, plaidState } = mapBankFromApi(apiLead)
+        setBankForm(bankData)
+        setPlaid(prev => ({ ...prev, ...plaidState }))
+        if (data.manual_verification_authorized) {
+          setPlaidBypassAvailable(true)
+        }
+
+        const { billingChoice, billingContact } = mapBillingContactFromApi(apiLead, mapped.email)
+        setBillingContactOption(billingChoice)
+        const nameParts = (billingContact.name || '').split(' ')
+        setBillingContactForm({
+          firstName: nameParts[0] || '',
+          lastName:  nameParts.slice(1).join(' ') || '',
+          email:     billingContact.email,
+          phone:     '',
+          title:     billingContact.role || '',
+        })
+
+        const { files: apiFiles, uploadStatus: apiUploadStatus } = mapFilesFromApi(apiLead)
+        setUploadedFiles(apiFiles)
+        setUploadStatus(prev => ({ ...prev, ...apiUploadStatus }))
+
+        const resumeStep = getResumeStep(data)
+
+        if (resumeStep >= 11 && token) {
+          window.location.replace(`/#/post-signing?token=${encodeURIComponent(token)}`)
+          return
+        }
+
+        const isPlaidRelink = !!data.plaid_relink_required
+        if (isPlaidRelink) {
+          setPlaid(prev => ({
+            ...prev,
+            status: 'not_started',
+            linkToken: '',
+            linkSessionId: '',
+            selectedAccount: null,
+            institution: null,
+            requestId: null,
+            requiresManualBankInput: false,
+          }))
+        }
+
+        let targetStep = isPlaidRelink ? 'plaid' : mapObsoleteStepToString(resumeStep)
+        if (!isPlaidRelink && data.manual_verification_authorized) {
+          targetStep = 'bankInfo'
+          setPlaidManualFallback(true)
+        }
+        setDisclaimerVisible(true)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        setStep(targetStep)
+        if (resumeStep === 10) loadContractEmbed(data.document_id)
+      })
+      .catch(() => setError(t('common.networkError')))
+      .finally(() => setLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const BANK_STEPS = [
@@ -531,6 +676,9 @@ export default function OtpVerification() {
 
   const handleBankSubmit = () => {
     const errs = {}
+    if (plaidManualFallback && !uploadedFiles.voidCheck) {
+      errs.voidCheck = t('bankInfo.errorVoidCheckRequired')
+    }
     const acct = bankForm.accountNumberMasked.replace(/\D/g, '')
     if (!acct) {
       errs.accountNumberMasked = t('bankInfo.errorAccountRequired')
@@ -553,7 +701,7 @@ export default function OtpVerification() {
     }
     saveProgress(3)
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    setStep(plaidConfig.step5Enabled ? 'plaid' : 'address')
+    setStep('address')
   }
 
   const handleSubmit = async () => {
@@ -576,7 +724,8 @@ export default function OtpVerification() {
         setError(t('otp.errorInvalid'))
         if (data.code === 'OTP_INVALID_OR_USED') {
           setCode('')
-          setShowEmailRecovery(true)
+          setError('')
+          setShowRecoveryModal(true)
         }
         return
       }
@@ -589,7 +738,9 @@ export default function OtpVerification() {
       const mapped  = mapLeadFromApi(apiLead)
       setLead(mapped)
       setOtpCode(otp)
+      otpCodeRef.current = otp
       setSessionToken(data.session_token || null)
+      sessionTokenRef.current = data.session_token || null
       if (data.document_id) setDocumentId(data.document_id)
 
       const addrSlice = mapAddressesFromApi(apiLead)
@@ -614,6 +765,9 @@ export default function OtpVerification() {
       const { bank: bankData, plaidState } = mapBankFromApi(apiLead)
       setBankForm(bankData)
       setPlaid(prev => ({ ...prev, ...plaidState }))
+      if (data.manual_verification_authorized) {
+        setPlaidBypassAvailable(true)
+      }
 
       const { billingChoice, billingContact } = mapBillingContactFromApi(apiLead, mapped.email)
       setBillingContactOption(billingChoice)
@@ -631,7 +785,36 @@ export default function OtpVerification() {
       setUploadStatus(prev => ({ ...prev, ...apiUploadStatus }))
 
       const resumeStep = getResumeStep(data)
-      const targetStep = mapObsoleteStepToString(resumeStep)
+
+      // Steps 11+ (contractSigned, allDone) now live in PostSigning.
+      // Redirect using the session token so that page can validate and resume.
+      if (resumeStep >= 11 && data.session_token) {
+        window.location.replace(`/#/post-signing?token=${encodeURIComponent(data.session_token)}`)
+        return
+      }
+
+      const isPlaidRelink = !!data.plaid_relink_required
+      if (isPlaidRelink) {
+        setPlaid(prev => ({
+          ...prev,
+          status: 'not_started',
+          linkToken: '',
+          linkSessionId: '',
+          selectedAccount: null,
+          institution: null,
+          requestId: null,
+          requiresManualBankInput: false,
+        }))
+      }
+
+      let targetStep = isPlaidRelink ? 'plaid' : mapObsoleteStepToString(resumeStep)
+      // Route to manual bank entry only when the backend explicitly authorises it.
+      // Tokenized account numbers are sufficient for ACH — do not force manual input
+      // based on Plaid metadata alone.
+      if (!isPlaidRelink && data.manual_verification_authorized) {
+        targetStep = 'bankInfo'
+        setPlaidManualFallback(true)
+      }
       setDisclaimerVisible(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       setStep(targetStep)
@@ -645,140 +828,151 @@ export default function OtpVerification() {
 
   const handleRequestNewCode = async () => {
     if (recoverySending || !recoveryEmail.trim()) return
+    setError('')
     setRecoverySending(true)
     await requestNewCode(recoveryEmail.trim())
     setRecoverySending(false)
     setRecoverySent(true)
+    setShowRecoveryModal(false)
   }
 
   if (step === 'plaid') {
     return (
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
-        <div className="text-center mb-8 sm:mb-12">
-          <div className="flex justify-center mb-5">
-            <div className="relative h-16 w-28">
-              <div className="absolute left-0 top-0 w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-ds-sm border-4 border-white z-10">
-                <span className="text-white font-black text-lg tracking-tight">IT</span>
-              </div>
-              <div className="absolute right-0 top-0 w-16 h-16 rounded-full bg-gray-950 flex items-center justify-center shadow-ds-sm border-4 border-white">
-                <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
-                  <path d="M12 3L19 7V15L12 19L5 15V7L12 3Z" />
-                  <path d="M5 7L12 11L19 7" />
-                  <path d="M12 11V19" />
-                </svg>
+      <>
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="flex justify-center mb-5">
+              <div className="relative h-16 w-28">
+                <div className="absolute left-0 top-0 w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-ds-sm border-4 border-white z-10">
+                  <span className="text-white font-black text-lg tracking-tight">IT</span>
+                </div>
+                <div className="absolute right-0 top-0 w-16 h-16 rounded-full bg-gray-950 flex items-center justify-center shadow-ds-sm border-4 border-white">
+                  <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                    <path d="M12 3L19 7V15L12 19L5 15V7L12 3Z" />
+                    <path d="M5 7L12 11L19 7" />
+                    <path d="M12 11V19" />
+                  </svg>
+                </div>
               </div>
             </div>
-          </div>
-          <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900 max-w-2xl mx-auto">
-            {t('plaidStub.heading')}
-          </h1>
-          <p className="text-gray-500 mt-3 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-            {t('plaidStub.subheading')}
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-10 max-w-3xl mx-auto">
-          <div className="space-y-4 mb-8">
-            <div className="flex items-start gap-4 rounded-xl border border-gray-100 bg-gray-50/70 p-4 sm:p-5">
-              <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <svg className="w-6 h-6 text-gray-900" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M3 10h18v2H3v-2zm2-5h14v3H5V5zm-1 9h16v6H4v-6zm6 1h4v4h-4v-4z" />
-                </svg>
-              </div>
-              <p className="text-sm sm:text-base font-medium text-gray-700 leading-relaxed">
-                {t('plaidStub.point1')}
-              </p>
-            </div>
-
-            <div className="flex items-start gap-4 rounded-xl border border-gray-100 bg-gray-50/70 p-4 sm:p-5">
-              <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
-                <svg className="w-6 h-6 text-gray-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
-                  <rect x="3" y="4" width="18" height="16" rx="2" />
-                  <circle cx="8.5" cy="10" r="1.7" />
-                  <path d="M13 9h6M13 12h6M6.5 16c1.1-1.4 3-2 4.6-2 1.2 0 2.5.3 3.5 1" />
-                </svg>
-              </div>
-              <p className="text-sm sm:text-base font-medium text-gray-700 leading-relaxed">
-                {t('plaidStub.point2')}
-              </p>
-            </div>
-
-            {/* Mismatch warning */}
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
-              <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24"
-                   stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round"
-                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-              </svg>
-              <p className="text-sm text-amber-800 leading-relaxed">{t('plaidStub.mismatchWarning')}</p>
-            </div>
+            <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900 max-w-2xl mx-auto">
+              {t('plaidStub.heading')}
+            </h1>
+            <p className="text-gray-500 mt-3 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+              {t('plaidStub.subheading')}
+            </p>
           </div>
 
-          {plaid.status === 'error' && (
-            <p className="text-sm text-red-600 text-center">{t('otp.errorPlaidFlowFailed')}</p>
-          )}
+          <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-10 max-w-3xl mx-auto">
+            <div className="space-y-4 mb-8">
+              <div className="flex items-start gap-4 rounded-xl border border-gray-100 bg-gray-50/70 p-4 sm:p-5">
+                <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <svg className="w-6 h-6 text-gray-900" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M3 10h18v2H3v-2zm2-5h14v3H5V5zm-1 9h16v6H4v-6zm6 1h4v4h-4v-4z" />
+                  </svg>
+                </div>
+                <p className="text-sm sm:text-base font-medium text-gray-700 leading-relaxed">
+                  {t('plaidStub.point1')}
+                </p>
+              </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              type="button"
-              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('bankInfo') }}
-              className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold
-                         text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
-                         transition-colors duration-200 cursor-pointer
-                         focus:outline-none focus:ring-2 focus:ring-gray-200"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-              </svg>
-              {t('plaidStub.backBtn')}
-            </button>
-            {plaid.status === 'verified' ? (
-              <button
-                type="button"
-                onClick={() => { saveProgress(4); window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('address') }}
-                className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
-                           bg-primary hover:bg-secondary rounded-md shadow-ds-sm
-                           transition-colors duration-200 cursor-pointer
-                           focus:outline-none focus:ring-2 focus:ring-primary/30"
-              >
-                {t('common.nextStep')}
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              <div className="flex items-start gap-4 rounded-xl border border-gray-100 bg-gray-50/70 p-4 sm:p-5">
+                <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <svg className="w-6 h-6 text-gray-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="16" rx="2" />
+                    <circle cx="8.5" cy="10" r="1.7" />
+                    <path d="M13 9h6M13 12h6M6.5 16c1.1-1.4 3-2 4.6-2 1.2 0 2.5.3 3.5 1" />
+                  </svg>
+                </div>
+                <p className="text-sm sm:text-base font-medium text-gray-700 leading-relaxed">
+                  {t('plaidStub.point2')}
+                </p>
+              </div>
+
+              {/* Mismatch warning */}
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round"
+                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                 </svg>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={startPlaidVerification}
-                disabled={plaid.status === 'in_progress'}
-                className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
-                           bg-primary hover:bg-secondary rounded-md shadow-ds-sm
-                           transition-colors duration-200 cursor-pointer
-                           focus:outline-none focus:ring-2 focus:ring-primary/30
-                           disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {plaid.status === 'in_progress' ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    {t('plaidStub.connecting')}
-                  </>
-                ) : plaid.status === 'error' ? (
-                  t('plaidStub.retryBtn')
-                ) : (
-                  t('plaidStub.button')
-                )}
-              </button>
+                <p className="text-sm text-amber-800 leading-relaxed">{t('plaidStub.mismatchWarning')}</p>
+              </div>
+            </div>
+
+            {plaid.status === 'error' && (
+              <p className="text-sm text-red-600 text-center mb-4">{t('otp.errorPlaidFlowFailed')}</p>
             )}
-          </div>
-        </div>
-      </main>
-    )
-  }
 
-  if (step === 'address') {
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                  setStep('review')
+                }}
+                className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold
+                           text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
+                           transition-colors duration-200 cursor-pointer
+                           focus:outline-none focus:ring-2 focus:ring-gray-200"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+                {t('plaidStub.backBtn')}
+              </button>
+              {plaid.status === 'verified' ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    saveProgress(5)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                    setStep('address')
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                             bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                             transition-colors duration-200 cursor-pointer
+                             focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  {t('common.nextStep')}
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startPlaidVerification}
+                  disabled={plaid.status === 'in_progress'}
+                  className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                             bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                             transition-colors duration-200 cursor-pointer
+                             focus:outline-none focus:ring-2 focus:ring-primary/30
+                             disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {plaid.status === 'in_progress' ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      {t('plaidStub.connecting')}
+                    </>
+                  ) : plaid.status === 'error' ? (
+                    t('plaidStub.retryBtn')
+                  ) : (
+                    t('plaidStub.button')
+                  )}
+                </button>
+              )}
+            </div>
+
+          </div>
+        </main>
+      </>
+    )
+  } 
+   if (step === 'address') {
     return (
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
         <StepIndicator steps={BANK_STEPS} currentStep={2} />
@@ -2027,9 +2221,22 @@ export default function OtpVerification() {
         {showTermsModal && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-            onClick={(e) => e.target === e.currentTarget && setShowTermsModal(false)}
+            onClick={(e) => !preparingContract && e.target === e.currentTarget && setShowTermsModal(false)}
           >
-            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 sm:p-8 space-y-5">
+            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 sm:p-8 space-y-5 relative overflow-hidden">
+
+              {/* Full-card loading overlay after Agree is clicked */}
+              {preparingContract && (
+                <div className="absolute inset-0 z-10 bg-white/90 flex flex-col items-center justify-center gap-4 rounded-2xl">
+                  <svg className="w-9 h-9 animate-spin text-primary" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <p className="text-sm font-semibold text-gray-700 text-center">
+                    {t('contractSigning.preparingPhase1')}
+                  </p>
+                </div>
+              )}
 
               {/* Header */}
               <div className="flex items-start justify-between gap-4">
@@ -2044,7 +2251,8 @@ export default function OtpVerification() {
                 <button
                   type="button"
                   onClick={() => setShowTermsModal(false)}
-                  className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+                  disabled={preparingContract}
+                  className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none disabled:opacity-0 disabled:pointer-events-none"
                   aria-label="Close"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -2067,7 +2275,7 @@ export default function OtpVerification() {
                 <button
                   type="button"
                   onClick={acceptTermsAndSubmit}
-                  disabled={submitting}
+                  disabled={preparingContract}
                   className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                              bg-primary hover:bg-secondary rounded-md shadow-ds-sm
                              transition-colors duration-200 cursor-pointer
@@ -2090,328 +2298,63 @@ export default function OtpVerification() {
 
   if (step === 'contractSigning') {
     return (
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">{t('contractSigning.heading')}</h1>
-          <p className="text-gray-500 mt-3 text-sm leading-relaxed max-w-xl mx-auto">
-            {t('contractSigning.subheading')}
-          </p>
-        </div>
+      <>
+        {/* Full-screen preparing overlay — shown while generating contract + fetching signing URL */}
+        {preparingContract && (
+          <div className="fixed inset-0 z-[60] bg-black/70 flex flex-col items-center justify-center gap-5 px-6">
+            <svg className="w-10 h-10 animate-spin text-white" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <p className="text-white text-lg font-semibold text-center">
+              {preparingPhase === 1 ? t('contractSigning.preparingPhase1') : t('contractSigning.preparingPhase2')}
+            </p>
+            <p className="text-white/60 text-sm text-center max-w-xs leading-relaxed">
+              {t('contractSigning.preparingNote')}
+            </p>
+          </div>
+        )}
 
-        <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 overflow-hidden">
-          {loadingContract ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <svg className="w-8 h-8 animate-spin text-primary" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              <p className="text-sm text-gray-500">{t('contractSigning.loading')}</p>
+        {/* Loading / error state — shown inside normal layout before iframe is ready */}
+        {(loadingContract || contractError) && !preparingContract && (
+          <main className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
+            <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 overflow-hidden">
+              {loadingContract ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <svg className="w-8 h-8 animate-spin text-primary" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <p className="text-sm text-gray-500">{t('contractSigning.loading')}</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <p className="text-sm text-red-600">{contractError}</p>
+                  <button
+                    type="button"
+                    onClick={() => { setPreparingContract(true); setPreparingPhase(2); loadContractEmbed() }}
+                    className="px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-secondary rounded-md
+                               transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  >
+                    {t('contractSigning.retryBtn')}
+                  </button>
+                </div>
+              )}
             </div>
-          ) : contractError ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <p className="text-sm text-red-600">{contractError}</p>
-              <button
-                type="button"
-                onClick={() => loadContractEmbed()}
-                className="px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-secondary rounded-md
-                           transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
-              >
-                {t('contractSigning.retryBtn')}
-              </button>
-            </div>
-          ) : contractEmbedUrl ? (
+          </main>
+        )}
+
+        {/* Full-viewport iframe — covers everything including Header once signing URL is ready */}
+        {contractEmbedUrl && (
+          <div className="fixed inset-0 z-50 bg-white">
             <iframe
               src={contractEmbedUrl}
               title="Contract signing"
-              className="w-full"
-              style={{ height: '70vh', border: 'none' }}
+              style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
             />
-          ) : null}
-        </div>
-
-        {contractEmbedUrl && (
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('contractSigned') }}
-              className="inline-flex items-center gap-2 px-7 py-3 text-sm font-semibold text-white
-                         bg-primary hover:bg-secondary rounded-md shadow-ds-sm
-                         transition-colors duration-200 cursor-pointer
-                         focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {t('contractSigning.doneBtn')}
-            </button>
           </div>
         )}
-      </main>
-    )
-  }
-
-  if (step === 'allDone') {
-    const services = [
-      {
-        title: t('allDone.service1Title'),
-        desc: t('allDone.service1Desc'),
-        href: 'https://itruckingservices.com/services/tire-discounts',
-        img: bannerTires,
-      },
-      {
-        title: t('allDone.service2Title'),
-        desc: t('allDone.service2Desc'),
-        href: 'https://itruckingservices.com/services/freight-factoring',
-        img: bannerFactoring,
-      },
-      {
-        title: t('allDone.service3Title'),
-        desc: t('allDone.service3Desc'),
-        href: 'https://itruckingservices.com/services/driver-business-support',
-        img: bannerProtection,
-      },
-    ]
-
-    return (
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
-
-        {/* Thank you header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 mb-6">
-            <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">{t('allDone.heading')}</h1>
-          <p className="text-gray-500 mt-3 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-            {t('allDone.subheading')}
-          </p>
-        </div>
-
-        {/* Services block — edge-to-edge on mobile, constrained on desktop */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-ds-sm overflow-hidden">
-
-          {/* Small centered label */}
-          <div className="text-center px-6 py-5 bg-blue-600">
-            <p className="text-sm font-semibold text-white">{t('allDone.servicesTitle')}</p>
-            <p className="text-xs text-blue-100 mt-1">{t('allDone.servicesSubtitle')}</p>
-          </div>
-
-          {/* Cards — stacked on mobile, horizontal rows on desktop */}
-          <div className="flex flex-col gap-4 p-4 sm:p-6">
-            {services.map((svc) => (
-              <a
-                key={svc.href}
-                href={svc.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col sm:flex-row rounded-xl border border-gray-100 overflow-hidden hover:border-primary hover:shadow-ds-sm transition-all duration-200"
-              >
-                {/* Image — half width on desktop */}
-                <div className="w-full sm:w-1/2 sm:flex-shrink-0 overflow-hidden">
-                  <img
-                    src={svc.img}
-                    alt={svc.title}
-                    className="w-full h-auto sm:h-full sm:object-cover block"
-                  />
-                </div>
-                {/* Text — half width on desktop */}
-                <div className="w-full sm:w-1/2 p-5 sm:p-8 flex flex-col justify-center">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">{svc.title}</h3>
-                  <p className="text-xs text-gray-500 leading-relaxed">{svc.desc}</p>
-                  <span className="mt-4 text-xs font-semibold text-primary group-hover:underline">
-                    {t('allDone.learnMore')}
-                  </span>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-
-      </main>
-    )
-  }
-
-  if (step === 'contractSigned') {
-    const MAX_TRUCKS = 50
-
-    const updateTruck = (idx, field, val) => {
-      setTrucks(prev => prev.map((t, i) => i === idx ? { ...t, [field]: val } : t))
-      setTruckErrors(prev => {
-        const next = [...prev]
-        if (next[idx]) { next[idx] = { ...next[idx], [field]: undefined } }
-        return next
-      })
-    }
-
-    const addTruck = () => {
-      if (trucks.length >= MAX_TRUCKS) return
-      setTrucks(prev => [...prev, { truckNumber: '', driverId: '' }])
-    }
-
-    const removeTruck = (idx) => {
-      setTrucks(prev => prev.filter((_, i) => i !== idx))
-      setTruckErrors(prev => prev.filter((_, i) => i !== idx))
-    }
-
-    const handleSave = async () => {
-      const errs = trucks.map(truck => ({
-        truckNumber: !truck.truckNumber.trim() ? t('contractSigned.errorTruckRequired') : undefined,
-        driverId:    !truck.driverId.trim()    ? t('contractSigned.errorDriverIdRequired') : undefined,
-      }))
-      const hasErr = errs.some(e => e.truckNumber || e.driverId)
-      if (hasErr) { setTruckErrors(errs); return }
-
-      setFuelCardsSubmitting(true)
-      setFuelCardsError('')
-      try {
-        const fuelCards = trucks.map(tr => ({ unit: tr.truckNumber, driver_id: tr.driverId }))
-        const { ok, data } = await setFuelCards(buildFuelCardsPayload(otpCode, sessionToken, fuelCards))
-        if (!ok || data.success === false) {
-          setFuelCardsError(data.message || t('contractSigned.errorSaveFailed'))
-          return
-        }
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-        setStep('allDone')
-      } catch {
-        setFuelCardsError(t('common.networkError'))
-      } finally {
-        setFuelCardsSubmitting(false)
-      }
-    }
-
-    const truckInputClass = (err) => [
-      'w-full px-3 py-2.5 text-sm border rounded-xl',
-      'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400',
-      'transition-colors duration-200 bg-white text-gray-900',
-      err ? 'border-red-300 bg-red-50' : 'border-gray-200',
-    ].join(' ')
-
-    return (
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
-
-        {/* Success header */}
-        <div className="text-center mb-10 sm:mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-5">
-            <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl sm:text-ds-h1 font-bold text-gray-900">{t('contractSigned.heading')}</h1>
-          <p className="text-gray-500 mt-3 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-            {t('contractSigned.subheading')}
-          </p>
-        </div>
-
-        {/* Truck setup — prominent highlighted block */}
-        <div className="max-w-3xl mx-auto">
-          <div className="rounded-2xl border-2 border-primary bg-blue-50/40 p-6 sm:p-8">
-
-            {/* Block header */}
-            <div className="relative mb-5">
-              <div className="absolute top-0 right-0 flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-primary">
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-                </svg>
-              </div>
-              <h2 className="text-base font-bold text-gray-900 pr-14">{t('contractSigned.truckBlockTitle')}</h2>
-              <p className="text-sm text-gray-600 mt-0.5 leading-relaxed pr-14">{t('contractSigned.truckBlockDesc')}</p>
-              <p className="mt-3 text-xs text-blue-700 bg-blue-100 rounded-lg px-3 py-2">
-                {t('contractSigned.pinRecommendation')}
-              </p>
-            </div>
-
-            {/* Truck rows */}
-            <div className="space-y-3">
-              {trucks.map((truck, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                      {t('contractSigned.labelTruckNumber')}
-                    </p>
-                    <input
-                      type="text"
-                      value={truck.truckNumber}
-                      onChange={e => updateTruck(idx, 'truckNumber', e.target.value)}
-                      placeholder={t('contractSigned.placeholderTruckNumber')}
-                      className={truckInputClass(truckErrors[idx]?.truckNumber)}
-                      maxLength={30}
-                    />
-                    {truckErrors[idx]?.truckNumber && (
-                      <p className="mt-1 text-xs text-red-600">{truckErrors[idx].truckNumber}</p>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                      {t('contractSigned.labelDriverId')}
-                    </p>
-                    <input
-                      type="text"
-                      value={truck.driverId}
-                      onChange={e => updateTruck(idx, 'driverId', e.target.value)}
-                      placeholder={t('contractSigned.placeholderDriverId')}
-                      className={truckInputClass(truckErrors[idx]?.driverId)}
-                      maxLength={20}
-                    />
-                    {truckErrors[idx]?.driverId && (
-                      <p className="mt-1 text-xs text-red-600">{truckErrors[idx].driverId}</p>
-                    )}
-                  </div>
-                  {trucks.length > 1 && (
-                    <div className="pt-6">
-                      <button
-                        type="button"
-                        onClick={() => removeTruck(idx)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none"
-                        aria-label="Remove truck"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Add truck */}
-            {trucks.length < MAX_TRUCKS && (
-              <button
-                type="button"
-                onClick={addTruck}
-                className="mt-4 flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary
-                           border border-primary rounded-md hover:bg-primary hover:text-white
-                           transition-colors duration-200 cursor-pointer focus:outline-none"
-              >
-                {t('contractSigned.addTruckBtn')}
-              </button>
-            )}
-
-            {fuelCardsError && (
-              <p className="mt-4 text-sm text-red-600 text-center">{fuelCardsError}</p>
-            )}
-
-            {/* Save button */}
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={fuelCardsSubmitting}
-              className="mt-6 w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
-                         bg-primary hover:bg-secondary rounded-md shadow-ds-sm
-                         transition-colors duration-200 cursor-pointer
-                         focus:outline-none focus:ring-2 focus:ring-primary/30
-                         disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {t('contractSigned.saveBtn')}
-            </button>
-          </div>
-        </div>
-
-      </main>
+      </>
     )
   }
 
@@ -2438,6 +2381,76 @@ export default function OtpVerification() {
             </svg>
             <p className="text-sm text-amber-800 leading-relaxed">{t('bankInfo.infoNotice')}</p>
           </div>
+
+          {/* Void check upload — required for backend-bypass / manual-fallback path */}
+          {plaidManualFallback && (
+            <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-8">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                {t('bankInfo.voidCheckLabel')} <span className="text-red-500">*</span>
+              </label>
+
+              {uploadedFiles.voidCheck ? (
+                <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-xl">
+                  <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                       stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round"
+                          d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-green-800 truncate">{uploadedFiles.voidCheck.filename}</p>
+                    <p className="text-xs text-green-600">{t('plaidStub.voidCheckUploaded')}</p>
+                  </div>
+                  <label className="cursor-pointer text-xs text-green-700 underline flex-shrink-0">
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.heic,.doc,.docx"
+                      className="sr-only"
+                      onChange={e => { handleVoidCheckSelect(e.target.files?.[0] ?? null); clearBankError('voidCheck') }}
+                    />
+                    {t('personalInfo.tapToChange')}
+                  </label>
+                </div>
+              ) : (
+                <label className={[
+                  'flex flex-col items-center justify-center gap-2 p-5 rounded-xl border-2 border-dashed cursor-pointer transition-colors duration-200',
+                  bankErrors.voidCheck || uploadStatus.voidCheck.type === 'error'
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50',
+                ].join(' ')}>
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.heic,.doc,.docx"
+                    className="sr-only"
+                    onChange={e => { handleVoidCheckSelect(e.target.files?.[0] ?? null); clearBankError('voidCheck') }}
+                  />
+                  {uploadInFlight.voidCheck ? (
+                    <>
+                      <svg className="w-5 h-5 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <p className="text-sm text-gray-500">{t('common.loading')}</p>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24"
+                           stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round"
+                              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                      </svg>
+                      <p className="text-sm font-medium text-gray-700">{t('personalInfo.uploadBtn')}</p>
+                      <p className="text-xs text-gray-400">{t('personalInfo.uploadHint')}</p>
+                    </>
+                  )}
+                </label>
+              )}
+              {(bankErrors.voidCheck || uploadStatus.voidCheck.type === 'error') && (
+                <p className="mt-1.5 text-xs text-red-600">
+                  {bankErrors.voidCheck || uploadStatus.voidCheck.message}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Manual input card */}
           <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-8">
@@ -2491,68 +2504,94 @@ export default function OtpVerification() {
                 {bankErrors.routingNumber && <p className="text-xs text-red-500 mt-1.5">{bankErrors.routingNumber}</p>}
               </div>
 
-              {/* Void check upload (required when not Plaid-verified) */}
-              {!plaid.selectedAccount && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    {t('bankInfo.labelVoidCheck')} <span className="text-red-500">*</span>
-                  </label>
-                  <label className={[
-                    'flex flex-col items-center justify-center gap-2 p-5 rounded-lg border-2 border-dashed cursor-pointer transition-colors duration-200',
-                    uploadStatus.voidCheck.type === 'success'
-                      ? 'border-green-400 bg-green-50'
-                      : uploadStatus.voidCheck.type === 'error'
-                        ? 'border-red-300 bg-red-50'
-                        : 'border-gray-200 hover:border-gray-400 hover:bg-gray-50',
-                  ].join(' ')}>
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png,.heic"
-                      className="sr-only"
-                      onChange={(e) => handleVoidCheckSelect(e.target.files?.[0] ?? null)}
-                    />
-                    {uploadInFlight.voidCheck ? (
-                      <p className="text-sm text-gray-500">{t('common.loading')}</p>
-                    ) : uploadStatus.voidCheck.type === 'success' ? (
-                      <p className="text-sm font-medium text-green-700">{voidCheckFile?.name || t('common.fileSelected')}</p>
-                    ) : (
-                      <p className="text-sm font-medium text-gray-700">{t('bankInfo.uploadVoidCheck')}</p>
-                    )}
-                  </label>
-                  {uploadStatus.voidCheck.type === 'error' && (
-                    <p className="text-xs text-red-500 mt-1.5">{uploadStatus.voidCheck.message}</p>
-                  )}
-                </div>
-              )}
-
-              {/* Plaid verified badge */}
-              {plaid.selectedAccount && (
-                <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
-                  <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <p className="text-xs font-semibold text-green-700">
-                    {plaid.institution?.name} ••••{plaid.selectedAccount.mask}
-                  </p>
-                </div>
-              )}
-
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleBankSubmit}
-            className="w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
-                       bg-primary hover:bg-secondary rounded-md shadow-ds-sm
-                       transition-colors duration-200 cursor-pointer
-                       focus:outline-none focus:ring-2 focus:ring-primary/30"
-          >
-            {t('bankInfo.confirmBtn')}
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
-          </button>
+          {/* Verification status messages */}
+          {bankVerificationStatus === 'fail' && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round"
+                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              <p className="text-sm text-red-800 leading-relaxed">{t('bankInfo.verifyFailMsg')}</p>
+            </div>
+          )}
+
+          {bankVerificationStatus === 'caution' && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+              <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round"
+                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              <p className="text-sm text-amber-800 leading-relaxed">{t('bankInfo.verifyCautionMsg')}</p>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+                setStep('plaid')
+              }}
+              className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold
+                         text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
+                         transition-colors duration-200 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-gray-200"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+              </svg>
+              {t('bankInfo.backBtn')}
+            </button>
+
+            {bankVerificationStatus === 'caution' ? (
+              <button
+                type="button"
+                onClick={handleBankProceed}
+                className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                           bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                           transition-colors duration-200 cursor-pointer
+                           focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                {t('bankInfo.proceedBtn')}
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleBankSubmit}
+                disabled={bankVerifying}
+                className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                           bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                           transition-colors duration-200 cursor-pointer
+                           focus:outline-none focus:ring-2 focus:ring-primary/30
+                           disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {bankVerifying ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    {t('bankInfo.verifying')}
+                  </>
+                ) : (
+                  <>
+                    {t('bankInfo.confirmBtn')}
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </main>
     )
@@ -2698,7 +2737,7 @@ export default function OtpVerification() {
                     setMarketingConsent(modalConsent)
                     setShowModal(false)
                     window.scrollTo({ top: 0, behavior: 'smooth' })
-                    setStep('bankInfo')
+                    setStep('plaid')
                   }}
                   className="flex-1 flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold text-white
                              bg-primary hover:bg-secondary rounded-md transition-colors duration-200
@@ -2736,15 +2775,19 @@ export default function OtpVerification() {
 
         {/* OTP input */}
         <div className="mb-8">
+          {recoverySent && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl">
+              <p className="text-sm text-green-700 text-center font-medium">{t('otp.recoverySent')}</p>
+            </div>
+          )}
           <p className="text-sm font-medium text-gray-700 mb-3 text-center">{t('otp.enterCode')}</p>
           <input
             type="text"
             autoComplete="one-time-code"
             spellCheck={false}
             value={code}
-            onChange={(e) => { setCode(e.target.value); setError('') }}
+            onChange={(e) => { setCode(e.target.value); setError(''); setCodePrefilled(false) }}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-
             className={[
               'w-full px-4 py-3 rounded-xl border-2 text-center text-xl font-bold tracking-widest uppercase',
               'text-gray-900 bg-white text-base',
@@ -2754,6 +2797,14 @@ export default function OtpVerification() {
           />
           {error && (
             <p className="text-xs text-red-500 mt-2 text-center" role="alert">{error}</p>
+          )}
+          {codePrefilled && !error && (
+            <p className="flex items-center justify-center gap-1.5 text-xs text-green-600 mt-2 text-center">
+              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {t('otp.prefillHint')}
+            </p>
           )}
         </div>
 
@@ -2770,8 +2821,6 @@ export default function OtpVerification() {
               <ul className="space-y-1.5">
                 {[
                   t('otp.prepareItem1'),
-                  t('otp.prepareItem2'),
-                  t('otp.prepareItem3'),
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-xs text-amber-700">
                     <svg className="w-3.5 h-3.5 flex-shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24"
@@ -2792,41 +2841,7 @@ export default function OtpVerification() {
           </div>
         )}
 
-        {/* Email recovery (shown when OTP is invalid/used) */}
-        {showEmailRecovery && (
-          <div className="mb-6 space-y-3">
-            <p className="text-sm text-gray-600 text-center">{t('otp.recoveryPrompt')}</p>
-            {recoverySent ? (
-              <p className="text-sm text-green-700 text-center font-medium">{t('otp.recoverySent')}</p>
-            ) : (
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  value={recoveryEmail}
-                  onChange={e => setRecoveryEmail(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleRequestNewCode()}
-                  placeholder={t('otp.recoveryPlaceholder')}
-                  className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-xl
-                             focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400
-                             transition-colors duration-200 bg-white text-gray-900"
-                />
-                <button
-                  type="button"
-                  onClick={handleRequestNewCode}
-                  disabled={recoverySending || !recoveryEmail.trim()}
-                  className="px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-secondary
-                             rounded-xl transition-colors duration-200 cursor-pointer
-                             focus:outline-none focus:ring-2 focus:ring-primary/30
-                             disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {recoverySending ? t('common.loading') : t('otp.recoverySendBtn')}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Continue button */}
+        {/* Action button */}
         <button
           type="button"
           onClick={handleSubmit}
@@ -2864,6 +2879,77 @@ export default function OtpVerification() {
         </div>
 
       </div>
+
+      {/* Invalid-code recovery modal — shown when OTP_INVALID_OR_USED */}
+      {showRecoveryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-red-50">
+                <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">{t('otp.invalidCodeModalTitle')}</h2>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">{t('otp.invalidCodeModalBody')}</p>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">{t('otp.recoveryPlaceholder')}</label>
+              <input
+                type="email"
+                autoComplete="email"
+                autoFocus
+                value={recoveryEmail}
+                onChange={e => setRecoveryEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleRequestNewCode()}
+                placeholder={t('otp.recoveryPlaceholder')}
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-gray-400
+                           text-gray-900 bg-white text-sm
+                           focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors duration-200"
+              />
+            </div>
+            <div className="flex flex-col gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={handleRequestNewCode}
+                disabled={recoverySending || !recoveryEmail.trim()}
+                className="w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                           bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                           transition-colors duration-200 cursor-pointer
+                           focus:outline-none focus:ring-2 focus:ring-primary/30
+                           disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {recoverySending ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    {t('common.loading')}
+                  </>
+                ) : (
+                  <>
+                    {t('otp.recoverySendBtn')}
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowRecoveryModal(false)}
+                className="w-full px-7 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700
+                           rounded-md border border-gray-200 hover:border-gray-300 bg-white
+                           transition-colors duration-200 cursor-pointer
+                           focus:outline-none focus:ring-2 focus:ring-gray-200"
+              >
+                {t('common.cancel') || 'Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Disclaimer modal — shown once after successful OTP verification */}
       {disclaimerVisible && (

@@ -3,16 +3,19 @@ import { lazy, Suspense, useEffect } from 'react'
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { I18nProvider, useI18n } from './context/I18nContext'
 import Header from './components/Header'
+import LanguagePromptModal from './components/LanguagePromptModal'
 
 const LeadForm         = lazy(() => import('./pages/LeadForm'))
 const OtpVerification  = lazy(() => import('./pages/OtpVerification'))
+const PostSigning      = lazy(() => import('./pages/PostSigning'))
+const RelinkPage       = lazy(() => import('./pages/RelinkPage'))
 
 function TitleUpdater() {
   const { t } = useI18n()
   const location = useLocation()
 
   useEffect(() => {
-    const isReg = location.pathname.startsWith('/registration')
+    const isReg = location.pathname.startsWith('/registration') || location.pathname.startsWith('/post-signing')
     document.title = isReg ? t('registration.title') : t('lead.title')
   }, [location.pathname, t])
 
@@ -37,10 +40,13 @@ function AppShell() {
     <div className="min-h-screen bg-white font-sans">
       <TitleUpdater />
       <Header />
+      <LanguagePromptModal />
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/" element={<LeadForm />} />
           <Route path="/registration" element={<OtpVerification />} />
+          <Route path="/post-signing" element={<PostSigning />} />
+          <Route path="/relink" element={<RelinkPage />} />
         </Routes>
       </Suspense>
     </div>

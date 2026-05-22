@@ -3,15 +3,31 @@ import translations from '../data/translations'
 
 const I18nContext = createContext(null)
 
+function safeGetStoredLang() {
+  try {
+    return localStorage.getItem('itrucking-lang')
+  } catch {
+    return null
+  }
+}
+
+function safeSetStoredLang(lang) {
+  try {
+    localStorage.setItem('itrucking-lang', lang)
+  } catch {
+    // Ignore storage failures (e.g. private mode / blocked storage)
+  }
+}
+
 export function I18nProvider({ children }) {
   const [lang, setLangState] = useState(() => {
-    return localStorage.getItem('itrucking-lang') || 'en'
+    return safeGetStoredLang() || 'en'
   })
 
   const setLang = (newLang) => {
     if (!translations[newLang]) return
     setLangState(newLang)
-    localStorage.setItem('itrucking-lang', newLang)
+    safeSetStoredLang(newLang)
     document.documentElement.lang = newLang
   }
 

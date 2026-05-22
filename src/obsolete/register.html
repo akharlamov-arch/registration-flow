@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration</title>
+  <link rel="stylesheet" href="./assets/style.css">
+</head>
+
+<body>
+  <div class="w-embed w-script">
+
+    <!-- Load Alpine first -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+
+    <div class="page-shell" x-data="registrationForm()">
+      <!-- <div class="page-header"> TODO: wrap all components above the card in a wrapper and make it stick to the top of the page -->
+
+        <div class="language-selector" aria-label="Language selector">
+          <label for="language-select" x-text="t('languageLabel')"></label>
+          <select id="language-select" x-model="language">
+            <option value="en">EN</option>
+            <option value="es">ES</option>
+            <option value="uk">UA</option>
+            <option value="ru">RU</option>
+          </select>
+        </div>
+
+        <svg xmlns="http://www.w3.org/2000/svg" style="display: none">
+          <symbol id="logo" viewBox="0 0 232 30" fill="none">
+            <g clip-path="url(#clip0_24_430)">
+              <path d="M4.02871 19.3462L0 30H10.6313L14.66 19.3462H4.02871Z" fill="#D42C00" />
+              <path d="M26.2891 30H32.4949C35.1585 30 37.5445 28.3491 38.4883 25.853L40.9489 19.3462H30.3176L26.2891 30Z"
+                fill="#D42C00" />
+              <path
+                d="M15.7704 -1.90735e-06C13.1068 -1.90735e-06 10.7209 1.6508 9.77691 4.1469L7.31641 10.6537H20.4609L13.1452 30H23.7765L31.092 10.6537H44.2365L48.2652 -1.90735e-06H15.7704Z"
+                fill="#D42C00" />
+              <path d="M56.4198 11.0062H60.6809V24.7875H56.4198V11.0062ZM56.3926 5.15929H60.7081V8.94723H56.3926V5.15929Z"
+                fill="#231E20" />
+              <path d="M71.6077 9.07962H64.5879V5.15929H83.1071V9.07962H76.1146V24.7875H71.6077V9.07962Z"
+                fill="#231E20" />
+              <path
+                d="M96.7925 14.5363C99.2234 14.5363 100.316 13.9536 100.316 11.7285C100.316 9.45051 99.2778 8.86775 96.7377 8.86775H91.5208V14.5363H96.7925ZM96.0549 18.2712H91.5208V24.7875H87.1504V5.15929H96.9289C103.293 5.15929 104.823 7.80814 104.823 11.5696C104.823 14.2714 103.922 16.7614 100.562 17.7944L104.577 24.7875H99.7969L96.0549 18.2712Z"
+                fill="#231E20" />
+              <path
+                d="M109.465 17.2912V5.15931H113.944V16.7349C113.944 19.6487 114.682 21.3175 118.779 21.3175C122.849 21.3175 123.641 19.7546 123.641 16.7349V5.15931H127.984V17.2912C127.984 21.0525 127.247 25.1583 118.725 25.1583C110.175 25.1583 109.465 21.0525 109.465 17.2912Z"
+                fill="#231E20" />
+              <path
+                d="M132.301 14.9601C132.301 7.91406 136.262 4.84134 142.981 4.84134C146.669 4.84134 149.018 5.79498 150.93 7.6757L147.843 10.6689C146.614 9.50337 145.166 8.81471 142.954 8.81471C138.638 8.81471 136.808 10.9338 136.808 15.0131C136.808 18.9599 138.338 21.2114 142.981 21.2114C145.603 21.2114 146.86 20.3638 148.116 19.2247L151.066 22.0326C149.455 23.6484 147.297 25.0788 142.708 25.0788C135.142 25.0788 132.301 21.4499 132.301 14.9601Z"
+                fill="#231E20" />
+              <path
+                d="M163.057 16.2316L160.189 19.5162V24.7875H155.764V5.15929H160.189V14.0331L167.864 5.15929H172.808L165.952 12.9205L173.792 24.7875H168.738L163.057 16.2316Z"
+                fill="#231E20" />
+              <path d="M178.463 5.15931H182.915V24.7875H178.463V5.15931Z" fill="#231E20" />
+              <path
+                d="M188.896 5.15931H193.731L203.046 17.5296V5.15931H207.307V24.7875H203.21L193.185 11.5431V24.7875H188.896V5.15931Z"
+                fill="#231E20" />
+              <path
+                d="M211.924 14.9601C211.924 7.8611 215.748 4.84137 222.576 4.84137C226.673 4.84137 229.159 6.00688 230.771 7.62275L227.712 10.616C226.674 9.66235 225.335 8.81474 222.549 8.81474C218.124 8.81474 216.403 10.9338 216.403 15.0131C216.403 19.3042 217.605 21.4234 222.494 21.4234C226.428 21.4234 227.575 20.1519 227.575 17.3971V16.9732H221.921V13.3708H232V16.5759C232 22.165 229.706 25.0788 222.276 25.0788C214.191 25.0788 211.924 21.4763 211.924 14.9601Z"
+                fill="#231E20" />
+            </g>
+            <defs>
+              <clipPath id="clip0_24_430">
+                <rect width="232" height="30" fill="white" />
+              </clipPath>
+            </defs>
+          </symbol>
+          <symbol id="phone-icon" viewBox="0 0 24 24">
+            <path
+              d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+          </symbol>
+        </svg>
+
+          <!-- Mobile Contact Us button (top-right corner) -->
+          <a href="tel:+19162694606" class="contact-us-mobile">
+            <svg width="20" height="20" fill="currentColor">
+              <use href="#phone-icon"></use>
+            </svg>
+            <span x-text="t('contactUs')"></span>
+          </a>
+
+        <svg class="page-logo" aria-label="iTRUCKING">
+          <use href="#logo"></use>
+        </svg>
+
+        <div class="page-hero">
+          <template x-if="pageTitleIconUrl">
+            <div class="page-title-row">
+              <span class="page-title-icon" x-html="pageTitleIconUrl"></span>
+              <h1 class="page-title" x-text="pageTitle"></h1>
+            </div>
+          </template>
+
+          <template x-if="!pageTitleIconUrl">
+            <h1 class="page-title" x-text="pageTitle"></h1>
+          </template>
+
+          <p class="page-subtitle" x-show="!pageSubtitleStrong">
+            <span x-text="pageSubtitle"></span>
+          </p>
+
+          <p class="page-subtitle" x-show="pageSubtitleStrong">
+            <span x-text="pageSubtitle"></span><span class="page-subtitle-strong" x-text="pageSubtitleStrong"></span>
+          </p>
+        </div>
+      <!-- Wrapper end </div> -->
+      <div class="card">
+
+        <!-- Progress bar -->
+        <div class="otp-progress">
+          <p class="otp-progress-label" x-text="progressTitle"></p>
+          <div class="otp-progress-track" aria-label="Application progress">
+            <div class="otp-progress-fill" :style="`width: ${progressFillPercent}%;`"></div>
+          </div>
+        </div>
+
+        <!-- Step 1: Contact Information -->
+        <div x-cloak x-show="step === 1">
+          <div class="step-header">
+            <h2 x-text="t('step1Title')"></h2>
+            <p class="step-subtitle" x-text="t('step1Subtitle')"></p>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <p class="form-label" x-text="t('labelFirstName')"></p>
+              <input class="form-input" type="text" x-model="form.firstName" :placeholder="t('placeholderFirstName')">
+              <template x-if="errors.firstName">
+                <div class="error" x-text="errors.firstName"></div>
+              </template>
+            </div>
+            <div class="field">
+              <p class="form-label" x-text="t('labelLastName')"></p>
+              <input class="form-input" type="text" x-model="form.lastName" :placeholder="t('placeholderLastName')">
+              <template x-if="errors.lastName">
+                <div class="error" x-text="errors.lastName"></div>
+              </template>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <p class="form-label" x-text="t('labelEmail')"></p>
+              <input class="form-input" type="email" x-model="form.email" :placeholder="t('placeholderEmail')">
+              <template x-if="errors.email">
+                <div class="error" x-text="errors.email"></div>
+              </template>
+            </div>
+            <div class="field">
+              <p class="form-label" x-text="t('labelPhone')"></p>
+              <input class="form-input" type="tel" :value="formatPhone(form.phone)"
+                @input="form.phone = normalizeDigits($event.target.value, 10)" :placeholder="t('placeholderPhone')"
+                inputmode="numeric" maxlength="14">
+              <template x-if="errors.phone">
+                <div class="error" x-text="errors.phone"></div>
+              </template>
+            </div>
+          </div>
+
+          <p class="helper-text" x-text="t('helperEmail')"></p>
+
+          <div class="page-actions page-actions-end">
+            <button class="primary review-next" @click="next()" x-text="t('nextStep')"></button>
+          </div>
+        </div>
+
+        <!-- Step 2: Account Type -->
+        <div x-cloak x-show="step === 2">
+          <div class="account-step-header">
+            <h2 x-text="t('step2Title')"></h2>
+            <p class="account-step-subtitle" x-text="t('step2Subtitle')"></p>
+          </div>
+
+          <div class="account-cards">
+            <div class="account-card" :class="{ selected: form.accountType === 'personal' }"
+              @click="form.accountType = 'personal'">
+              <label class="account-pill">
+                <input type="radio" name="acctType" value="personal" x-model="form.accountType">
+                <span x-text="t('accountPersonalLabel')"></span>
+              </label>
+              <span class="fuel-radio-dot" aria-hidden="true"></span>
+              <div class="account-card-content">
+                <h3 class="account-card-title" x-text="t('accountPersonalTitle')"></h3>
+                <p class="account-card-text" x-html="t('accountPersonalText')"></p>
+              </div>
+            </div>
+            <div class="account-card" :class="{ selected: form.accountType === 'business' }"
+              @click="form.accountType = 'business'">
+              <label class="account-pill">
+                <input type="radio" name="acctType" value="business" x-model="form.accountType">
+                <span x-text="t('accountBusinessLabel')"></span>
+              </label>
+              <span class="fuel-radio-dot" aria-hidden="true"></span>
+              <div class="account-card-content">
+                <h3 class="account-card-title" x-text="t('accountBusinessTitle')"></h3>
+                <p class="account-card-text" x-html="t('accountBusinessText')"></p>
+                <p class="account-card-text">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none"
+                    class="bulb-icon">
+                    <path
+                      d="M21.1054 20.9251C19.6145 22.416 19.8009 25.4243 19.8009 25.4243H12.2402C12.2402 25.4243 12.3999 22.416 10.9357 20.9251C9.31171 19.4875 8.27344 17.411 8.27344 15.0949C8.27344 10.8353 11.7343 7.37439 15.9939 7.37439C20.2535 7.37439 23.7144 10.8353 23.7144 15.0949C23.7144 17.411 22.7027 19.4875 21.1054 20.9251Z"
+                      fill="#FFD517"></path>
+                    <path
+                      d="M20.0143 27.7937C20.0143 28.193 19.6948 28.5125 19.2955 28.5125H12.7198C12.3204 28.5125 12.001 28.193 12.001 27.7937C12.001 27.3944 12.3204 27.0749 12.7198 27.0749H19.2689C19.6682 27.0749 20.0143 27.3944 20.0143 27.7937ZM19.0293 30.7754C19.0293 31.1747 18.7098 31.4942 18.3105 31.4942H13.7048C13.3055 31.4942 12.986 31.1747 12.986 30.7754C12.986 30.3761 13.3055 30.0566 13.7048 30.0566H18.3105C18.7098 30.0566 19.0293 30.3761 19.0293 30.7754Z"
+                      fill="#E5E5E5"></path>
+                    <path
+                      d="M21.5047 21.1913C23.2351 19.6206 24.2202 17.411 24.2202 15.0948C24.2202 10.569 20.5197 6.86853 15.9939 6.86853C11.4681 6.86853 7.76758 10.569 7.76758 15.0948C7.76758 17.4642 8.80585 19.7271 10.5629 21.2712C11.8674 22.5757 11.7343 25.3444 11.7343 25.371C11.7343 25.5041 11.7875 25.6372 11.8674 25.7437C11.9739 25.8502 12.107 25.9035 12.2401 25.9035H19.7742C19.9073 25.9035 20.0405 25.8502 20.1469 25.7437C20.2534 25.6372 20.2801 25.5041 20.2801 25.371C20.2801 25.3444 20.1469 22.5757 21.4514 21.2712C21.4781 21.2446 21.5047 21.2179 21.5047 21.1913ZM20.7593 20.5258C20.706 20.5524 20.6794 20.6056 20.6528 20.6589C19.4814 21.9101 19.295 23.96 19.2684 24.9184H12.7459C12.7193 23.9334 12.5063 21.8036 11.2551 20.5524C9.68438 19.168 8.77923 17.198 8.77923 15.1214C8.77923 11.1281 12.0271 7.9068 15.9939 7.9068C19.9872 7.9068 23.2085 11.1547 23.2085 15.1214C23.2085 17.1714 22.33 19.168 20.7593 20.5258Z"
+                      fill="#210B20"></path>
+                    <path
+                      d="M15.9939 8.99834C15.7277 8.99834 15.4881 9.21131 15.4881 9.50416C15.4881 9.77038 15.701 10.01 15.9939 10.01C18.9756 10.01 21.3982 12.4326 21.3982 15.4143C21.3982 15.6805 21.6112 15.9201 21.904 15.9201C22.1703 15.9201 22.4099 15.7072 22.4099 15.4143C22.4099 11.8735 19.5347 8.99834 15.9939 8.99834ZM20.5197 27.7937C20.5197 27.1015 19.9606 26.5691 19.2951 26.5691H12.7193C12.0272 26.5691 11.4947 27.1281 11.4947 27.7937C11.4947 28.4859 12.0538 29.0183 12.7193 29.0183H19.2684C19.9606 29.0183 20.5197 28.4859 20.5197 27.7937ZM19.2684 28.0067H12.7193C12.5862 28.0067 12.5064 27.9002 12.5064 27.7937C12.5064 27.6606 12.6129 27.5807 12.7193 27.5807H19.2684C19.4015 27.5807 19.4814 27.6872 19.4814 27.7937C19.508 27.9268 19.4015 28.0067 19.2684 28.0067ZM18.31 29.5507H13.7044C13.0122 29.5507 12.4797 30.1098 12.4797 30.7754C12.4797 31.4676 13.0388 32 13.7044 32H18.31C19.0022 32 19.5347 31.4409 19.5347 30.7754C19.5347 30.1098 18.9756 29.5507 18.31 29.5507ZM18.31 30.9884H13.7044C13.5713 30.9884 13.4914 30.8819 13.4914 30.7754C13.4914 30.6423 13.5979 30.5624 13.7044 30.5624H18.31C18.4431 30.5624 18.523 30.6689 18.523 30.7754C18.523 30.9085 18.4431 30.9884 18.31 30.9884ZM16.4997 3.91348V0.505824C16.4997 0.239601 16.2867 0 15.9939 0C15.7277 0 15.4881 0.212978 15.4881 0.505824V3.9401C15.4881 4.20632 15.701 4.44592 15.9939 4.44592C16.2867 4.4193 16.4997 4.20632 16.4997 3.91348ZM24.3799 2.52912C24.1403 2.36938 23.8475 2.44925 23.6877 2.66223L21.7976 5.51082C21.6378 5.75042 21.7177 6.04326 21.9307 6.20299C22.0105 6.25624 22.117 6.28286 22.1969 6.28286C22.3566 6.28286 22.5164 6.20299 22.6228 6.06988L24.513 3.2213C24.6728 3.00832 24.5929 2.68885 24.3799 2.52912ZM9.97725 6.17637C10.0571 6.17637 10.1636 6.14975 10.2435 6.09651C10.4831 5.93677 10.5363 5.64393 10.4032 5.40433L8.56627 2.52912C8.40654 2.28952 8.11369 2.23627 7.87409 2.36938C7.63449 2.52912 7.58124 2.82196 7.71436 3.06156L9.55129 5.93677C9.65778 6.09651 9.81752 6.17637 9.97725 6.17637ZM2.92234 8.57238L5.93066 10.1963C6.01053 10.2496 6.0904 10.2496 6.17026 10.2496C6.35662 10.2496 6.51635 10.1431 6.62284 9.98336C6.75595 9.74376 6.67609 9.42429 6.40986 9.29118L3.40154 7.66722C3.16194 7.53411 2.84248 7.61398 2.70936 7.8802C2.60288 8.14642 2.68274 8.43927 2.92234 8.57238ZM25.8175 10.2762C25.8974 10.2762 25.9773 10.2496 26.0571 10.223L29.0654 8.599C29.305 8.46589 29.4115 8.17305 29.2784 7.90682C29.1453 7.66722 28.8525 7.56073 28.5862 7.69384L25.5779 9.3178C25.3383 9.45091 25.2318 9.74376 25.3649 10.01C25.4448 10.1697 25.6312 10.2762 25.8175 10.2762Z"
+                      fill="#210B20"></path>
+                  </svg>
+                  <span x-html="t('accountBusinessNote')"></span>
+                </p>
+              </div>
+            </div>
+          </div>
+          <template x-if="errors.accountType">
+            <div class="error" x-text="errors.accountType"></div>
+          </template>
+
+          <div x-show="form.accountType === 'business'" class="confirm-row">
+            <input type="checkbox" x-model="form.businessOwnerConfirm">
+            <p class="confirm-text" x-html="t('accountBusinessConfirm')"></p>
+          </div>
+          <template x-if="errors.businessOwnerConfirm">
+            <div class="error" x-text="errors.businessOwnerConfirm"></div>
+          </template>
+
+          <div x-show="form.accountType === 'personal'" class="field-row" style="margin-top:20px; justify-content:center;">
+            <div class="field" style="max-width:220px; width:100%;">
+              <p class="form-label" x-text="t('labelFleetSize')"></p>
+              <input class="form-input" type="number" min="1" x-model.number="form.fleetSize" :placeholder="t('placeholderFleetSize')" style="height:48px; font-size:16px; padding:0 20px;">
+              <template x-if="errors.fleetSize">
+                <div class="error" x-text="errors.fleetSize"></div>
+              </template>
+            </div>
+          </div>
+
+          <p class="helper-text" x-text="t('helperReviewSign')"></p>
+          <div class="page-actions">
+            <button class="secondary-filled review-next" @click="prev()" x-text="t('previousStep')"></button>
+            <a href="tel:+19162694606" class="contact-us-btn desktop-only">
+              <svg width="20" height="20" fill="currentColor">
+                <use href="#phone-icon"></use>
+              </svg>
+              <span x-text="t('contactUs')"></span>
+            </a>
+            <button class="primary review-next" @click="next()" x-text="t('nextStep')"></button>
+          </div>
+        </div>
+
+        <!-- Step 3: Company Information (shown if business) -->
+        <div x-cloak x-show="step === 3">
+          <div class="step-header">
+            <h2 x-text="t('step3Title')"></h2>
+            <p class="step-subtitle" x-text="t('step3Subtitle')"></p>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <p class="form-label" x-text="t('labelCompanyName')"></p>
+              <input class="form-input" type="text" x-model="form.companyName" :placeholder="t('placeholderCompanyName')">
+              <template x-if="errors.companyName">
+                <div class="error" x-text="errors.companyName"></div>
+              </template>
+            </div>
+            <div class="field">
+              <p class="form-label" x-text="t('labelBusinessType')"></p>
+              <div class="select-wrap">
+                <select class="form-input select-input" x-model="form.businessType">
+                  <option value="" disabled x-text="t('selectPlaceholder')"></option>
+                  <option value="sole-proprietorship" x-text="t('businessTypeSole')"></option>
+                  <option value="partnership" x-text="t('businessTypePartnership')"></option>
+                  <option value="llc" x-text="t('businessTypeLlc')"></option>
+                  <option value="corporation" x-text="t('businessTypeCorporation')"></option>
+                </select>
+                <span class="select-caret" aria-hidden="true"></span>
+              </div>
+              <template x-if="errors.businessType">
+                <div class="error" x-text="errors.businessType"></div>
+              </template>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <p class="form-label" x-text="t('labelCompanyTitle')"></p>
+              <div class="select-wrap">
+                <select class="form-input select-input" x-model="form.companyTitle">
+                  <option value="" disabled x-text="t('selectPlaceholder')"></option>
+                  <option value="CEO">CEO</option>
+                  <option value="CFO">CFO</option>
+                  <option value="ACCOUNTANT" x-text="t('companyTitleAccountant')"></option>
+                  <option value="PRESIDENT" x-text="t('companyTitlePresident')"></option>
+                  <option value="OWNER" x-text="t('companyTitleOwner')"></option>
+                  <option value="Other" x-text="t('companyTitleOther')"></option>
+                </select>
+                <span class="select-caret" aria-hidden="true"></span>
+              </div>
+              <template x-if="errors.companyTitle">
+                <div class="error" x-text="errors.companyTitle"></div>
+              </template>
+            </div>
+            <div class="field">
+              <p class="form-label" x-text="t('labelFleetSize')"></p>
+              <input class="form-input" type="number" min="0" x-model.number="form.fleetSize" :placeholder="t('placeholderFleetSize')">
+              <template x-if="errors.fleetSize">
+                <div class="error" x-text="errors.fleetSize"></div>
+              </template>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <p class="form-label" x-text="t('labelDotOptional')"></p>
+              <input class="form-input" type="text" :value="form.dot"
+                @input="form.dot = normalizeDigits($event.target.value)" :placeholder="t('placeholderDot')"
+                inputmode="numeric">
+            </div>
+            <div class="field">
+              <p class="form-label" x-text="t('labelMcOptional')"></p>
+              <input class="form-input" type="text" :value="form.mc"
+                @input="form.mc = normalizeDigits($event.target.value)" :placeholder="t('placeholderMc')"
+                inputmode="numeric">
+            </div>
+          </div>
+
+          <p class="helper-text" x-text="t('helperReviewSign')"></p>
+          <div class="page-actions">
+            <button class="secondary-filled review-next" @click="prev()" x-text="t('previousStep')"></button>
+            <a href="tel:+19162694606" class="contact-us-btn desktop-only">
+              <svg width="20" height="20" fill="currentColor">
+                <use href="#phone-icon"></use>
+              </svg>
+              <span x-text="t('contactUs')"></span>
+            </a>
+            <button class="primary review-next" @click="next()" x-text="t('nextStep')"></button>
+          </div>
+        </div>
+
+        <!-- Step 4: Fuel Program  -->
+        <div x-cloak x-show="step === 4">
+          <div class="step-header">
+            <h2 x-text="t('step4FuelTitle')"></h2>
+            <p class="step-subtitle" x-text="t('step4FuelSubtitle')"></p>
+          </div>
+
+          <div class="fuel-options">
+            <label class="fuel-option">
+              <input type="radio" x-model="form.usedFuelProgram" value="yes">
+              <span class="fuel-radio-dot" aria-hidden="true"></span>
+              <span class="fuel-option-label" x-text="t('fuelYesOption')"></span>
+            </label>
+            <label class="fuel-option">
+              <input type="radio" x-model="form.usedFuelProgram" value="no">
+              <span class="fuel-radio-dot" aria-hidden="true"></span>
+              <span class="fuel-option-label" x-text="t('fuelNoOption')"></span>
+            </label>
+          </div>
+
+          <template x-if="errors.usedFuelProgram">
+            <div class="error" x-text="errors.usedFuelProgram"></div>
+          </template>
+
+          <!-- File upload section - only shown when "Yes" is selected -->
+          <template x-if="form.usedFuelProgram === 'yes'">
+            <div class="fuel-upload-section">
+              <input class="sr-only" type="file" id="fuel-invoice" @change="onFileSelect($event, 'fuelInvoice')"
+                accept="image/*,application/pdf">
+              <button class="attach-button" type="button" @click="document.getElementById('fuel-invoice').click()"
+                x-text="form.files?.fuelInvoice?.filename ? t('changeFuelInvoice') : t('attachFuelInvoice')"></button>
+
+              <!-- Upload status feedback -->
+              <template x-if="uploadStatus.fuelInvoice.type === 'success' || form.files?.fuelInvoice?.filename">
+                <div class="upload-status success">
+                  <svg class="upload-status-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                  </svg>
+                  <span class="upload-filename" x-text="form.files?.fuelInvoice?.filename || 'Uploaded'"></span>
+                </div>
+              </template>
+              <template x-if="uploadStatus.fuelInvoice.type === 'error'">
+                <div class="upload-status error">
+                  <svg class="upload-status-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                  </svg>
+                  <span x-text="uploadStatus.fuelInvoice.message"></span>
+                </div>
+              </template>
+
+              <div class="fuel-upload-header">
+                <p class="fuel-upload-title" x-text="t('fuelUploadTitle')"></p>
+                <p class="fuel-upload-subtitle" x-text="t('fuelUploadSubtitle')"></p>
+              </div>
+            </div>
+          </template>
+
+          <p class="helper-text" x-text="t('helperReviewSign')"></p>
+          <div class="page-actions">
+            <button class="secondary-filled review-next" @click="prev()" x-text="t('previousStep')"></button>
+            <a href="tel:+19162694606" class="contact-us-btn desktop-only">
+              <svg width="20" height="20" fill="currentColor">
+                <use href="#phone-icon"></use>
+              </svg>
+              <span x-text="t('contactUs')"></span>
+            </a>
+            <button class="primary review-next" @click="next()" x-text="t('nextStep')"></button>
+          </div>
+        </div>
+
+        <!-- Step 5: Referral -->
+        <div x-cloak x-show="step === 5">
+          <div class="step-header">
+            <h2 x-text="t('step4Title')"></h2>
+            <p class="step-subtitle" x-html="t('step4Subtitle')"></p>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <p class="form-label" x-text="t('labelRefFirstName')"></p>
+              <input class="form-input" type="text" x-model="form.refFirstName" :placeholder="t('placeholderFirstName')">
+              <template x-if="errors.refFirstName">
+                <div class="error" x-text="errors.refFirstName"></div>
+              </template>
+            </div>
+            <div class="field">
+              <p class="form-label" x-text="t('labelRefLastName')"></p>
+              <input class="form-input" type="text" x-model="form.refLastName" :placeholder="t('placeholderLastName')">
+              <template x-if="errors.refLastName">
+                <div class="error" x-text="errors.refLastName"></div>
+              </template>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <p class="form-label" x-text="t('labelRefCompany')"></p>
+              <input class="form-input" type="text" x-model="form.refCompany" :placeholder="t('placeholderRefCompany')">
+            </div>
+            <div class="field">
+              <p class="form-label" x-text="t('labelPhone')"></p>
+              <input class="form-input" type="tel" :value="formatPhone(form.refPhone)"
+                @input="form.refPhone = normalizeDigits($event.target.value, 10)" :placeholder="t('placeholderPhone')"
+                inputmode="numeric" maxlength="14">
+              <template x-if="errors.refPhone">
+                <div class="error" x-text="errors.refPhone"></div>
+              </template>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field" style="flex: 1 1 100%;">
+              <p class="form-label" x-text="t('labelRefNotes')"></p>
+              <textarea class="form-input" x-model="form.refNotes" :placeholder="t('placeholderRefNotes')" rows="3"></textarea>
+            </div>
+          </div>
+
+          <p class="helper-text" x-text="t('helperReferral')"></p>
+
+          <div class="page-actions">
+            <button class="secondary-filled review-next" @click="prev()" x-text="t('previousStep')"></button>
+            <a href="tel:+19162694606" class="contact-us-btn desktop-only">
+              <svg width="20" height="20" fill="currentColor">
+                <use href="#phone-icon"></use>
+              </svg>
+              <span x-text="t('contactUs')"></span>
+            </a>
+            <button class="primary review-next" @click="next()" x-text="t('nextStep')"></button>
+          </div>
+        </div>
+
+        <!-- Step 6: Summary & Submit -->
+        <div x-cloak x-show="step === 6">
+          <div class="step-header">
+            <h2 x-text="t('step5Title')"></h2>
+            <p class="step-subtitle" x-text="t('step5Subtitle')"></p>
+          </div>
+
+          <div class="summary-row">
+            <div class="summary-main">
+              <div class="summary-title" x-text="t('summaryContactTitle')"></div>
+              <p class="summary-text">
+                <span x-text="form.firstName"></span>
+                <span> </span>
+                <span x-text="form.lastName"></span>,
+                <span> </span>
+                <span x-text="form.email"></span>,
+                <span> </span>
+                <span x-text="form.phone"></span>
+              </p>
+            </div>
+            <button type="button" class="summary-edit" @click="step = 1" :aria-label="t('ariaEditContact')">
+              <span class="summary-edit-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M16.862 3.487a2 2 0 0 1 2.828 0l.823.823a2 2 0 0 1 0 2.828L9.41 18.243a2 2 0 0 1-.845.51l-4.25 1.417a.75.75 0 0 1-.948-.948l1.417-4.25a2 2 0 0 1 .51-.845L16.862 3.487Z"
+                    stroke="#231E20" stroke-width="1.6" />
+                  <path d="M15.5 4.85 19.15 8.5" stroke="#231E20" stroke-width="1.6" />
+                </svg>
+              </span>
+              <p class="summary-edit-label" x-text="t('editLabel')"></p>
+            </button>
+          </div>
+
+          <template x-if="form.accountType === 'personal'">
+            <div class="summary-row">
+              <div class="summary-main">
+                <div class="summary-title" x-text="t('summaryFleetTitle')"></div>
+                <p class="summary-text">
+                  <span x-text="form.fleetSize"></span>
+                  <span> </span>
+                  <span x-text="t('summaryTrucks')"></span>
+                </p>
+              </div>
+              <button type="button" class="summary-edit" @click="step = 2" :aria-label="t('ariaEditFleet')">
+                <span class="summary-edit-icon" aria-hidden="true">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16.862 3.487a2 2 0 0 1 2.828 0l.823.823a2 2 0 0 1 0 2.828L9.41 18.243a2 2 0 0 1-.845.51l-4.25 1.417a.75.75 0 0 1-.948-.948l1.417-4.25a2 2 0 0 1 .51-.845L16.862 3.487Z" stroke="#231E20" stroke-width="1.6" />
+                    <path d="M15.5 4.85 19.15 8.5" stroke="#231E20" stroke-width="1.6" />
+                  </svg>
+                </span>
+                <p class="summary-edit-label" x-text="t('editLabel')"></p>
+              </button>
+            </div>
+          </template>
+
+          <template x-if="form.accountType === 'business'">
+            <div class="summary-row">
+              <div class="summary-main">
+                <div class="summary-title" x-text="t('summaryBusinessTitle')"></div>
+                <p class="summary-text">
+                  <span x-text="form.companyName"></span>,
+                  <span> </span>
+                  <span x-text="businessTypeLabel(form.businessType)"></span>,
+                  <span> </span>
+                  <span x-text="companyTitleLabel(form.companyTitle)"></span>,
+                  <span> </span>
+                  <span x-text="form.fleetSize"></span>
+                  <span> </span>
+                  <span x-text="t('summaryTrucks')"></span>
+                  <span>, </span>
+                  <span x-text="t('summaryDotLabel')"></span>
+                  <span> </span>
+                  <span x-text="form.dot || t('notAvailable')"></span>
+                  <span>, </span>
+                  <span x-text="t('summaryMcLabel')"></span>
+                  <span> </span>
+                  <span x-text="form.mc || t('notAvailable')"></span>
+                </p>
+              </div>
+              <button type="button" class="summary-edit" @click="step = 3" :aria-label="t('ariaEditBusiness')">
+                <span class="summary-edit-icon" aria-hidden="true">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M16.862 3.487a2 2 0 0 1 2.828 0l.823.823a2 2 0 0 1 0 2.828L9.41 18.243a2 2 0 0 1-.845.51l-4.25 1.417a.75.75 0 0 1-.948-.948l1.417-4.25a2 2 0 0 1 .51-.845L16.862 3.487Z"
+                      stroke="#231E20" stroke-width="1.6" />
+                    <path d="M15.5 4.85 19.15 8.5" stroke="#231E20" stroke-width="1.6" />
+                  </svg>
+                </span>
+                <p class="summary-edit-label" x-text="t('editLabel')"></p>
+              </button>
+            </div>
+          </template>
+
+          <div class="summary-row">
+            <div class="summary-main">
+              <div class="summary-title" x-text="t('summaryReferralTitle')"></div>
+              <p class="summary-text">
+                <span x-text="form.refFirstName || t('notAvailable')"></span>
+                <span> </span>
+                <span x-text="form.refLastName"></span>,
+                <span> </span>
+                <span x-text="form.refCompany || t('notAvailable')"></span>,
+                <span> </span>
+                <span x-text="form.refPhone || t('notAvailable')"></span>
+              </p>
+              <template x-if="form.refNotes">
+                <p class="summary-text" x-text="form.refNotes"></p>
+              </template>
+            </div>
+            <button type="button" class="summary-edit" @click="step = 5" :aria-label="t('ariaEditReferral')">
+              <span class="summary-edit-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M16.862 3.487a2 2 0 0 1 2.828 0l.823.823a2 2 0 0 1 0 2.828L9.41 18.243a2 2 0 0 1-.845.51l-4.25 1.417a.75.75 0 0 1-.948-.948l1.417-4.25a2 2 0 0 1 .51-.845L16.862 3.487Z"
+                    stroke="#231E20" stroke-width="1.6" />
+                  <path d="M15.5 4.85 19.15 8.5" stroke="#231E20" stroke-width="1.6" />
+                </svg>
+              </span>
+              <p class="summary-edit-label" x-text="t('editLabel')"></p>
+            </button>
+          </div>
+
+          <div class="summary-footer" x-text="t('helperReviewSign')"></div>
+          <div class="page-actions">
+            <button class="secondary-filled review-next" @click="prev()" x-text="t('previousStep')"></button>
+            <a href="tel:+19162694606" class="contact-us-btn desktop-only">
+              <svg width="20" height="20" fill="currentColor">
+                <use href="#phone-icon"></use>
+              </svg>
+              <span x-text="t('contactUs')"></span>
+            </a>
+            <button class="primary review-next" @click="submit()" :disabled="submitting">
+              <span x-text="submitting ? t('submitting') : t('submit')"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 7: Application received -->
+        <div x-cloak x-show="step === 7">
+          <div class="received-body">
+            <p class="received-lead" x-text="receivedLead"></p>
+
+            <p class="received-mid">
+              <span x-text="t('receivedPrepareStart')"></span>
+              <span class="received-strong" x-text="t('receivedPrepareLicense')"></span>
+              <span x-text="t('receivedPrepareEnd')"></span>
+            </p>
+
+            <p class="received-lead" x-text="t('receivedContactTimeline')"></p>
+          </div>
+
+          <div class="received-footer">
+            <span x-text="t('receivedFooter')"></span>
+          </div>
+        </div>
+
+      </div>
+
+
+      <script src="./assets/shared.js"></script>
+      <script src="./assets/register.js"></script>
+
+    </div><!-- end page-shell -->
+
+  </div><!-- end w-embed -->
+
+</body>
+
+</html>

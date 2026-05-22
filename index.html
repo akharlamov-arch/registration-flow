@@ -3,6 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      Iframe escape: after ZohoSign signing completes, the provider redirects
+      the return URL inside the signing iframe rather than in the top window.
+      This script detects that condition and immediately navigates the top-level
+      window to this URL so the React app renders full-screen with proper layout.
+      Must run synchronously before React hydrates.
+    -->
+    <script>
+      (function () {
+        if (window.self !== window.top) {
+          try {
+            window.top.location.replace(window.self.location.href);
+          } catch (e) {
+            // Cross-origin guard: frameorigin in ZohoSign is set to our domain,
+            // so this should never trigger in production.
+          }
+        }
+      })();
+    </script>
     <title>iTrucking — Registration</title>
     <link rel="icon" type="image/svg+xml" href="/src/assets/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

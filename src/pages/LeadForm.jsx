@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useI18n } from '../context/I18nContext'
 import StepIndicator from '../components/StepIndicator'
 import FormField from '../components/FormField'
 import PhoneInput from '../components/PhoneInput'
-import { createLead, generateOtpCode, uploadFuelInvoice } from '../api/leads'
+import { createLead, fetchInvite, generateOtpCode, uploadFuelInvoice, requestNewCode } from '../api/leads'
 
 // ── Step icon definitions ──────────────────────────────────────────────────
 const CONTACT_STEP = {
@@ -109,6 +110,7 @@ const selectClass = (hasError) => [
 
 export default function LeadForm() {
   const { t } = useI18n()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
   // DS: loading state — show spinner → then success (UX guideline: Submit Feedback)
@@ -119,6 +121,82 @@ export default function LeadForm() {
   const [fuelUploading, setFuelUploading] = useState(false)
   const [fuelUploadError, setFuelUploadError] = useState('')
   const [modalErrors, setModalErrors] = useState({})
+
+  // ── Invite-token state ───────────────────────────────────────────────
+  // Resolved from ?invite=<token> on mount. Three states:
+  //   inviteLoading=true            → validating token (show skeleton)
+  //   inviteError=<string>          → token invalid/expired/consumed (show error page)
+  //   inviteToken && inviteLabel    → token valid (show banner + form)
+  const [inviteToken, setInviteToken]           = useState(null)
+  const [inviteLabel, setInviteLabel]           = useState(null)
+  const [inviteError, setInviteError]           = useState(null)
+  const [inviteLoading, setInviteLoading]       = useState(false)
+  const [inviteIsPreApproved, setInviteIsPreApproved] = useState(false)
+
+  useEffect(() => {
+    const token = searchParams.get('invite')
+
+    if (!token) {
+      // No token in URL — check if one was persisted in this session (e.g. after a reload).
+      const stored = sessionStorage.getItem('itrucking-invite-token')
+      if (stored) {
+        setInviteToken(stored)
+        setInviteLabel(sessionStorage.getItem('itrucking-invite-label') || null)
+        setInviteIsPreApproved(sessionStorage.getItem('itrucking-invite-preapproved') === 'true')
+      }
+      return
+    }
+
+    // Strip the token from the address bar so it does not leak via the
+    // Referer header or browser history sharing.
+    setSearchParams({}, { replace: true })
+
+    setInviteLoading(true)
+
+    fetchInvite(token).then(({ ok, data }) => {
+      if (ok && data.success) {
+        setInviteToken(token)
+        setInviteLabel(data.invite_label || null)
+        setInviteIsPreApproved(data.pre_approved === true)
+        // Persist across reloads for the lifetime of this browser tab.
+        sessionStorage.setItem('itrucking-invite-token', token)
+        sessionStorage.setItem('itrucking-invite-label', data.invite_label || '')
+        sessionStorage.setItem('itrucking-invite-preapproved', String(data.pre_approved === true))
+      } else {
+        // Token is invalid/consumed — remove any stale stored value.
+        sessionStorage.removeItem('itrucking-invite-token')
+        sessionStorage.removeItem('itrucking-invite-label')
+        sessionStorage.removeItem('itrucking-invite-preapproved')
+        setInviteError(data.error || 'invite_invalid')
+      }
+      setInviteLoading(false)
+    }).catch(() => {
+      sessionStorage.removeItem('itrucking-invite-token')
+      sessionStorage.removeItem('itrucking-invite-label')
+      sessionStorage.removeItem('itrucking-invite-preapproved')
+      setInviteError('invite_invalid')
+      setInviteLoading(false)
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── OTP reset modal (shown on invalid/used invite token) ─────────────────
+  const [showOtpResetModal, setShowOtpResetModal] = useState(false)
+  const [otpResetEmail,     setOtpResetEmail]     = useState('')
+  const [otpResetSending,   setOtpResetSending]   = useState(false)
+  const [otpResetSent,      setOtpResetSent]      = useState(false)
+
+  const handleOtpReset = async () => {
+    if (otpResetSending || !otpResetEmail.trim()) return
+    setOtpResetSending(true)
+    await requestNewCode(otpResetEmail.trim())
+    setOtpResetSending(false)
+    setOtpResetSent(true)
+    // Brief pause so the user sees the success state before leaving the page
+    setTimeout(() => {
+      window.location.replace('/#/registration')
+    }, 1200)
+  }
+
   const [form, setForm] = useState({
     // Step 1 — Contact
     firstName: '',
@@ -210,10 +288,21 @@ export default function LeadForm() {
   }
 
   // ── Validators ─────────────────────────────────────────────────────
+  // Only printable ASCII (0x20–0x7E) is permitted — the resulting contract is in English.
+  const isLatinOnly = (str) => /^[\x20-\x7E]*$/.test(str)
+
   const validateContact = () => {
     const e = {}
-    if (!form.firstName.trim()) e.firstName = t('common.required')
-    if (!form.lastName.trim()) e.lastName = t('common.required')
+    if (!form.firstName.trim()) {
+      e.firstName = t('common.required')
+    } else if (!isLatinOnly(form.firstName)) {
+      e.firstName = t('common.latinOnly')
+    }
+    if (!form.lastName.trim()) {
+      e.lastName = t('common.required')
+    } else if (!isLatinOnly(form.lastName)) {
+      e.lastName = t('common.latinOnly')
+    }
     if (!form.email.trim()) {
       e.email = t('common.required')
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
@@ -238,7 +327,11 @@ export default function LeadForm() {
 
   const validateBusiness = () => {
     const e = {}
-    if (!form.companyName.trim()) e.companyName = t('common.required')
+    if (!form.companyName.trim()) {
+      e.companyName = t('common.required')
+    } else if (!isLatinOnly(form.companyName)) {
+      e.companyName = t('common.latinOnly')
+    }
     if (!form.businessType) e.businessType = t('common.required')
     if (!form.companyTitle) e.companyTitle = t('common.required')
     if (!form.companyTrucks.trim() || !/^\d+$/.test(form.companyTrucks.trim()))
@@ -255,13 +348,31 @@ export default function LeadForm() {
 
   const validateReferral = () => {
     const e = {}
-    if (!form.refFirstName.trim()) e.refFirstName = t('common.required')
-    if (!form.refLastName.trim()) e.refLastName = t('common.required')
+    if (!form.refFirstName.trim()) {
+      e.refFirstName = t('common.required')
+    } else if (!isLatinOnly(form.refFirstName)) {
+      e.refFirstName = t('common.latinOnly')
+    }
+    if (!form.refLastName.trim()) {
+      e.refLastName = t('common.required')
+    } else if (!isLatinOnly(form.refLastName)) {
+      e.refLastName = t('common.latinOnly')
+    }
+    if (form.refCompany.trim() && !isLatinOnly(form.refCompany)) {
+      e.refCompany = t('common.latinOnly')
+    }
+    if (form.refNote.trim() && !isLatinOnly(form.refNote)) {
+      e.refNote = t('common.latinOnly')
+    }
     if (!form.refPhone.trim()) {
       e.refPhone = t('common.required')
     } else {
-      const d = form.refPhone.replace(/\D/g, '')
-      if ((d.length === 11 ? d.slice(1) : d).length !== 10) e.refPhone = t('common.phoneInvalid')
+      const normalizePhone = (v) => { const d = v.replace(/\D/g, ''); return d.length === 11 ? d.slice(1) : d }
+      if (normalizePhone(form.refPhone).length !== 10) {
+        e.refPhone = t('common.phoneInvalid')
+      } else if (normalizePhone(form.refPhone) === normalizePhone(form.phone)) {
+        e.refPhone = t('lead.step4.phoneSameAsApplicant')
+      }
     }
     return e
   }
@@ -296,7 +407,9 @@ export default function LeadForm() {
           form: {
             firstName:            form.firstName,
             lastName:             form.lastName,
+            email:                form.email,
             phone:                form.phone,
+            accountType:          form.accountType,
             businessOwnerConfirm: form.ownerConfirmed,
             fleetSize:            isBusiness ? Number(form.companyTrucks) : Number(form.personalTrucks),
             companyName:          form.companyName,
@@ -314,9 +427,30 @@ export default function LeadForm() {
             otpCode,
           },
         }
+        // When this session was initiated from a personalized invite link,
+        // include the token so the backend updates the existing placeholder lead
+        // instead of inserting a new row.
+        if (inviteToken) {
+          payload.inviteToken = inviteToken
+        }
         const { ok, status, data } = await createLead(payload)
         if (ok) {
-          setSubmitted(true)
+          if (data.pre_approved && data.session_token) {
+            // Pre-approved invite: session already issued — navigate directly to
+            // the registration page and skip the OTP step.
+            sessionStorage.removeItem('itrucking-invite-token')
+            sessionStorage.removeItem('itrucking-invite-label')
+            sessionStorage.removeItem('itrucking-invite-preapproved')
+            window.location.replace(
+              '/#/registration?sessionToken=' + encodeURIComponent(data.session_token)
+            )
+          } else {
+            // Submission complete — token has been consumed, clear storage.
+            sessionStorage.removeItem('itrucking-invite-token')
+            sessionStorage.removeItem('itrucking-invite-label')
+            sessionStorage.removeItem('itrucking-invite-preapproved')
+            setSubmitted(true)
+          }
         } else if (status === 422 && data.errors) {
           const flat = {}
           for (const [field, msgs] of Object.entries(data.errors)) {
@@ -356,6 +490,137 @@ export default function LeadForm() {
   }
 
   // DS: success state with checkmark icon
+  // ── Invite-token render guards ──────────────────────────────────────────
+  // 1. Validating token — show skeleton while the API call is in-flight.
+  if (inviteLoading) {
+    return (
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
+        <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-10 text-center animate-pulse">
+          <div className="h-6 bg-gray-100 rounded w-1/3 mx-auto mb-4" />
+          <div className="h-4 bg-gray-100 rounded w-1/2 mx-auto" />
+        </div>
+      </main>
+    )
+  }
+
+  // 2. Token invalid / expired / already used — show friendly error page.
+  if (inviteError) {
+    return (
+      <>
+      <main className="max-w-4xl mx-auto px-4 sm:px6 py-16">
+        <div className="bg-white rounded-2xl shadow-ds-md border border-red-100 p-10 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-5">
+            <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-3">This invite link is no longer valid</h2>
+          <p className="text-slate-500 text-sm leading-relaxed mb-6">
+            The link may have expired or already been used. Enter your email below and we'll
+            send you a fresh verification code.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              if (form.email) setOtpResetEmail(form.email)
+              setShowOtpResetModal(true)
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:bg-secondary transition-colors cursor-pointer"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+            </svg>
+            Get a new verification code
+          </button>
+        </div>
+      </main>
+
+      {/* OTP reset modal — shown when invite token is invalid/used */}
+      {showOtpResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-red-50">
+                <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">{t('otp.invalidCodeModalTitle')}</h2>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">{t('otp.invalidCodeModalBody')}</p>
+
+            {otpResetSent ? (
+              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+                <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm text-green-700 font-medium">{t('otp.recoverySent')}</p>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">{t('otp.recoveryPlaceholder')}</label>
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    autoFocus
+                    value={otpResetEmail}
+                    onChange={e => setOtpResetEmail(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleOtpReset()}
+                    placeholder={t('otp.recoveryPlaceholder')}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-gray-400
+                               text-gray-900 bg-white text-sm
+                               focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors duration-200"
+                  />
+                </div>
+                <div className="flex flex-col gap-2.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleOtpReset}
+                    disabled={otpResetSending || !otpResetEmail.trim()}
+                    className="w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                               bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                               transition-colors duration-200 cursor-pointer
+                               focus:outline-none focus:ring-2 focus:ring-primary/30
+                               disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {otpResetSending ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        {t('common.loading')}
+                      </>
+                    ) : (
+                      <>
+                        {t('otp.recoverySendBtn')}
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                        </svg>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowOtpResetModal(false)}
+                    className="w-full px-7 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700
+                               rounded-md border border-gray-200 hover:border-gray-300 bg-white
+                               transition-colors duration-200 cursor-pointer
+                               focus:outline-none focus:ring-2 focus:ring-gray-200"
+                  >
+                    {t('common.cancel') || 'Cancel'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  )
+  }
+
   if (submitted) {
     return (
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
@@ -395,6 +660,25 @@ export default function LeadForm() {
       )}
 
       <StepIndicator steps={activeSteps} currentStep={indicatorStep} />
+
+      { 
+      /* Invite banner — shown when the form was opened via a personalized link
+      {inviteToken && !inviteIsPreApproved && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <span className="font-semibold">Personalized invitation</span>
+          {inviteLabel ? ` — ${inviteLabel}` : ''}. Please complete the form below.
+        </div>
+      )} 
+        Temorarily disabled 
+        */}
+
+      {/* Pre-approved invite banner */}
+      {inviteToken && inviteIsPreApproved && (
+        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <span className="font-semibold">✓ Approved invitation</span>
+          Your account has been approved — complete the form below to get started immediately.
+        </div>
+      )}
 
       {/* DS: shadow-ds-md card, rounded-2xl */}
       <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-10">
@@ -999,7 +1283,7 @@ export default function LeadForm() {
                 </svg>
                 {t('common.loading')}
               </>
-            ) : contentKey === 'review' ? (
+            ) : contentKey === 'review' && !inviteToken ? (
               <>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor" strokeWidth={2} aria-hidden="true">

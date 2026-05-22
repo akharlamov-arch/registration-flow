@@ -1,0 +1,1401 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Flow</title>
+  <link rel="stylesheet" href="./assets/style.css">
+  <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+  <script>
+    window.APP_CONFIG = {
+      plaid_combined_link_enabled: 'false',
+      plaid_step5_enabled: 'true',
+    };
+  </script>
+</head>
+
+<body>
+  <div class="w-embed w-script">
+
+    <!-- Load Alpine first -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <div class="page-shell" x-data="registrationForm()">
+      <div class="page-header">
+        <div class="language-selector" aria-label="Language selector">
+          <label for="language-select" x-text="t('languageLabel')"></label>
+          <select id="language-select" x-model="language">
+            <option value="en">EN</option>
+            <option value="es">ES</option>
+            <option value="uk">UA</option>
+            <option value="ru">RU</option>
+          </select>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" style="display: none">
+          <symbol id="logo" viewBox="0 0 232 30" fill="none">
+            <g clip-path="url(#clip0_24_430)">
+              <path d="M4.02871 19.3462L0 30H10.6313L14.66 19.3462H4.02871Z" fill="#D42C00" />
+              <path d="M26.2891 30H32.4949C35.1585 30 37.5445 28.3491 38.4883 25.853L40.9489 19.3462H30.3176L26.2891 30Z"
+                fill="#D42C00" />
+              <path
+                d="M15.7704 -1.90735e-06C13.1068 -1.90735e-06 10.7209 1.6508 9.77691 4.1469L7.31641 10.6537H20.4609L13.1452 30H23.7765L31.092 10.6537H44.2365L48.2652 -1.90735e-06H15.7704Z"
+                fill="#D42C00" />
+              <path d="M56.4198 11.0062H60.6809V24.7875H56.4198V11.0062ZM56.3926 5.15929H60.7081V8.94723H56.3926V5.15929Z"
+                fill="#231E20" />
+              <path d="M71.6077 9.07962H64.5879V5.15929H83.1071V9.07962H76.1146V24.7875H71.6077V9.07962Z"
+                fill="#231E20" />
+              <path
+                d="M96.7925 14.5363C99.2234 14.5363 100.316 13.9536 100.316 11.7285C100.316 9.45051 99.2778 8.86775 96.7377 8.86775H91.5208V14.5363H96.7925ZM96.0549 18.2712H91.5208V24.7875H87.1504V5.15929H96.9289C103.293 5.15929 104.823 7.80814 104.823 11.5696C104.823 14.2714 103.922 16.7614 100.562 17.7944L104.577 24.7875H99.7969L96.0549 18.2712Z"
+                fill="#231E20" />
+              <path
+                d="M109.465 17.2912V5.15931H113.944V16.7349C113.944 19.6487 114.682 21.3175 118.779 21.3175C122.849 21.3175 123.641 19.7546 123.641 16.7349V5.15931H127.984V17.2912C127.984 21.0525 127.247 25.1583 118.725 25.1583C110.175 25.1583 109.465 21.0525 109.465 17.2912Z"
+                fill="#231E20" />
+              <path
+                d="M132.301 14.9601C132.301 7.91406 136.262 4.84134 142.981 4.84134C146.669 4.84134 149.018 5.79498 150.93 7.6757L147.843 10.6689C146.614 9.50337 145.166 8.81471 142.954 8.81471C138.638 8.81471 136.808 10.9338 136.808 15.0131C136.808 18.9599 138.338 21.2114 142.981 21.2114C145.603 21.2114 146.86 20.3638 148.116 19.2247L151.066 22.0326C149.455 23.6484 147.297 25.0788 142.708 25.0788C135.142 25.0788 132.301 21.4499 132.301 14.9601Z"
+                fill="#231E20" />
+              <path
+                d="M163.057 16.2316L160.189 19.5162V24.7875H155.764V5.15929H160.189V14.0331L167.864 5.15929H172.808L165.952 12.9205L173.792 24.7875H168.738L163.057 16.2316Z"
+                fill="#231E20" />
+              <path d="M178.463 5.15931H182.915V24.7875H178.463V5.15931Z" fill="#231E20" />
+              <path
+                d="M188.896 5.15931H193.731L203.046 17.5296V5.15931H207.307V24.7875H203.21L193.185 11.5431V24.7875H188.896V5.15931Z"
+                fill="#231E20" />
+              <path
+                d="M211.924 14.9601C211.924 7.8611 215.748 4.84137 222.576 4.84137C226.673 4.84137 229.159 6.00688 230.771 7.62275L227.712 10.616C226.674 9.66235 225.335 8.81474 222.549 8.81474C218.124 8.81474 216.403 10.9338 216.403 15.0131C216.403 19.3042 217.605 21.4234 222.494 21.4234C226.428 21.4234 227.575 20.1519 227.575 17.3971V16.9732H221.921V13.3708H232V16.5759C232 22.165 229.706 25.0788 222.276 25.0788C214.191 25.0788 211.924 21.4763 211.924 14.9601Z"
+                fill="#231E20" />
+            </g>
+            <defs>
+              <clipPath id="clip0_24_430">
+                <rect width="232" height="30" fill="white" />
+              </clipPath>
+            </defs>
+          </symbol>
+          <symbol id="phone-icon" viewBox="0 0 24 24">
+            <path
+              d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+          </symbol>
+        </svg>
+
+        <!-- Mobile Contact Us button (top-right corner) -->
+        <a href="tel:+19162694606" class="contact-us-mobile">
+          <svg width="20" height="20" fill="currentColor">
+            <use href="#phone-icon"></use>
+          </svg>
+          <span x-text="t('contactUs')"></span>
+        </a>
+
+        <!-- Figma Step 1 wrapper (OTP) -->
+        <svg x-cloak x-show="step === 1" class="page-logo" alt="">
+          <use href="#logo"></use>
+        </svg>
+
+        <!-- Figma Step 2 wrapper (Review information) -->
+        <svg x-cloak x-show="step === 2" class="page-logo">
+          <use href="#logo"></use>
+        </svg>
+        <div x-cloak x-show="step === 2" class="page-hero" style="gap:0;">
+          <p class="page-title" x-html="t('pageTitleStep2')"></p>
+        </div>
+
+        <!-- Figma Step 3 wrapper (Continue filling out the form) -->
+        <svg x-cloak x-show="step === 3 || step === 4 || step === 5 || step === 6 || step === 7 || step === 8"
+          class="page-logo">
+          <use href="#logo"></use>
+        </svg>
+
+        <div x-cloak x-show="step === 3 || step === 4 || step === 5 || step === 6 || step === 7 || step === 8"
+          class="page-hero">
+          <p class="page-title" x-text="t('pageTitleStep3')"></p>
+          <p class="page-subtitle" x-text="t('pageSubtitleStep3')"></p>
+        </div>
+
+        <!-- Figma Step 9 wrapper (Review summary) -->
+        <svg x-cloak x-show="step === 9" class="page-logo">
+          <use href="#logo"></use>
+        </svg>
+
+        <div x-cloak x-show="step === 9" class="page-hero" style="gap:15px;">
+          <p class="page-title" x-text="t('pageTitleStep9')"></p>
+          <p class="page-subtitle page-subtitle-narrow" x-text="t('pageSubtitleStep9')"></p>
+        </div>
+
+        <!-- Figma Step 10 wrapper (Terms) -->
+        <svg x-cloak x-show="step === 10" class="page-logo">
+          <use href="#logo"></use>
+        </svg>
+
+        <div x-cloak x-show="step === 10" class="page-hero" style="gap:15px;">
+          <p class="page-title" x-text="t('pageTitleStep10')"></p>
+          <p class="page-subtitle page-subtitle-narrow" x-text="t('pageSubtitleStep10')"></p>
+        </div>
+
+        <!-- Figma Step 11 wrapper (Congratulations) -->
+        <svg x-cloak x-show="step === 11 || step === 12" class="page-logo">
+          <use href="#logo"></use>
+        </svg>
+
+        <div x-cloak x-show="step === 11 || step === 12" class="page-hero" style="gap:10px;">
+          <p class="page-title" x-text="t('pageTitleStep11')"></p>
+          <p class="page-subtitle" x-text="t('pageSubtitleStep11')"></p>
+        </div>
+      </div>
+
+      <div class="card">
+
+        <!-- Progress bar (existing, non-Figma) -->
+        <div x-cloak
+          x-show="step !== 1 && step !== 2 && step !== 3 && step !== 4 && step !== 5 && step !== 6 && step !== 7 && step !== 8 && step !== 9 && step !== 10 && step !== 11 && step !== 12"
+          class="progress-wrapper" style="margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <template x-for="(label, index) in progressLabels()">
+              <div style="text-align:center; width:9%; font-size:11px;">
+                <div x-text="label" :style="index + 1 === step ? 'font-weight:600; color:#2563eb;' : 'color:#6b7280;'">
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <div style="position:relative; height:6px; background:#e5e7eb; border-radius:4px; overflow:hidden;">
+            <div style="height:100%; background:#2563eb; width:0%; transition:width .3s ease;"
+              :style="`width: ${((step - 1) / 10) * 100}%`">
+            </div>
+            <div
+              style="height:100%; background:#2563eb; width:0%; position:absolute; top:0; left:0; transition:width .3s ease;"
+              :style="step === 11 ? 'width:100%;' : ''">
+            </div>
+          </div>
+        </div>
+
+        <!-- Figma progress (Step 1 only) -->
+        <div x-cloak x-show="step === 1" class="otp-progress">
+          <p class="otp-progress-label" x-text="t('progressLabel')"></p>
+          <div class="otp-progress-track">
+            <div class="otp-progress-fill" :style="`width:${progressPercent()}%`"></div>
+          </div>
+        </div>
+
+        <!-- Figma progress (Step 2 only) -->
+        <div x-cloak x-show="step === 2" class="otp-progress">
+          <p class="otp-progress-label" x-text="t('progressLabel')"></p>
+          <div class="otp-progress-track">
+            <div class="otp-progress-fill" :style="`width:${progressPercent()}%`"></div>
+          </div>
+        </div>
+
+        <!-- Figma progress (Step 3 only) -->
+        <div x-cloak x-show="step === 3 || step === 4 || step === 5 || step === 6 || step === 7 || step === 8"
+          class="otp-progress">
+          <p class="otp-progress-label" x-text="t('progressLabel')"></p>
+          <div class="otp-progress-track">
+            <div class="otp-progress-fill" :style="`width:${progressPercent()}%`"></div>
+          </div>
+        </div>
+
+        <!-- Figma progress (Step 9 only) -->
+        <div x-cloak x-show="step === 9" class="otp-progress">
+          <p class="otp-progress-label" x-text="t('progressLabel')"></p>
+          <div class="otp-progress-track">
+            <div class="otp-progress-fill" :style="`width:${progressPercent()}%`"></div>
+          </div>
+        </div>
+
+        <!-- Figma progress (Step 10 only) -->
+        <div x-cloak x-show="step === 10" class="otp-progress">
+          <p class="otp-progress-label" x-text="t('progressLabel')"></p>
+          <div class="otp-progress-track">
+            <div class="otp-progress-fill" :style="`width:${progressPercent()}%`"></div>
+          </div>
+        </div>
+
+        <!-- Step 1: OTP Verification -->
+        <div x-cloak x-show="step === 1">
+          <div class="otp-content">
+            <div class="otp-welcome">
+              <p class="otp-welcome-title" x-text="t('otpWelcomeTitle')"></p>
+              <p class="otp-welcome-subtitle" x-text="t('otpWelcomeSubtitle')"></p>
+            </div>
+
+            <p class="otp-message" x-text="t('otpMessage')"></p>
+
+            <div class="otp-form">
+              <template x-if="!pendingMessage">
+                <div style="width:100%; display:flex; flex-direction:column; align-items:center;">
+                  <div x-show="!showEmailRecovery || recoverySent" style="width:100%; display:flex; flex-direction:column; align-items:center;">
+                    <label class="sr-only" for="otp" x-text="t('otpLabel')"></label>
+                    <input id="otp" class="otp-input" type="text" x-model="form.otp" maxlength="6"
+                      :placeholder="t('otpPlaceholder')" autocomplete="one-time-code" inputmode="text" autocapitalize="characters" style="text-transform:uppercase;">
+
+                    <template x-if="errors.otp">
+                      <div class="otp-error" x-text="errors.otp"></div>
+                    </template>
+                  </div>
+
+                  <!-- Email recovery block — revealed when OTP code is invalid or already used -->
+                  <div x-show="showEmailRecovery" style="width:100%; display:flex; flex-direction:column; align-items:center; gap:8px; margin-top:12px;">
+                    <template x-if="!recoverySent">
+                      <div style="width:100%; display:flex; flex-direction:column; align-items:center; gap:8px;">
+                        <div class="otp-error" x-text="t('otpInvalidCodeWarning')"></div>
+                        <label class="sr-only" x-text="t('otpRecoveryLabel')"></label>
+                        <input class="otp-input" type="email" x-model="recoveryEmail"
+                          :placeholder="t('otpRecoveryPlaceholder')" autocomplete="email">
+                        <button class="primary otp-button" @click="requestNewCode()" :disabled="recoverySending">
+                          <span x-text="recoverySending ? t('otpRecoveryButtonSending') : t('otpRecoveryButton')"></span>
+                        </button>
+                      </div>
+                    </template>
+                    <template x-if="recoverySent">
+                      <div class="otp-pending" x-text="t('otpRecoverySent')"></div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+
+              <button class="primary otp-button" x-show="!showEmailRecovery || recoverySent" @click="verifyOtp()" :disabled="verifying">
+                <span x-text="verifying ? t('otpVerifying') : (pendingMessage ? t('otpRetry') : t('otpNext') )"></span>
+              </button>
+
+              <template x-if="pendingMessage">
+                <div class="otp-pending" x-text="pendingMessage"></div>
+              </template>
+            </div>
+
+            <div class="otp-note">
+              <p x-html="t('otpNoteLine1')"></p>
+              <p x-text="t('otpNoteLine2')"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Lead Summary from validate-otp -->
+        <div x-cloak x-show="step === 2">
+          <div class="review-layout">
+            <template x-if="lead">
+              <div class="review-sections">
+                <div>
+                  <p class="review-section-title" x-text="t('step2ContactTitle')"></p>
+                  <p class="review-section-text">
+                    <span x-text="lead.firstName + ' ' + lead.lastName"></span>,
+                    <span x-text="lead.email"></span>,
+                    <span x-text="lead.phone"></span>
+                  </p>
+                  <template x-if="errors.contactEmail">
+                    <div class="field-error" x-text="errors.contactEmail"></div>
+                  </template>
+                  <template x-if="errors.contactPhone">
+                    <div class="field-error" x-text="errors.contactPhone"></div>
+                  </template>
+                </div>
+
+                <div>
+                  <p class="review-section-title" x-text="t('step2BusinessTitle')"></p>
+                  <p class="review-section-text">
+                    <span x-text="lead.companyName"></span>,
+                    <span x-text="lead.companyTitle"></span> -
+                    <span x-text="lead.firstName + ' ' + lead.lastName"></span>,
+                    <span x-text="lead.fleetSize"></span> <span x-text="t('fleetTrucks')"></span><template
+                      x-if="lead.dot">,
+                      <span>DOT <span x-text="lead.dot"></span></span></template><template x-if="lead.mc">,
+                      <span>MC <span x-text="lead.mc"></span></span></template>
+                  </p>
+                </div>
+
+                <div>
+                  <p class="review-section-title" x-text="t('step2RecommendedTitle')"></p>
+                  <p class="review-section-text">
+                    <span x-text="[lead.refFirstName, lead.refLastName].filter(Boolean).join(' ') || ''"></span>
+                    <template x-if="lead.refCompany">
+                      <span>, <span x-text="lead.refCompany"></span></span>
+                    </template>
+                    <template x-if="lead.refPhone">
+                      <span>, <span x-text="lead.refPhone"></span></span>
+                    </template>
+                  </p>
+                </div>
+              </div>
+            </template>
+
+            <p class="review-callout">
+              <span x-text="t('step2CalloutBefore')"></span>
+              <a class="review-phone" href="tel:+19162694606">(916) 269-4606</a>
+              <span x-text="t('step2CalloutAfter')"></span>
+            </p>
+
+            <div class="review-spacer"></div>
+
+            <div class="review-bottom">
+              <div class="review-divider"></div>
+              <p class="review-bottom-note" x-text="t('reviewBottomNote')"></p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Step 3: Plaid bank verification (first step after Step 2 review) -->
+        <div x-cloak x-show="step === 3">
+          <div class="form-layout">
+            <div class="company-head" x-show="!shouldShowPlaidIntroCard()">
+              <p class="company-title" x-text="t('step5Title')"></p>
+              <p class="company-subtitle" x-text="t('step5Subtitle')"></p>
+            </div>
+
+            <div style="max-width:800px; margin:0 auto; display:flex; flex-direction:column; gap:16px;">
+              <template x-if="shouldShowPlaidIntroCard()">
+                <div class="plaid-intro-card">
+                  <div class="plaid-intro-logos">
+                    <svg width="89" height="50" viewBox="0 0 89 50" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Plaid connection logos">
+                      <rect x="39" width="50" height="50" rx="25" fill="black" />
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M61.4125 12.375L53.6753 14.4014L51.5431 22.1821L54.2099 24.9202L51.5 27.6131L53.5067 35.4278L61.2103 37.5803L63.9208 34.8869L66.5875 37.6244L74.3247 35.598L76.4564 27.8168L73.7901 25.0798L76.5 22.3869L74.4933 14.5716L66.7886 12.4191L64.0792 15.112L61.4125 12.375ZM56.6645 15.8981L60.7402 14.8301L62.5225 16.6597L59.9232 19.2425L56.6645 15.8981ZM65.6116 16.6842L67.4226 14.8849L71.4807 16.0188L68.1688 19.3095L65.6116 16.6842ZM53.9849 21.5434L55.1077 17.4453L58.3654 20.7897L55.7667 23.3725L53.9849 21.5428V21.5434ZM69.7 20.8823L73.012 17.5905L74.0683 21.7072L72.2578 23.507L69.7 20.8823ZM61.455 20.8147L64.0543 18.2319L66.6109 20.8573L64.0122 23.44L61.455 20.8147ZM57.299 24.9447L59.8977 22.3619L62.456 24.9872L59.8562 27.57L57.299 24.9447ZM65.5445 25.0122L68.1433 22.4295L70.7005 25.0548L68.1012 27.6375L65.5445 25.0122ZM53.9306 28.2923L55.7422 26.4919L58.2989 29.1177L54.988 32.4079L53.9306 28.2923ZM61.388 29.1422L63.9872 26.5594L66.5445 29.1847L63.9457 31.7675L61.388 29.1422ZM69.633 29.2103L72.2323 26.6275L74.0146 28.4566L72.8923 32.5547L69.633 29.2103ZM56.5193 33.9811L59.8307 30.6894L62.389 33.3147L60.5774 35.1151L56.5193 33.9811ZM65.4775 33.3397L68.0762 30.7569L71.3345 34.1019L67.2593 35.1693L65.4775 33.3397Z" fill="white" />
+                      <g clip-path="url(#clip0_1206_14333)">
+                        <circle cx="25" cy="25" r="25" fill="#D42C00" />
+                        <g clip-path="url(#clip1_1206_14333)">
+                          <path d="M12.3331 27.7231L9.7998 34.3994H16.485L19.0183 27.7231H12.3331Z" fill="white" />
+                          <path d="M26.3311 34.3994H30.2334C31.9084 34.3994 33.4088 33.3649 34.0023 31.8006L35.5496 27.7231H28.8644L26.3311 34.3994Z" fill="white" />
+                          <path d="M19.7165 15.5994C18.0415 15.5994 16.5411 16.634 15.9476 18.1982L14.4004 22.2758H22.6659L18.0657 34.3994H24.7508L29.3511 22.2758H37.6167L40.15 15.5994H19.7165Z" fill="white" />
+                        </g>
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_1206_14333">
+                          <rect width="50" height="50" fill="white" />
+                        </clipPath>
+                        <clipPath id="clip1_1206_14333">
+                          <rect width="30.35" height="18.8" fill="white" transform="translate(9.7998 15.5996)" />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </div>
+
+                  <p class="plaid-intro-title" x-text="t('plaidIntroTitle')"></p>
+                  <p class="plaid-intro-subtitle" x-text="t('plaidIntroSubtitle')"></p>
+
+                  <div class="plaid-intro-body">
+                    <div class="plaid-intro-bullet-row">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none">
+                        <path d="M9.5 0L0 5V7H19V5M14 9V16H17V9M0 21H19V18H0M8 9V16H11V9M2 9V16H5V9H2Z" fill="black"/>
+                      </svg>
+                      <p class="plaid-intro-bullet-text" x-text="t('plaidIntroBulletBank')"></p>
+                    </div>
+
+                    <div class="plaid-intro-bullet-row">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 13C18.2833 13 18.521 12.904 18.713 12.712C18.905 12.52 19.0007 12.2827 19 12C18.9993 11.7173 18.9033 11.48 18.712 11.288C18.5207 11.096 18.2833 11 18 11H15C14.7167 11 14.4793 11.096 14.288 11.288C14.0967 11.48 14.0007 11.7173 14 12C13.9993 12.2827 14.0953 12.5203 14.288 12.713C14.4807 12.9057 14.718 13.0013 15 13H18ZM18 10C18.2833 10 18.521 9.904 18.713 9.712C18.905 9.52 19.0007 9.28267 19 9C18.9993 8.71733 18.9033 8.48 18.712 8.288C18.5207 8.096 18.2833 8 18 8H15C14.7167 8 14.4793 8.096 14.288 8.288C14.0967 8.48 14.0007 8.71733 14 9C13.9993 9.28267 14.0953 9.52033 14.288 9.713C14.4807 9.90567 14.718 10.0013 15 10H18ZM9 13C8.4 13 7.85833 13.0543 7.375 13.163C6.89167 13.2717 6.46667 13.4423 6.1 13.675C5.75 13.8917 5.48333 14.1377 5.3 14.413C5.11667 14.6883 5.025 14.984 5.025 15.3C5.025 15.5 5.1 15.6667 5.25 15.8C5.4 15.9333 5.58333 16 5.8 16H12.2C12.4167 16 12.6 15.929 12.75 15.787C12.9 15.645 12.975 15.466 12.975 15.25C12.975 14.9667 12.8833 14.6917 12.7 14.425C12.5167 14.1583 12.25 13.9083 11.9 13.675C11.5333 13.4417 11.1083 13.2707 10.625 13.162C10.1417 13.0533 9.6 12.9993 9 13ZM10.412 11.413C10.804 11.021 11 10.55 11 10C11 9.45 10.8043 8.97933 10.413 8.588C10.0217 8.19667 9.55067 8.00067 9 8C8.44933 7.99933 7.97867 8.19533 7.588 8.588C7.19733 8.98067 7.00133 9.45133 7 10C6.99867 10.5487 7.19467 11.0197 7.588 11.413C7.98133 11.8063 8.452 12.002 9 12C9.548 11.998 10.019 11.8023 10.413 11.413M4 20C3.45 20 2.97933 19.8043 2.588 19.413C2.19667 19.0217 2.00067 18.5507 2 18V6C2 5.45 2.196 4.97933 2.588 4.588C2.98 4.19667 3.45067 4.00067 4 4H20C20.55 4 21.021 4.196 21.413 4.588C21.805 4.98 22.0007 5.45067 22 6V18C22 18.55 21.8043 19.021 21.413 19.413C21.0217 19.805 20.5507 20.0007 20 20H4ZM4 18H20V6H4V18Z" fill="black"/>
+                      </svg>
+                      <p class="plaid-intro-bullet-text" x-text="t('plaidIntroBulletOwner')"></p>
+                    </div>
+
+                    <template x-if="errors.plaidFlow">
+                      <div class="upload-status error plaid-intro-error">
+                        <svg class="upload-status-icon" viewBox="0 0 24 24" fill="currentColor">
+                          <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                        </svg>
+                        <span x-text="errors.plaidFlow"></span>
+                      </div>
+                    </template>
+
+                    <button class="primary review-next plaid-intro-action" @click="step5Action()" :disabled="plaid.status === 'in_progress'">
+                      <span x-text="plaid.status === 'in_progress' ? t('plaidConnectingButton') : t('plaidIntroButton')"></span>
+                    </button>
+                  </div>
+                </div>
+              </template>
+
+              <template x-if="!shouldShowPlaidIntroCard()">
+                <div style="display:flex; flex-direction:column; gap:16px;">
+                  <div x-show="isPlaidStep5Enabled()"
+                    style="padding:16px; border:1px solid #e5e7eb; border-radius:10px; background:#f9fafb;">
+                    <p class="form-label" style="margin-bottom:8px;" x-text="t('plaidStatusLabel')"></p>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                      <span
+                        style="display:inline-flex; align-items:center; border-radius:999px; padding:4px 10px; font-size:12px; font-weight:600;"
+                        :style="plaid.status === 'verified'
+                          ? 'background:#dcfce7; color:#166534;'
+                          : (plaid.status === 'in_progress'
+                            ? 'background:#dbeafe; color:#1e40af;'
+                            : (plaid.status === 'error'
+                              ? 'background:#fee2e2; color:#991b1b;'
+                              : 'background:#f3f4f6; color:#374151;'))"
+                        x-text="plaidStatusText()">
+                      </span>
+                      <template x-if="plaid.status === 'verified'">
+                        <span style="font-size:12px; color:#4b5563;" x-text="t('plaidVerifiedHint')"></span>
+                      </template>
+                    </div>
+                  </div>
+
+                  <div x-show="isPlaidStep5Enabled()" style="padding:16px; border:1px solid #e5e7eb; border-radius:10px; background:#fff;">
+                    <p class="form-label" style="margin-bottom:8px;" x-text="t('plaidSelectedAccountLabel')"></p>
+                    <template x-if="plaid.selectedAccount">
+                      <p class="summary-text" x-text="formatPlaidSelectionSummary()"></p>
+                    </template>
+                    <template x-if="!plaid.selectedAccount">
+                      <p class="summary-text" style="color:#6b7280;" x-text="t('plaidNoAccountSelected')"></p>
+                    </template>
+                  </div>
+
+                  <template x-if="isPlaidStep5Enabled() && errors.plaidVerification">
+                    <div class="field-error" x-text="errors.plaidVerification"></div>
+                  </template>
+
+                  <template x-if="isPlaidStep5Enabled() && errors.plaidFlow">
+                    <div class="upload-status error" style="justify-content:center;">
+                      <svg class="upload-status-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                      </svg>
+                      <span x-text="errors.plaidFlow"></span>
+                    </div>
+                  </template>
+
+                  <template x-if="isPlaidStep5Enabled() && plaid.requiresManualBankInput">
+                    <div class="upload-status warning" style="background:#fef3c7; color:#92400e; justify-content:center;">
+                      <svg class="upload-status-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+                      </svg>
+                      <span x-text="t('plaidManualFallbackPending')"></span>
+                    </div>
+                  </template>
+
+                  <template x-if="plaid.requiresManualBankInput || !isPlaidStep5Enabled()">
+                    <div class="form-grid" style="max-width:800px; margin:0 auto; width:100%;">
+                      <div class="form-field w-390">
+                        <p class="form-label" x-text="t('labelBankName')"></p>
+                        <input class="form-input" type="text" x-model="form.bank.name" :placeholder="t('placeholderBankName')">
+                        <template x-if="errors.bankName">
+                          <div class="field-error" x-text="errors.bankName"></div>
+                        </template>
+                      </div>
+
+                      <div class="form-field w-390">
+                        <p class="form-label" x-text="t('labelAccountType')"></p>
+                        <div class="select-wrap">
+                          <select class="form-input select-input" x-model="form.bank.accountType">
+                            <option value="" disabled x-text="t('accountTypeChoose')"></option>
+                            <option value="checking" x-text="t('accountTypeChecking')"></option>
+                            <option value="savings" x-text="t('accountTypeSavings')"></option>
+                          </select>
+                          <span class="select-caret" aria-hidden="true"></span>
+                        </div>
+                      </div>
+
+                      <div class="form-field w-390">
+                        <p class="form-label" x-text="t('labelAccountNumber')"></p>
+                        <div class="input-with-toggle">
+                          <input class="form-input" type="text"
+                            :style="showBankAccount ? '' : '-webkit-text-security: disc; text-security: disc;'"
+                            :value="formatAccountNumber(form.bank.accountNumberMasked)"
+                            @input="form.bank.accountNumberMasked = normalizeDigits($event.target.value, 21)"
+                            :placeholder="t('placeholderAccountNumber')" autocomplete="off" inputmode="numeric">
+                          <span class="toggle-visibility" @click="showBankAccount = !showBankAccount"
+                            x-text="showBankAccount ? t('hide') : t('show')"></span>
+                        </div>
+                        <template x-if="errors.accountNumberMasked">
+                          <div class="field-error" x-text="errors.accountNumberMasked"></div>
+                        </template>
+                      </div>
+
+                      <div class="form-field w-390">
+                        <p class="form-label" x-text="t('labelConfirmAccount')"></p>
+                        <div class="input-with-toggle">
+                          <input class="form-input" type="text"
+                            :style="showBankAccountConfirm ? '' : '-webkit-text-security: disc; text-security: disc;'"
+                            :value="formatAccountNumber(form.bank.accountNumberMaskedConfirm)"
+                            @input="form.bank.accountNumberMaskedConfirm = normalizeDigits($event.target.value, 21)"
+                            :placeholder="t('placeholderAccountNumber')" autocomplete="off" inputmode="numeric">
+                          <span class="toggle-visibility" @click="showBankAccountConfirm = !showBankAccountConfirm"
+                            x-text="showBankAccountConfirm ? t('hide') : t('show')"></span>
+                        </div>
+                        <template x-if="errors.accountNumberMaskedConfirm">
+                          <div class="field-error" x-text="errors.accountNumberMaskedConfirm"></div>
+                        </template>
+                      </div>
+
+                      <div class="form-field w-390">
+                        <p class="form-label" x-text="t('labelRoutingNumber')"></p>
+                        <input class="form-input" type="text" :value="formatRoutingNumber(form.bank.routingNumber)"
+                          @input="(() => { const digits = normalizeDigits($event.target.value, 9); form.bank.routingNumber = digits; $event.target.value = formatRoutingNumber(digits); })()"
+                          :placeholder="t('placeholderRoutingNumber')" inputmode="numeric" maxlength="11">
+                        <template x-if="errors.routingNumber">
+                          <div class="field-error" x-text="errors.routingNumber"></div>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+
+                </div>
+              </template>
+            </div>
+
+            <div x-show="!shouldShowPlaidIntroCard()" class="review-spacer"></div>
+
+            <div x-show="!shouldShowPlaidIntroCard()" class="review-bottom">
+              <div class="review-divider"></div>
+              <p class="review-bottom-note" x-text="t('reviewBottomNote')"></p>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Step 4: Company address (shown after Step 3 Plaid verification) -->
+        <div x-cloak x-show="step === 4">
+          <div class="form-layout">
+            <div class="company-head">
+              <p class="company-title" x-text="t('step3Title')"></p>
+              <p class="company-subtitle" x-text="t('step3Subtitle')"></p>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-field w-500">
+                <p class="form-label" x-text="t('labelStreet1')"></p>
+                <input class="form-input" type="text" x-model="form.companyAddress.line1"
+                  :placeholder="t('placeholderStreet1')">
+                <template x-if="errors.companyAddressLine1">
+                  <div class="field-error" x-text="errors.companyAddressLine1"></div>
+                </template>
+              </div>
+
+              <div class="form-field w-280">
+                <p class="form-label" x-text="t('labelStreet2')"></p>
+                <input class="form-input" type="text" x-model="form.companyAddress.line2"
+                  :placeholder="t('placeholderStreet2')">
+              </div>
+
+              <div class="form-field w-390">
+                <p class="form-label" x-text="t('labelCity')"></p>
+                <input class="form-input" type="text" x-model="form.companyAddress.city"
+                  :placeholder="t('placeholderCity')">
+                <template x-if="errors.companyAddressCity">
+                  <div class="field-error" x-text="errors.companyAddressCity"></div>
+                </template>
+              </div>
+
+              <div class="form-field w-185">
+                <p class="form-label" x-text="t('labelState')"></p>
+                <input class="form-input" type="text" x-model="form.companyAddress.state"
+                  :placeholder="t('placeholderState')">
+                <template x-if="errors.companyAddressState">
+                  <div class="field-error" x-text="errors.companyAddressState"></div>
+                </template>
+              </div>
+
+              <div class="form-field w-185">
+                <p class="form-label" x-text="t('labelZip')"></p>
+                <input class="form-input" type="text" x-model="form.companyAddress.zip"
+                  :placeholder="t('placeholderZip')">
+                <template x-if="errors.companyAddressZip">
+                  <div class="field-error" x-text="errors.companyAddressZip"></div>
+                </template>
+              </div>
+            </div>
+
+            <div class="mail-choices">
+              <label class="mail-choice">
+                <input type="radio" x-model="form.mailingAddressChoice" value="same-as-company">
+                <span class="mail-dot" aria-hidden="true"></span>
+                <span class="mail-text" x-text="t('mailChoiceSame')"></span>
+              </label>
+
+              <label class="mail-choice">
+                <input type="radio" x-model="form.mailingAddressChoice" value="other">
+                <span class="mail-dot" aria-hidden="true"></span>
+                <span class="mail-text" x-text="t('mailChoiceOther')"></span>
+              </label>
+            </div>
+
+            <div class="review-spacer"></div>
+
+            <div class="review-bottom">
+              <div class="review-divider"></div>
+              <p class="review-bottom-note" x-text="t('reviewBottomNote')"></p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Step 5: Mailing address (optional) -->
+        <div x-cloak x-show="step === 5 && form.mailingAddressChoice === 'other'">
+          <div class="form-layout">
+            <div class="company-head">
+              <p class="company-title" x-text="t('step4Title')"></p>
+              <p class="company-subtitle" x-text="t('step4Subtitle')"></p>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-field w-500">
+                <p class="form-label" x-text="t('labelStreet1')"></p>
+                <input class="form-input" type="text" x-model="form.mailingAddress.line1"
+                  :placeholder="t('placeholderStreet1')">
+              </div>
+
+              <div class="form-field w-280">
+                <p class="form-label" x-text="t('labelStreet2')"></p>
+                <input class="form-input" type="text" x-model="form.mailingAddress.line2"
+                  :placeholder="t('placeholderStreet2')">
+              </div>
+
+              <div class="form-field w-390">
+                <p class="form-label" x-text="t('labelCity')"></p>
+                <input class="form-input" type="text" x-model="form.mailingAddress.city"
+                  :placeholder="t('placeholderCity')">
+              </div>
+
+              <div class="form-field w-185">
+                <p class="form-label" x-text="t('labelState')"></p>
+                <input class="form-input" type="text" x-model="form.mailingAddress.state"
+                  :placeholder="t('placeholderState')">
+              </div>
+
+              <div class="form-field w-185">
+                <p class="form-label" x-text="t('labelZip')"></p>
+                <input class="form-input" type="text" x-model="form.mailingAddress.zip"
+                  :placeholder="t('placeholderZip')">
+              </div>
+            </div>
+
+            <div class="review-spacer"></div>
+
+            <div class="review-bottom">
+              <div class="review-divider"></div>
+              <p class="review-bottom-note" x-text="t('reviewBottomNote')"></p>
+            </div>
+          </div>
+        </div>
+
+       
+        <!-- Step 6: Personal information -->
+        <div x-cloak x-show="step === 6">
+          <div class="form-layout">
+            <div class="company-head">
+              <p class="company-title" x-text="t('step6Title')"></p>
+              <p class="company-subtitle personal-subtitle" x-text="t('step6Subtitle')"></p>
+            </div>
+
+            <div class="form-grid" style="max-width:800px; margin-top:25px; align-items:flex-end;">
+              <div class="form-field w-390">
+                <p class="form-label" x-text="t('labelSsnFull')"></p>
+                <div class="input-with-toggle">
+                  <input class="form-input" type="text"
+                    :style="showSsn ? '' : '-webkit-text-security: disc; text-security: disc;'"
+                    :value="formatSsn(form.personal.ssnLast4Masked)"
+                    @input="(() => { const digits = normalizeSsn($event.target.value); form.personal.ssnLast4Masked = digits; $event.target.value = formatSsn(digits); })()"
+                    placeholder="000-00-0000" autocomplete="off" inputmode="numeric" maxlength="11">
+                  <span class="toggle-visibility" @click="showSsn = !showSsn"
+                    x-text="showSsn ? t('hide') : t('show')"></span>
+                </div>
+                <template x-if="errors.ssnLast4Masked">
+                  <div class="field-error" x-text="errors.ssnLast4Masked"></div>
+                </template>
+              </div>
+
+              <div class="form-field w-390">
+                <p class="form-label" x-text="t('labelDriverLicense')"></p>
+                <div class="input-with-toggle">
+                  <input class="form-input" type="text"
+                    :style="showDriverLicense ? '' : '-webkit-text-security: disc; text-security: disc;'"
+                    x-model="form.personal.driverLicenseNumber" :placeholder="t('placeholderDriverLicense')"
+                    autocomplete="off">
+                  <span class="toggle-visibility" @click="showDriverLicense = !showDriverLicense"
+                    x-text="showDriverLicense ? t('hide') : t('show')"></span>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top:12px; display:flex; flex-direction:column; align-items:center; gap:15px;">
+              <input class="sr-only" type="file" id="driver-license" @change="onFileSelect($event, 'driverLicenseScan')"
+                accept="image/*,application/pdf">
+              <button class="attach-button" type="button" @click="document.getElementById('driver-license').click()"
+                x-text="form.files?.driverLicenseScan?.filename ? t('changeDriverLicense') : t('attachDriverLicense')"></button>
+
+              <!-- Upload status feedback -->
+              <template
+                x-if="uploadStatus.driverLicenseScan.type === 'success' || form.files?.driverLicenseScan?.filename">
+                <div class="upload-status success">
+                  <svg class="upload-status-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                  </svg>
+                  <span class="upload-filename" x-text="form.files?.driverLicenseScan?.filename || 'Uploaded'"></span>
+                </div>
+              </template>
+              <template x-if="uploadStatus.driverLicenseScan.type === 'error'">
+                <div class="upload-status error">
+                  <svg class="upload-status-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                  </svg>
+                  <span x-text="uploadStatus.driverLicenseScan.message"></span>
+                </div>
+              </template>
+              <!-- Default warning shown until file is uploaded -->
+              <template
+                x-if="!form.files?.driverLicenseScan?.filename && uploadStatus.driverLicenseScan.type !== 'error'">
+                <div class="upload-status warning" style="background:#fef3c7; color:#92400e;">
+                  <svg class="upload-status-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+                  </svg>
+                  <span x-text="t('driverLicenseWarning')"></span>
+                </div>
+              </template>
+
+              <p class="bank-helper" x-html="t('driverLicenseHelper')"></p>
+            </div>
+
+            <div class="review-spacer"></div>
+
+            <div class="review-bottom">
+              <div class="review-divider"></div>
+              <p class="review-bottom-note" x-text="t('reviewBottomNote')"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 7: Personal address -->
+        <div x-cloak x-show="step === 7">
+          <div class="form-layout">
+            <div class="company-head">
+              <p class="company-title" x-text="t('step7Title')"></p>
+            </div>
+
+            <div class="choice-grid">
+              <label class="address-choice">
+                <input type="radio" x-model="form.personalAddressChoice" value="same-as-business">
+                <span class="radio-dot" aria-hidden="true"></span>
+                <span class="choice-text">
+                  <p class="choice-title" x-html="t('personalAddrSameBusiness')"></p>
+                  <p class="choice-subtitle" x-text="formatAddress(form.companyAddress)"></p>
+                </span>
+              </label>
+
+              <label class="address-choice">
+                <input type="radio" x-model="form.personalAddressChoice" value="same-as-mailing">
+                <span class="radio-dot" aria-hidden="true"></span>
+                <span class="choice-text">
+                  <p class="choice-title" x-html="t('personalAddrSameMailing')"></p>
+                  <p class="choice-subtitle" x-text="formatMailingAddress()"></p>
+                </span>
+              </label>
+
+              <label class="address-choice single">
+                <input type="radio" x-model="form.personalAddressChoice" value="other">
+                <span class="radio-dot" aria-hidden="true"></span>
+                <span class="choice-title" x-text="t('personalAddrOther')"></span>
+              </label>
+            </div>
+
+            <template x-if="form.personalAddressChoice === 'other'">
+              <div class="form-grid" style="max-width:800px; margin-top:25px;">
+                <div class="form-field w-500">
+                  <p class="form-label" x-text="t('labelStreet1')"></p>
+                  <input class="form-input" type="text" x-model="form.personalAddress.line1"
+                    :placeholder="t('placeholderStreet1')">
+                </div>
+
+                <div class="form-field w-280">
+                  <p class="form-label" x-text="t('labelStreet2')"></p>
+                  <input class="form-input" type="text" x-model="form.personalAddress.line2"
+                    :placeholder="t('placeholderStreet2')">
+                </div>
+
+                <div class="form-field w-390">
+                  <p class="form-label" x-text="t('labelCity')"></p>
+                  <input class="form-input" type="text" x-model="form.personalAddress.city"
+                    :placeholder="t('placeholderCity')">
+                </div>
+
+                <div class="form-field w-185">
+                  <p class="form-label" x-text="t('labelState')"></p>
+                  <input class="form-input" type="text" x-model="form.personalAddress.state"
+                    :placeholder="t('placeholderState')">
+                </div>
+
+                <div class="form-field w-185">
+                  <p class="form-label" x-text="t('labelZip')"></p>
+                  <input class="form-input" type="text" x-model="form.personalAddress.zip"
+                    :placeholder="t('placeholderZip')">
+                </div>
+              </div>
+            </template>
+
+            <div class="review-spacer"></div>
+
+            <div class="review-bottom">
+              <div class="review-divider"></div>
+              <p class="review-bottom-note" x-text="t('reviewBottomNote')"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 8: Billing contact (also in HubSpot) -->
+        <div x-cloak x-show="step === 8">
+          <div class="form-layout">
+            <div class="company-head">
+              <p class="company-title" x-text="t('step8Title')"></p>
+            </div>
+
+            <div class="billing-choices">
+              <label class="billing-choice">
+                <input type="radio" x-model="form.billingChoice" value="self">
+                <span class="radio-dot" aria-hidden="true"></span>
+                <span class="choice-text">
+                  <p class="choice-title" x-text="t('billingSelfTitle')"></p>
+                  <p class="billing-helper" x-text="t('billingSelfHelper')"></p>
+                </span>
+              </label>
+
+              <label class="billing-choice center">
+                <input type="radio" x-model="form.billingChoice" value="other">
+                <span class="radio-dot" aria-hidden="true"></span>
+                <p class="choice-title" x-text="t('billingOtherTitle')"></p>
+              </label>
+            </div>
+
+            <template x-if="form.billingChoice === 'other'">
+              <div class="form-grid" style="max-width:800px; margin-top:25px;">
+                <div class="form-field w-390">
+                  <p class="form-label" x-text="t('billingNameLabel')"></p>
+                  <input class="form-input" type="text" x-model="form.billingContact.name"
+                    :placeholder="t('billingNamePlaceholder')">
+                </div>
+
+                <div class="form-field w-390">
+                  <p class="form-label" x-text="t('billingEmailLabel')"></p>
+                  <input class="form-input" type="email" x-model="form.billingContact.email"
+                    :placeholder="t('billingEmailPlaceholder')">
+                  <template x-if="errors.billingContactEmail">
+                    <div class="field-error" x-text="errors.billingContactEmail"></div>
+                  </template>
+                </div>
+
+                <div class="form-field w-390">
+                  <p class="form-label" x-text="t('billingRoleLabel')"></p>
+                  <input class="form-input" type="text" x-model="form.billingContact.role"
+                    :placeholder="t('billingRolePlaceholder')">
+                </div>
+              </div>
+            </template>
+
+            <div class="review-spacer"></div>
+
+            <div class="review-bottom">
+              <div class="review-divider"></div>
+              <p class="review-bottom-note" x-text="t('reviewBottomNote')"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 9: Summary of all inputs -->
+        <div x-cloak x-show="step === 9">
+          <div class="summary-layout">
+            <div class="summary-card">
+              <div class="summary-scroll">
+                <div class="summary-section">
+                  <div>
+                    <p class="summary-title" x-text="t('summaryContact')"></p>
+                    <p class="summary-text" x-text="formatContactSummary()"></p>
+                  </div>
+                  <button type="button" class="summary-edit" @click="step = 2" aria-label="Edit contact details">
+                    <span class="summary-edit-icon" aria-hidden="true">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M16.862 3.487a2 2 0 0 1 2.828 0l.823.823a2 2 0 0 1 0 2.828L9.41 18.243a2 2 0 0 1-.845.51l-4.25 1.417a.75.75 0 0 1-.948-.948l1.417-4.25a2 2 0 0 1 .51-.845L16.862 3.487Z"
+                          stroke="#231E20" stroke-width="1.6" />
+                        <path d="M15.5 4.85 19.15 8.5" stroke="#231E20" stroke-width="1.6" />
+                      </svg>
+                    </span>
+                    <p class="summary-edit-label" x-text="t('summaryEdit')"></p>
+                  </button>
+                </div>
+
+                <div class="summary-section">
+                  <div>
+                    <p class="summary-title" x-text="t('summaryCompany')"></p>
+                    <p class="summary-text" x-text="formatCompanySummary()"></p>
+                  </div>
+                  <button type="button" class="summary-edit" @click="step = 3" aria-label="Edit company details">
+                    <span class="summary-edit-icon" aria-hidden="true">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M16.862 3.487a2 2 0 0 1 2.828 0l.823.823a2 2 0 0 1 0 2.828L9.41 18.243a2 2 0 0 1-.845.51l-4.25 1.417a.75.75 0 0 1-.948-.948l1.417-4.25a2 2 0 0 1 .51-.845L16.862 3.487Z"
+                          stroke="#231E20" stroke-width="1.6" />
+                        <path d="M15.5 4.85 19.15 8.5" stroke="#231E20" stroke-width="1.6" />
+                      </svg>
+                    </span>
+                    <p class="summary-edit-label" x-text="t('summaryEdit')"></p>
+                  </button>
+                </div>
+
+                <div class="summary-section">
+                  <div>
+                    <p class="summary-title" x-text="t('summaryCompanyAddress')"></p>
+                    <p class="summary-text" x-text="formatAddress(form.companyAddress)"></p>
+                  </div>
+                  <button type="button" class="summary-edit" @click="step = 3" aria-label="Edit company address">
+                    <span class="summary-edit-icon" aria-hidden="true">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M16.862 3.487a2 2 0 0 1 2.828 0l.823.823a2 2 0 0 1 0 2.828L9.41 18.243a2 2 0 0 1-.845.51l-4.25 1.417a.75.75 0 0 1-.948-.948l1.417-4.25a2 2 0 0 1 .51-.845L16.862 3.487Z"
+                          stroke="#231E20" stroke-width="1.6" />
+                        <path d="M15.5 4.85 19.15 8.5" stroke="#231E20" stroke-width="1.6" />
+                      </svg>
+                    </span>
+                    <p class="summary-edit-label" x-text="t('summaryEdit')"></p>
+                  </button>
+                </div>
+
+                <div class="summary-section">
+                  <div>
+                    <p class="summary-title" x-text="t('summaryMailing')"></p>
+                    <p class="summary-text" x-text="formatMailingAddress()"></p>
+                  </div>
+                  <button type="button" class="summary-edit"
+                    @click="step = (form.mailingAddressChoice === 'other' ? 4 : 3)" aria-label="Edit mailing address">
+                    <span class="summary-edit-icon" aria-hidden="true">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M16.862 3.487a2 2 0 0 1 2.828 0l.823.823a2 2 0 0 1 0 2.828L9.41 18.243a2 2 0 0 1-.845.51l-4.25 1.417a.75.75 0 0 1-.948-.948l1.417-4.25a2 2 0 0 1 .51-.845L16.862 3.487Z"
+                          stroke="#231E20" stroke-width="1.6" />
+                        <path d="M15.5 4.85 19.15 8.5" stroke="#231E20" stroke-width="1.6" />
+                      </svg>
+                    </span>
+                    <p class="summary-edit-label" x-text="t('summaryEdit')"></p>
+                  </button>
+                </div>
+
+                <div class="summary-section">
+                  <div>
+                    <p class="summary-title" x-text="t('summaryBillingDetails')"></p>
+                    <p class="summary-text" x-text="formatBankSummary()"></p>
+                  </div>
+                  <button type="button" class="summary-edit" @click="step = 5" aria-label="Edit billing details">
+                    <span class="summary-edit-icon" aria-hidden="true">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M16.862 3.487a2 2 0 0 1 2.828 0l.823.823a2 2 0 0 1 0 2.828L9.41 18.243a2 2 0 0 1-.845.51l-4.25 1.417a.75.75 0 0 1-.948-.948l1.417-4.25a2 2 0 0 1 .51-.845L16.862 3.487Z"
+                          stroke="#231E20" stroke-width="1.6" />
+                        <path d="M15.5 4.85 19.15 8.5" stroke="#231E20" stroke-width="1.6" />
+                      </svg>
+                    </span>
+                    <p class="summary-edit-label" x-text="t('summaryEdit')"></p>
+                  </button>
+                </div>
+
+                <div class="summary-section">
+                  <div>
+                    <p class="summary-title" x-text="t('summaryPersonalInfo')"></p>
+                    <p class="summary-text" x-text="formatPersonalInfoSummary()"></p>
+                  </div>
+                  <button type="button" class="summary-edit" @click="step = 6" aria-label="Edit personal information">
+                    <span class="summary-edit-icon" aria-hidden="true">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M16.862 3.487a2 2 0 0 1 2.828 0l.823.823a2 2 0 0 1 0 2.828L9.41 18.243a2 2 0 0 1-.845.51l-4.25 1.417a.75.75 0 0 1-.948-.948l1.417-4.25a2 2 0 0 1 .51-.845L16.862 3.487Z"
+                          stroke="#231E20" stroke-width="1.6" />
+                        <path d="M15.5 4.85 19.15 8.5" stroke="#231E20" stroke-width="1.6" />
+                      </svg>
+                    </span>
+                    <p class="summary-edit-label" x-text="t('summaryEdit')"></p>
+                  </button>
+                </div>
+
+                <div class="summary-section">
+                  <div>
+                    <p class="summary-title" x-text="t('summaryPersonalAddress')"></p>
+                    <p class="summary-text" x-text="formatPersonalAddress()"></p>
+                  </div>
+                  <button type="button" class="summary-edit" @click="step = 7" aria-label="Edit personal address">
+                    <span class="summary-edit-icon" aria-hidden="true">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M16.862 3.487a2 2 0 0 1 2.828 0l.823.823a2 2 0 0 1 0 2.828L9.41 18.243a2 2 0 0 1-.845.51l-4.25 1.417a.75.75 0 0 1-.948-.948l1.417-4.25a2 2 0 0 1 .51-.845L16.862 3.487Z"
+                          stroke="#231E20" stroke-width="1.6" />
+                        <path d="M15.5 4.85 19.15 8.5" stroke="#231E20" stroke-width="1.6" />
+                      </svg>
+                    </span>
+                    <p class="summary-edit-label" x-text="t('summaryEdit')"></p>
+                  </button>
+                </div>
+
+                <div class="summary-section">
+                  <div>
+                    <p class="summary-title" x-text="t('summaryBillingContact')"></p>
+                    <p class="summary-text" x-text="formatBillingContactSummary()"></p>
+                  </div>
+                  <button type="button" class="summary-edit" @click="step = 8" aria-label="Edit billing contact">
+                    <span class="summary-edit-icon" aria-hidden="true">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M16.862 3.487a2 2 0 0 1 2.828 0l.823.823a2 2 0 0 1 0 2.828L9.41 18.243a2 2 0 0 1-.845.51l-4.25 1.417a.75.75 0 0 1-.948-.948l1.417-4.25a2 2 0 0 1 .51-.845L16.862 3.487Z"
+                          stroke="#231E20" stroke-width="1.6" />
+                        <path d="M15.5 4.85 19.15 8.5" stroke="#231E20" stroke-width="1.6" />
+                      </svg>
+                    </span>
+                    <p class="summary-edit-label" x-text="t('summaryEdit')"></p>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Missing files upload section for step 9 -->
+              <template x-if="shouldShowMissingFilesPanel()">
+                <div class="summary-missing-files"
+                  style="margin-top:20px; padding:16px; background:#fef3c7; border-radius:8px;">
+                  <p style="margin:0 0 12px 0; font-weight:600; color:#92400e;" x-text="t('summaryMissingTitle')"></p>
+
+                  <template x-if="shouldBlockTokenizedManualFallbackAtStep9()">
+                    <div style="margin:0 0 12px 0;">
+                      <p class="bank-helper" style="margin:0; color:#92400e;" x-text="t('summaryTokenizedManualBankTitle')"></p>
+                    </div>
+                  </template>
+
+                  <!-- Void Check Upload (if missing) -->
+                  <template x-if="requiresVoidedCheckForSubmission() && !form.files?.voidCheck?.filename">
+                    <div style="margin-bottom:16px; display:flex; flex-direction:column; align-items:center; gap:10px;">
+                      <input class="sr-only" type="file" id="void-check-summary"
+                        @change="onFileSelect($event, 'voidCheck')" accept="image/*,application/pdf">
+                      <button class="attach-button" type="button"
+                        @click="document.getElementById('void-check-summary').click()"
+                        x-text="t('attachVoidedCheck')"></button>
+                      <template x-if="uploadStatus.voidCheck.type === 'success'">
+                        <div class="upload-status success">
+                          <svg class="upload-status-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                          </svg>
+                          <span class="upload-filename" x-text="form.files?.voidCheck?.filename || 'Uploaded'"></span>
+                        </div>
+                      </template>
+                      <template x-if="uploadStatus.voidCheck.type === 'error'">
+                        <div class="upload-status error">
+                          <svg class="upload-status-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                          </svg>
+                          <span x-text="uploadStatus.voidCheck.message"></span>
+                        </div>
+                      </template>
+                      <p class="bank-helper" style="margin:0;" x-html="t('summaryVoidCheckHelper')"></p>
+                    </div>
+                  </template>
+
+                  <!-- Driver License Upload (if missing) -->
+                  <template x-if="!form.files?.driverLicenseScan?.filename">
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+                      <input class="sr-only" type="file" id="driver-license-summary"
+                        @change="onFileSelect($event, 'driverLicenseScan')" accept="image/*,application/pdf">
+                      <button class="attach-button" type="button"
+                        @click="document.getElementById('driver-license-summary').click()"
+                        x-text="t('attachDriverLicense')"></button>
+                      <template x-if="uploadStatus.driverLicenseScan.type === 'success'">
+                        <div class="upload-status success">
+                          <svg class="upload-status-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                          </svg>
+                          <span class="upload-filename"
+                            x-text="form.files?.driverLicenseScan?.filename || 'Uploaded'"></span>
+                        </div>
+                      </template>
+                      <template x-if="uploadStatus.driverLicenseScan.type === 'error'">
+                        <div class="upload-status error">
+                          <svg class="upload-status-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                          </svg>
+                          <span x-text="uploadStatus.driverLicenseScan.message"></span>
+                        </div>
+                      </template>
+                      <p class="bank-helper" style="margin:0;" x-html="t('summaryDriverLicenseHelper')"></p>
+                    </div>
+                  </template>
+                </div>
+              </template>
+
+              <div class="review-bottom" style="margin-top:14px;">
+                <div class="review-divider"></div>
+                <p class="review-bottom-note" x-text="t('reviewBottomNote')"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 10: Terms and conditions -->
+        <div x-cloak x-show="step === 10" class="terms-layout">
+          <div class="terms-card">
+            <p class="terms-last-step" x-text="t('termsLastStep')"></p>
+
+            <div class="contract-embed-container">
+              <template x-if="loadingContract">
+                <div class="contract-embed-loading">
+                  <div class="contract-embed-spinner"></div>
+                  <p class="contract-embed-loading-text" x-text="t('contractLoading')"></p>
+                </div>
+              </template>
+              <template x-if="contractError">
+                <div class="contract-embed-error">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                      fill="#dc2626" />
+                  </svg>
+                  <p class="contract-embed-error-text" x-text="contractError"></p>
+                  <button class="primary" style="padding: 10px 24px;" @click="loadContractEmbed()"
+                    x-text="t('retry')"></button>
+                </div>
+              </template>
+              <template x-if="contractEmbedUrl && !loadingContract && !contractError">
+                <iframe class="contract-embed-iframe" :src="contractEmbedUrl"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen>
+                </iframe>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 11: Fuel Card -->
+        <div x-cloak x-show="step === 11">
+          <div class="fuel-layout">
+            <div class="fuel-card">
+              <div class="fuel-done">
+                <p class="fuel-done-title" x-text="t('fuelDoneTitle')"></p>
+                <p class="fuel-done-sub" x-text="t('fuelDoneSub')"></p>
+              </div>
+
+              <div class="fuel-section">
+                <p class="fuel-section-title" x-text="t('fuelSectionTitle')"></p>
+                <p class="fuel-section-sub" x-text="t('fuelSectionSub')"></p>
+
+                <p class="fuel-section-sub" style="margin-top:10px; font-weight:700; color:#000;"
+                  x-text="t('fuelSectionHint')"></p>
+
+                <div class="fuel-columns">
+                  <div class="fuel-col">
+                    <p class="fuel-col-title" x-text="t('fuelUnitTitle')"></p>
+                    <p class="fuel-col-help" x-text="t('fuelUnitHelp')"></p>
+                    <template x-for="(row, idx) in fuelCardsData" :key="idx">
+                      <input class="form-input" style="width:100%;" type="text" x-model="fuelCardsData[idx].unit"
+                        :placeholder="t('fuelUnitPlaceholder')">
+                    </template>
+                  </div>
+
+                  <div class="fuel-col">
+                    <p class="fuel-col-title" x-text="t('fuelDriverTitle')"></p>
+                    <p class="fuel-col-help" x-text="t('fuelDriverHelp')"></p>
+                    <template x-for="(row, idx) in fuelCardsData" :key="idx">
+                      <input class="form-input" style="width:100%;" type="text" x-model="fuelCardsData[idx].driver_id"
+                        :placeholder="t('fuelDriverPlaceholder')" inputmode="numeric">
+                    </template>
+                  </div>
+                </div>
+
+                <p class="fuel-add" @click="addFuelCardRow()" x-text="t('fuelAddMore')"></p>
+
+                <template x-if="errors.fuelCards">
+                  <div class="fuel-error" x-text="errors.fuelCards"></div>
+                </template>
+              </div>
+
+              <div class="review-bottom" style="margin-top:22px;">
+                <div class="review-divider"></div>
+                <p class="review-bottom-note" x-text="t('reviewBottomNote')"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 12: Confirmation -->
+        <div x-cloak x-show="step === 12">
+          <div class="confirm-layout">
+            <div class="confirm-card">
+              <div class="confirm-head">
+                <p class="confirm-title" x-text="t('confirmTitle')"></p>
+                <p class="confirm-subtitle" x-text="t('confirmSubtitle')"></p>
+              </div>
+
+              <div class="confirm-media" x-text="t('confirmMedia')"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Step 2 next action (outside the card like Figma; routes to Step 3 Plaid first) -->
+      <div x-cloak x-show="step === 2" class="page-actions page-actions-end">
+        <a href="tel:+19162694606" class="contact-us-btn desktop-only">
+          <svg width="20" height="20" fill="currentColor">
+            <use href="#phone-icon"></use>
+          </svg>
+          <span x-text="t('contactUs')"></span>
+        </a>
+        <button class="primary review-next" @click="next()" x-text="t('nextStep')"></button>
+      </div>
+
+      <!-- Step 3 next action (outside the card like Figma; Plaid step action) -->
+      <div x-cloak x-show="step === 3 && !shouldShowPlaidIntroCard()" class="page-actions">
+        <button class="secondary-filled review-next" @click="prev()" x-text="t('prevStep')"></button>
+        <a href="tel:+19162694606" class="contact-us-btn desktop-only">
+          <svg width="20" height="20" fill="currentColor">
+            <use href="#phone-icon"></use>
+          </svg>
+          <span x-text="t('contactUs')"></span>
+        </a>
+        <button class="primary review-next" @click="step5Action()" :disabled="plaid.status === 'in_progress'">
+          <span x-text="step5ActionLabel()"></span>
+        </button>
+      </div>
+
+      <!-- Step 4 next action (outside the card like Figma) -->
+      <div x-cloak x-show="step === 4" class="page-actions">
+        <button class="secondary-filled review-next" @click="prev()" x-text="t('prevStep')"></button>
+        <a href="tel:+19162694606" class="contact-us-btn desktop-only">
+          <svg width="20" height="20" fill="currentColor">
+            <use href="#phone-icon"></use>
+          </svg>
+          <span x-text="t('contactUs')"></span>
+        </a>
+        <button class="primary review-next" @click="next()" x-text="t('nextStep')"></button>
+      </div>
+
+      <!-- Step 5 next action (outside the card like Figma) -->
+      <div x-cloak x-show="step === 5" class="page-actions">
+        <button class="secondary-filled review-next" @click="prev()" x-text="t('prevStep')"></button>
+        <a href="tel:+19162694606" class="contact-us-btn desktop-only">
+          <svg width="20" height="20" fill="currentColor">
+            <use href="#phone-icon"></use>
+          </svg>
+          <span x-text="t('contactUs')"></span>
+        </a>
+        <button class="primary review-next" @click="next()" x-text="t('nextStep')"></button>
+      </div>
+
+      <!-- Step 6 next action (outside the card like Figma) -->
+      <div x-cloak x-show="step === 6" class="page-actions">
+        <button class="secondary-filled review-next" @click="prev()" x-text="t('prevStep')"></button>
+        <a href="tel:+19162694606" class="contact-us-btn desktop-only">
+          <svg width="20" height="20" fill="currentColor">
+            <use href="#phone-icon"></use>
+          </svg>
+          <span x-text="t('contactUs')"></span>
+        </a>
+        <button class="primary review-next" @click="next()" x-text="t('nextStep')"></button>
+      </div>
+
+      <!-- Step 7 next action (outside the card like Figma) -->
+      <div x-cloak x-show="step === 7" class="page-actions">
+        <button class="secondary-filled review-next" @click="prev()" x-text="t('prevStep')"></button>
+        <a href="tel:+19162694606" class="contact-us-btn desktop-only">
+          <svg width="20" height="20" fill="currentColor">
+            <use href="#phone-icon"></use>
+          </svg>
+          <span x-text="t('contactUs')"></span>
+        </a>
+        <button class="primary review-next" @click="next()" x-text="t('nextStep')"></button>
+      </div>
+
+      <!-- Step 8 next action (outside the card like Figma) -->
+      <div x-cloak x-show="step === 8" class="page-actions">
+        <button class="secondary-filled review-next" @click="prev()" x-text="t('prevStep')"></button>
+        <a href="tel:+19162694606" class="contact-us-btn desktop-only">
+          <svg width="20" height="20" fill="currentColor">
+            <use href="#phone-icon"></use>
+          </svg>
+          <span x-text="t('contactUs')"></span>
+        </a>
+        <button class="primary review-next" @click="next()" x-text="t('nextStep')"></button>
+      </div>
+
+      <!-- Step 9 next action (outside the card like Figma) -->
+      <div x-cloak x-show="step === 9" class="page-actions">
+        <button class="secondary-filled review-next" @click="prev()" :disabled="submitting"
+          x-text="t('prevStep')"></button>
+        <a href="tel:+19162694606" class="contact-us-btn desktop-only">
+          <svg width="20" height="20" fill="currentColor">
+            <use href="#phone-icon"></use>
+          </svg>
+          <span x-text="t('contactUs')"></span>
+        </a>
+        <button class="primary review-next" @click="showTermsModal()" :disabled="submitting">
+          <span x-show="!submitting" x-text="t('submit')"></span>
+          <span x-show="submitting" style="display:inline-flex; align-items:center; gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
+                stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+            </svg>
+            <span x-text="t('submitting')"></span>
+          </span>
+        </button>
+      </div>
+
+      <!-- Terms and Conditions Modal -->
+      <div x-cloak x-show="termsModalVisible" class="terms-modal-overlay" @click.self="termsModalVisible = false">
+        <div class="terms-modal">
+          <p class="terms-modal-title" x-text="t('termsTitle')"></p>
+          <p class="terms-modal-text" x-html="t('termsText')"></p>
+          <div class="terms-modal-actions">
+            <button class="primary" @click="acceptTermsAndSubmit()" :disabled="submitting">
+              <span x-show="!submitting" x-text="t('agree')"></span>
+              <span x-show="submitting"
+                style="display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
+                    stroke-dasharray="31.4 31.4" stroke-linecap="round" />
+                </svg>
+                <span x-text="t('submitting')"></span>
+              </span>
+            </button>
+            <a href="tel:+19162694606" class="terms-modal-contact">
+              <svg width="20" height="20" fill="currentColor">
+                <use href="#phone-icon"></use>
+              </svg>
+              <span x-text="t('contactUs')"></span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Disclaimer Modal (shown after OTP verification) -->
+      <div x-cloak x-show="disclaimerModalVisible" class="terms-modal-overlay">
+        <div class="terms-modal">
+          <p class="terms-modal-title" x-text="t('disclaimerTitle')"></p>
+          <p class="terms-modal-text" x-html="t('disclaimerLine1')"></p>
+          <p class="terms-modal-text" x-text="t('disclaimerLine2')"></p>
+          <p class="terms-modal-text" style="margin-top: 15px;" x-text="t('disclaimerLine3')"></p>
+          <div class="terms-modal-actions">
+            <button class="primary" @click="disclaimerModalVisible = false" x-text="t('disclaimerCta')"></button>
+            <a href="tel:+19162694606" class="terms-modal-contact">
+              <svg width="20" height="20" fill="currentColor">
+                <use href="#phone-icon"></use>
+              </svg>
+              <span x-text="t('contactUs')"></span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 11 submit action (outside the card like Figma) -->
+      <div x-cloak x-show="step === 11" class="page-actions page-actions-end">
+        <button class="primary review-next" @click="submitFuelCards()" :disabled="fuelCardsSubmitting">
+          <span x-text="fuelCardsSubmitting ? t('submitting') : t('submit')"></span>
+        </button>
+      </div>
+
+      <!-- Contract preparing overlay (shown while submitting) -->
+      <div x-cloak x-show="submitting" class="terms-modal-overlay">
+        <div class="terms-modal preparing-contract-modal">
+          <div class="preparing-contract-spinner">
+            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="4"
+                stroke-linecap="round" stroke-dasharray="90 60">
+                <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25"
+                  dur="0.9s" repeatCount="indefinite" />
+              </circle>
+            </svg>
+          </div>
+          <p class="terms-modal-title preparing-contract-title" x-text="t('preparingContract')"></p>
+        </div>
+      </div>
+
+      <script src="./assets/shared.js?v=021826"></script>
+      <script src="./assets/index.js?v=021826"></script>
+    </div>
+
+  </div>
+
+</body>
+
+</html>

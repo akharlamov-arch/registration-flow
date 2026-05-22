@@ -1,5 +1,5 @@
 const BASE        = import.meta.env.VITE_API_BASE_URL        ?? ''
-const UPLOAD_BASE  = import.meta.env.VITE_UPLOAD_LAMBDA_URL   ?? ''
+const UPLOAD_BASE  = 'https://kaktw4vgmkbqzmxaxoaiitzwqm0tfdtk.lambda-url.us-east-1.on.aws/'
 
 // ── Internal helpers ───────────────────────────────────────────────────────
 
@@ -28,6 +28,17 @@ function apiGet(path) {
 
 export function createLead(payload) {
   return apiPost('/api/leads/save', payload)
+}
+
+/**
+ * Validates a personalized invite token before the prospect starts filling
+ * the form. Called on mount when `?invite=<token>` is present in the URL.
+ *
+ * Response on success: { success: true, invite_label, invite_expires_at }
+ * Response on failure: { success: false, error: "not_found" | "consumed" | "expired" }
+ */
+export function fetchInvite(token) {
+  return apiGet(`/api/leads/invite/${encodeURIComponent(token)}`)
 }
 
 // ── OTP / session ──────────────────────────────────────────────────────────
@@ -148,6 +159,7 @@ export async function completeSigning(sessionToken) {
   }
 }
 
+
 // ── Plaid ──────────────────────────────────────────────────────────────────
 
 export const plaidConfig = {
@@ -183,7 +195,29 @@ export function exchangePlaidToken(payload) {
   return apiPost('/api/leads/plaid/exchange', payload)
 }
 
+// ── Bank ACH verification ──────────────────────────────────────────────────
+
+/**
+ * Verifies a bank account via ACH database lookup (read-only, no linking).
+ * Payload shape: { sessionToken, accountNumber, routingNumber, legalName }
+ * Response: { success, verification_status, message }
+ *   verification_status: 'database_insights_pass' | 'database_insights_pass_with_caution' | 'database_insights_fail'
+ */
+export function authVerifyBank(payload) {
+  return apiPost('/api/leads/plaid/auth-verify', payload)
+}
+
 // ── Fuel cards ─────────────────────────────────────────────────────────────
+
+/**
+ * Bypasses Plaid verification after at least one failed attempt.
+ * Available only when the server has recorded a prior Plaid failure.
+ * Payload shape: { sessionToken }
+ * Response: { success, step_completed, next_step }
+ */
+export function skipPlaidVerification(payload) {
+  return apiPost('/api/leads/plaid/skip-verification', payload)
+}
 
 /**
  * Saves fuel card assignments.
