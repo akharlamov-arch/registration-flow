@@ -9,12 +9,17 @@ const LeadForm         = lazy(() => import('./pages/LeadForm'))
 const OtpVerification  = lazy(() => import('./pages/OtpVerification'))
 const PostSigning      = lazy(() => import('./pages/PostSigning'))
 const RelinkPage       = lazy(() => import('./pages/RelinkPage'))
+const PortalPage       = lazy(() => import('./pages/PortalPage'))
 
 function TitleUpdater() {
   const { t } = useI18n()
   const location = useLocation()
 
   useEffect(() => {
+    if (location.pathname.startsWith('/portal')) {
+      document.title = t('portal.title')
+      return
+    }
     const isReg = location.pathname.startsWith('/registration') || location.pathname.startsWith('/post-signing')
     document.title = isReg ? t('registration.title') : t('lead.title')
   }, [location.pathname, t])
@@ -47,6 +52,7 @@ function AppShell() {
           <Route path="/registration" element={<OtpVerification />} />
           <Route path="/post-signing" element={<PostSigning />} />
           <Route path="/relink" element={<RelinkPage />} />
+          <Route path="/portal" element={<PortalPage />} />
         </Routes>
       </Suspense>
     </div>

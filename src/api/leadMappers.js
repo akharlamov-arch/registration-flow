@@ -66,12 +66,46 @@ export function mapAddressesFromApi(apiLead) {
 }
 
 /**
+ * Mirrors `Pijb.Plaid.Rejection.rejected?/1` on the client so resume state
+ * does not treat a rejection audit snapshot as a successful verification.
+ */
+export function isUnresolvedPlaidRejection(metadataPlaid = {}, apiRejected) {
+  if (apiRejected === true) return true
+
+  const reason = metadataPlaid.plaid_last_rejection_reason
+  if (!reason) return false
+
+  const verification = metadataPlaid.verification_method
+  const skipUser = metadataPlaid.skip_authorization?.user_id
+
+  if (verification === 'plaid') return false
+  if (verification === 'bypassed' && skipUser) return false
+  if (verification === 'identity_fixed') return false
+  if (verification === 'relink_operator_accepted') return false
+  return true
+}
+
+export function rejectionReasonToCode(reason) {
+  switch (reason) {
+    case 'name_mismatch':
+      return 'PLAID_NAME_MISMATCH'
+    case 'holder_type_mismatch':
+      return 'PLAID_HOLDER_TYPE_MISMATCH'
+    default:
+      return 'PLAID_VERIFICATION_FAILED'
+  }
+}
+
+/**
  * Returns bank form values and the initial Plaid state derived from the API lead.
  * Detects whether the lead was previously verified via Plaid and restores that state.
+ * Unresolved identity rejections restore `error` (not `verified`) even when Plaid
+ * snapshot fields are present on bank_information.
  */
-export function mapBankFromApi(apiLead) {
+export function mapBankFromApi(apiLead, opts = {}) {
   const bank         = apiLead.bank_information || {}
   const metadataPlaid = apiLead.metadata?.plaid || {}
+  const apiRejected = opts.plaid_rejected ?? apiLead.plaid_rejected
 
   const bankForm = {
     name:                      bank.name                  || '',
@@ -96,6 +130,9 @@ export function mapBankFromApi(apiLead) {
         requiresManualBankInput: false,
         institution:            null,
         selectedAccount:        null,
+        rejectionCode:          null,
+        rejectionDetails:       null,
+        rejectionMessage:       null,
       },
     }
   }
@@ -103,22 +140,52 @@ export function mapBankFromApi(apiLead) {
   const mask    = bank.plaid_account_mask    || metadataPlaid.plaid_account_mask    || bank.account_number_masked || ''
   const subtype = bank.plaid_account_subtype || metadataPlaid.plaid_account_subtype || bank.account_type || ''
 
+  const institution = {
+    name: bank.plaid_institution_name || metadataPlaid.plaid_institution_name || bank.name || '',
+  }
+
+  const selectedAccount = {
+    id:      bank.plaid_account_id || metadataPlaid.plaid_account_id || null,
+    mask,
+    subtype,
+    type:    subtype,
+  }
+
+  const sharedPlaidFields = {
+    linkSessionId: bank.plaid_link_session_id || metadataPlaid.plaid_link_session_id || '',
+    requestId:    null,
+    requiresManualBankInput: !!metadataPlaid.plaid_manual_bank_required,
+    institution,
+    selectedAccount,
+  }
+
+  if (isUnresolvedPlaidRejection(metadataPlaid, apiRejected)) {
+    const storedDetails = metadataPlaid.plaid_last_rejection_details || {}
+    const ownerNames = bank.plaid_identity_names || storedDetails.owner_names || []
+
+    return {
+      bank: bankForm,
+      plaidState: {
+        ...sharedPlaidFields,
+        status: 'error',
+        rejectionCode: rejectionReasonToCode(metadataPlaid.plaid_last_rejection_reason),
+        rejectionDetails: {
+          ...storedDetails,
+          owner_names: ownerNames.length > 0 ? ownerNames : storedDetails.owner_names,
+        },
+        rejectionMessage: null,
+      },
+    }
+  }
+
   return {
     bank: bankForm,
     plaidState: {
+      ...sharedPlaidFields,
       status:       'verified',
-      linkSessionId: bank.plaid_link_session_id || metadataPlaid.plaid_link_session_id || '',
-      requestId:    null,
-      requiresManualBankInput: !!metadataPlaid.plaid_manual_bank_required,
-      institution: {
-        name: bank.plaid_institution_name || metadataPlaid.plaid_institution_name || bank.name || '',
-      },
-      selectedAccount: {
-        id:      bank.plaid_account_id || metadataPlaid.plaid_account_id || null,
-        mask,
-        subtype,
-        type:    subtype,
-      },
+      rejectionCode: null,
+      rejectionDetails: null,
+      rejectionMessage: null,
     },
   }
 }

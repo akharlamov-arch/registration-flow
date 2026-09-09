@@ -16,68 +16,129 @@ import {
   buildContractPayload, buildSignEmbedPayload,
   isValidOtp, validateUploadFile,
 } from '../api/leadMappers'
-// ── Review helpers (same design as LeadForm review step) ───────────────────
-function ReviewSection({ title, onEdit, editLabel, children }) {
+import { ReviewSection, ReviewRow, Row, US_STATES } from '../components/ReviewCard'
+import PlaidExchangeErrorPanel from '../components/PlaidExchangeErrorPanel'
+
+// ── Review-info modal (same card design as the old review step) ─────────────
+function ReviewInfoModal({ lead, marketingConsent, onConsentChange, onClose }) {
+  const { t } = useI18n()
   return (
-    <div className="border border-gray-100 rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b border-gray-100">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{title}</p>
-        {onEdit ? (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/50 overflow-y-auto"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 sm:p-8 my-6 space-y-5">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-900">{t('accountReview.heading')}</h2>
           <button
             type="button"
-            onClick={onEdit}
-            className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-secondary
-                       transition-colors duration-200 cursor-pointer focus:outline-none"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+            aria-label="Close"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
-            {editLabel}
           </button>
-        ) : (
-          <span className="flex items-center gap-1.5 text-xs font-medium text-green-600">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-            </svg>
-            {editLabel}
+        </div>
+
+        {/* Two-column data card */}
+        <div className="bg-gray-50/60 rounded-xl border border-gray-100 p-4 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-0">
+            <div>
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                {t('accountReview.sectionContact')}
+              </h3>
+              <Row label={t('accountReview.labelName')}        value={lead ? `${lead.firstName} ${lead.lastName}` : ''} />
+              <Row label={t('accountReview.labelEmail')}       value={lead?.email} />
+              <Row label={t('accountReview.labelPhone')}       value={lead?.phone} />
+              <Row label={t('accountReview.labelAccountType')} value={lead?.accountType} />
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 mt-5 sm:mt-0">
+                {t('accountReview.sectionBusiness')}
+              </h3>
+              <Row label={t('accountReview.labelCompany')}  value={lead?.companyName} />
+              <Row label={t('accountReview.labelBizType')}  value={lead?.businessType} />
+              <Row label={t('accountReview.labelTitle')}    value={lead?.companyTitle} />
+              <Row label={t('accountReview.labelTrucks')}   value={lead?.fleetSize != null ? String(lead.fleetSize) : ''} />
+              <div className="flex gap-4 py-2 border-b border-gray-100">
+                <div className="flex-1">
+                  <span className="text-xs text-gray-400">{t('accountReview.labelDOT')}</span>
+                  <p className="text-sm font-medium text-gray-900">{lead?.dot || '—'}</p>
+                </div>
+                <div className="flex-1">
+                  <span className="text-xs text-gray-400">{t('accountReview.labelMC')}</span>
+                  <p className="text-sm font-medium text-gray-900">{lead?.mc || '—'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bank notice */}
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+          <svg className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24"
+               stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          <p className="text-xs text-red-800 leading-relaxed">{t('accountReview.bankNotice')}</p>
+        </div>
+
+        {/* Marketing consent */}
+        <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-xl bg-gray-50 border border-gray-200">
+          <div className="mt-0.5 flex-shrink-0">
+            <input
+              type="checkbox"
+              checked={marketingConsent}
+              onChange={(e) => onConsentChange(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-300 accent-primary cursor-pointer"
+            />
+          </div>
+          <span className="text-sm text-gray-600 leading-relaxed group-hover:text-gray-800 transition-colors">
+            {t('accountReview.marketingConsent')}
           </span>
-        )}
+        </label>
+
+        {/* Close */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full flex items-center justify-center px-7 py-3 text-sm font-semibold text-white
+                     bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                     transition-colors duration-200 cursor-pointer
+                     focus:outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          {t('common.cancel') || 'Close'}
+        </button>
       </div>
-      <div className="px-5 divide-y divide-gray-50">{children}</div>
     </div>
   )
 }
 
-function ReviewRow({ label, value }) {
+// ── Floating "Review my info" button — rendered on every post-OTP step ──────
+function ReviewFab({ onClick }) {
+  const { t } = useI18n()
   return (
-    <div className="flex items-start justify-between py-3 gap-6">
-      <span className="text-xs text-gray-400 flex-shrink-0 mt-0.5 leading-relaxed">{label}</span>
-      <span className="text-sm text-gray-900 text-right font-medium leading-relaxed break-all">{value || '—'}</span>
-    </div>
-  )
-}
-
-const US_STATES = [
-  ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],
-  ['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['FL','Florida'],['GA','Georgia'],
-  ['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],
-  ['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],
-  ['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],
-  ['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],
-  ['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],
-  ['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],
-  ['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],
-  ['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming'],
-]
-
-
-function Row({ label, value }) {
-  if (!value) return null
-  return (
-    <div className="flex flex-col gap-0.5 py-2 border-b border-gray-100 last:border-0">
-      <span className="text-xs text-gray-400">{label}</span>
-      <span className="text-sm font-medium text-gray-900 break-all">{value}</span>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={t('accountReview.heading')}
+      title={t('accountReview.heading')}
+      className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2.5
+                 text-xs font-semibold text-white bg-gray-900 hover:bg-gray-700
+                 rounded-full shadow-lg
+                 transition-colors duration-200 cursor-pointer
+                 focus:outline-none focus:ring-2 focus:ring-gray-400/50"
+    >
+      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+      <span className="hidden sm:inline">{t('accountReview.heading')}</span>
+    </button>
   )
 }
 
@@ -136,8 +197,11 @@ export default function OtpVerification() {
   const [recoverySending, setRecoverySending]     = useState(false)
   const [recoverySent, setRecoverySent]           = useState(false)
 
-  // ── Disclaimer modal (shown after OTP success, before review) ───────────
+  // ── Disclaimer modal (shown on Plaid step, unskippable until acknowledged) ────
   const [disclaimerVisible, setDisclaimerVisible] = useState(false)
+  const [disclaimerAcknowledged, setDisclaimerAcknowledged] = useState(false)
+  // ── Review-info modal (floating button — accessible from any step) ────────
+  const [showReviewModal, setShowReviewModal] = useState(false)
 
   // ── Plaid ───────────────────────────────────────────────────────────────
   const [plaid, setPlaid] = useState({
@@ -148,6 +212,9 @@ export default function OtpVerification() {
     institution: null,
     requestId: null,
     requiresManualBankInput: false,
+    rejectionCode: null,
+    rejectionDetails: null,
+    rejectionMessage: null,
     combinedProbe: { enabled: false, mode: 'standard', idvEvents: [], lastOutcome: null },
   })
   const plaidHandlerRef = useRef(null)
@@ -220,7 +287,7 @@ export default function OtpVerification() {
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
-    saveProgress(6)
+    saveProgress(5)
     window.scrollTo({ top: 0, behavior: 'smooth' })
     setStep('personalInfo')
   }
@@ -243,16 +310,19 @@ export default function OtpVerification() {
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
-    saveProgress(6)
+    saveProgress(5)
     window.scrollTo({ top: 0, behavior: 'smooth' })
     setStep('personalInfo')
   }
 
   // ── Step mapping ────────────────────────────────────────────────────────
+  // Plaid moved to the end of data collection (just before finalReview), so it
+  // is now step 8. Steps 2–8 reshuffled; 9–12 are intentionally unchanged so the
+  // post-signing (>= 11) and contract-embed (=== 10) checks below stay valid.
   const mapObsoleteStepToString = (n) => {
     const map = {
-      2: 'review', 3: 'address', 4: 'address', 5: 'address',
-      6: 'personalInfo', 7: 'personalAddress', 8: 'billingContact',
+      2: 'address', 3: 'address', 4: 'address', 5: 'personalInfo',
+      6: 'personalAddress', 7: 'billingContact', 8: 'plaid',
       9: 'finalReview', 10: 'contractSigning', 11: 'contractSigned', 12: 'allDone',
     }
     return map[n] ?? 'review'
@@ -278,6 +348,11 @@ export default function OtpVerification() {
       : null,
     bank: bankForm,
     personal: {
+      // Send the full SSN (parity with the driver-license number) so the backend
+      // can persist it. `extract_ssn` reads `ssn` first; `ssnLast4Masked` is kept
+      // only as a masked echo for display. A masked-only value would be dropped
+      // by `SensitiveFields.merge_update` and never saved.
+      ssn: personalForm.ssn || '',
       ssnLast4Masked: personalForm.ssn ? '•••••' + personalForm.ssn.slice(-4) : '',
       driverLicenseNumber: personalForm.dlNumber,
     },
@@ -348,17 +423,29 @@ export default function OtpVerification() {
         metadata,
       })
       if (!ok || !data?.success) {
-        setPlaid(prev => ({ ...prev, status: 'error' }))
+        setPlaid(prev => ({
+          ...prev,
+          status: 'error',
+          rejectionCode: data?.code || 'PLAID_EXCHANGE_FAILED',
+          rejectionDetails: data?.details || null,
+          rejectionMessage: data?.message || null,
+        }))
         if (data?.bypass_available) setPlaidBypassAvailable(true)
         return
       }
       const result = mapPlaidExchangeResult(data, metadata, selectedAccount)
-      setPlaid(prev => ({ ...prev, ...result }))
+      setPlaid(prev => ({
+        ...prev,
+        ...result,
+        rejectionCode: null,
+        rejectionDetails: null,
+        rejectionMessage: null,
+      }))
       setBankForm(prev => ({ ...prev, name: result.bankUpdates.name, accountType: result.bankUpdates.accountType }))
 
-      saveProgress(5)
+      saveProgress(9)
       window.scrollTo({ top: 0, behavior: 'smooth' })
-      setStep('address')
+      setStep('finalReview')
     } catch {
       setPlaid(prev => ({ ...prev, status: 'error' }))
     }
@@ -367,7 +454,13 @@ export default function OtpVerification() {
   const startPlaidVerification = async () => {
     if (plaid.status === 'in_progress') return
     setPlaidAttempted(true)
-    setPlaid(prev => ({ ...prev, status: 'in_progress' }))
+    setPlaid(prev => ({
+      ...prev,
+      status: 'in_progress',
+      rejectionCode: null,
+      rejectionDetails: null,
+      rejectionMessage: null,
+    }))
     try {
       const useCombined = plaidConfig.combinedLinkEnabled
       const fetcher = useCombined ? getPlaidCombinedLinkToken : getPlaidLinkToken
@@ -498,6 +591,15 @@ export default function OtpVerification() {
     }
   }
 
+  // ── Force the entry disclaimer on the first data step (address) if not yet
+  //    acknowledged. Plaid moved to the end of the flow, so this is no longer
+  //    tied to the Plaid step.
+  useEffect(() => {
+    if (step === 'address' && !disclaimerAcknowledged) {
+      setDisclaimerVisible(true)
+    }
+  }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Plaid bypass redirect: when backend allows bypass, skip Plaid entirely ──
   // If plaidBypassAvailable becomes true while on the plaid step (e.g. after
   // OTP verify, session restore, or a failed Plaid exchange), redirect the user
@@ -572,7 +674,7 @@ export default function OtpVerification() {
           })
         }
 
-        const { bank: bankData, plaidState } = mapBankFromApi(apiLead)
+        const { bank: bankData, plaidState } = mapBankFromApi(apiLead, { plaid_rejected: data.plaid_rejected })
         setBankForm(bankData)
         setPlaid(prev => ({ ...prev, ...plaidState }))
         if (data.manual_verification_authorized) {
@@ -602,6 +704,7 @@ export default function OtpVerification() {
         }
 
         const isPlaidRelink = !!data.plaid_relink_required
+        const plaidRejected = !!data.plaid_rejected
         if (isPlaidRelink) {
           setPlaid(prev => ({
             ...prev,
@@ -615,10 +718,13 @@ export default function OtpVerification() {
           }))
         }
 
-        let targetStep = isPlaidRelink ? 'plaid' : mapObsoleteStepToString(resumeStep)
-        if (!isPlaidRelink && data.manual_verification_authorized) {
-          targetStep = 'bankInfo'
-          setPlaidManualFallback(true)
+        let targetStep = isPlaidRelink || plaidRejected ? 'plaid' : mapObsoleteStepToString(resumeStep)
+        // Plaid now sits at the end of the flow. When manual entry is authorised,
+        // flag the bypass instead of jumping straight to it — the (final) Plaid
+        // step routes to the manual bank form on arrival, so the customer still
+        // completes the earlier, simpler steps first.
+        if (!isPlaidRelink && !plaidRejected && data.manual_verification_authorized) {
+          setPlaidBypassAvailable(true)
         }
         setDisclaimerVisible(true)
         window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -699,9 +805,9 @@ export default function OtpVerification() {
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
-    saveProgress(3)
+    saveProgress(9)
     window.scrollTo({ top: 0, behavior: 'smooth' })
-    setStep('address')
+    setStep('finalReview')
   }
 
   const handleSubmit = async () => {
@@ -762,7 +868,7 @@ export default function OtpVerification() {
         })
       }
 
-      const { bank: bankData, plaidState } = mapBankFromApi(apiLead)
+      const { bank: bankData, plaidState } = mapBankFromApi(apiLead, { plaid_rejected: data.plaid_rejected })
       setBankForm(bankData)
       setPlaid(prev => ({ ...prev, ...plaidState }))
       if (data.manual_verification_authorized) {
@@ -794,6 +900,7 @@ export default function OtpVerification() {
       }
 
       const isPlaidRelink = !!data.plaid_relink_required
+      const plaidRejected = !!data.plaid_rejected
       if (isPlaidRelink) {
         setPlaid(prev => ({
           ...prev,
@@ -807,13 +914,13 @@ export default function OtpVerification() {
         }))
       }
 
-      let targetStep = isPlaidRelink ? 'plaid' : mapObsoleteStepToString(resumeStep)
-      // Route to manual bank entry only when the backend explicitly authorises it.
-      // Tokenized account numbers are sufficient for ACH — do not force manual input
-      // based on Plaid metadata alone.
-      if (!isPlaidRelink && data.manual_verification_authorized) {
-        targetStep = 'bankInfo'
-        setPlaidManualFallback(true)
+      let targetStep = isPlaidRelink || plaidRejected ? 'plaid' : mapObsoleteStepToString(resumeStep)
+      // Plaid now sits at the end of the flow. When manual entry is authorised,
+      // flag the bypass instead of jumping straight to it — the (final) Plaid
+      // step routes to the manual bank form on arrival, so the customer still
+      // completes the earlier, simpler steps first.
+      if (!isPlaidRelink && !plaidRejected && data.manual_verification_authorized) {
+        setPlaidBypassAvailable(true)
       }
       setDisclaimerVisible(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -865,14 +972,14 @@ export default function OtpVerification() {
 
           <div className="bg-white rounded-2xl shadow-ds-md border border-gray-100 p-6 sm:p-10 max-w-3xl mx-auto">
             <div className="space-y-4 mb-8">
-              <div className="flex items-start gap-4 rounded-xl border border-gray-100 bg-gray-50/70 p-4 sm:p-5">
-                <div className="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <svg className="w-6 h-6 text-gray-900" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M3 10h18v2H3v-2zm2-5h14v3H5V5zm-1 9h16v6H4v-6zm6 1h4v4h-4v-4z" />
+              <div className="flex items-start gap-4 rounded-xl border border-amber-100 bg-amber-50/60 p-4 sm:p-5">
+                <div className="w-11 h-11 rounded-xl bg-white border border-amber-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <svg className="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                   </svg>
                 </div>
-                <p className="text-sm sm:text-base font-medium text-gray-700 leading-relaxed">
-                  {t('plaidStub.point1')}
+                <p className="text-sm sm:text-base font-semibold text-amber-800 leading-relaxed">
+                  {t('accountReview.bankNotice')}
                 </p>
               </div>
 
@@ -889,27 +996,30 @@ export default function OtpVerification() {
                 </p>
               </div>
 
-              {/* Mismatch warning */}
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
-                <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24"
+              {/* Account match reminder */}
+              <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl flex items-start gap-3">
+                <svg className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round"
-                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                 </svg>
-                <p className="text-sm text-amber-800 leading-relaxed">{t('plaidStub.mismatchWarning')}</p>
+                <p className="text-sm text-gray-600 leading-relaxed">{t('plaidStub.mismatchWarning')}</p>
               </div>
             </div>
 
             {plaid.status === 'error' && (
-              <p className="text-sm text-red-600 text-center mb-4">{t('otp.errorPlaidFlowFailed')}</p>
+              <PlaidExchangeErrorPanel
+                code={plaid.rejectionCode}
+                details={plaid.rejectionDetails}
+                message={plaid.rejectionMessage}
+              />
             )}
 
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 type="button"
                 onClick={() => {
-                  window.scrollTo({ top: 0, behavior: 'smooth' })
-                  setStep('review')
+                  setShowReviewModal(true)
                 }}
                 className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold
                            text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
@@ -917,7 +1027,8 @@ export default function OtpVerification() {
                            focus:outline-none focus:ring-2 focus:ring-gray-200"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 {t('plaidStub.backBtn')}
               </button>
@@ -925,9 +1036,9 @@ export default function OtpVerification() {
                 <button
                   type="button"
                   onClick={() => {
-                    saveProgress(5)
+                    saveProgress(9)
                     window.scrollTo({ top: 0, behavior: 'smooth' })
-                    setStep('address')
+                    setStep('finalReview')
                   }}
                   className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                              bg-primary hover:bg-secondary rounded-md shadow-ds-sm
@@ -959,7 +1070,7 @@ export default function OtpVerification() {
                       {t('plaidStub.connecting')}
                     </>
                   ) : plaid.status === 'error' ? (
-                    t('plaidStub.retryBtn')
+                    t('plaidStub.retryDifferentAccountBtn')
                   ) : (
                     t('plaidStub.button')
                   )}
@@ -968,12 +1079,15 @@ export default function OtpVerification() {
             </div>
 
           </div>
+        {lead && <ReviewFab onClick={() => setShowReviewModal(true)} />}
+        {showReviewModal && <ReviewInfoModal lead={lead} marketingConsent={marketingConsent} onConsentChange={setMarketingConsent} onClose={() => setShowReviewModal(false)} />}
         </main>
       </>
     )
-  } 
+  }
    if (step === 'address') {
     return (
+      <>
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
         <StepIndicator steps={BANK_STEPS} currentStep={2} />
         <div className="text-center mb-8 sm:mb-10">
@@ -1192,19 +1306,6 @@ export default function OtpVerification() {
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <button
               type="button"
-              onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('plaid') }}
-              className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold
-                         text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
-                         transition-colors duration-200 cursor-pointer
-                         focus:outline-none focus:ring-2 focus:ring-gray-200"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-              </svg>
-              {t('address.backBtn')}
-            </button>
-            <button
-              type="button"
               onClick={handleAddressSubmit}
               className="flex-1 flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
                          bg-primary hover:bg-secondary rounded-md shadow-ds-sm
@@ -1218,7 +1319,53 @@ export default function OtpVerification() {
             </button>
           </div>
         </div>
+      {lead && <ReviewFab onClick={() => setShowReviewModal(true)} />}
+      {showReviewModal && <ReviewInfoModal lead={lead} marketingConsent={marketingConsent} onConsentChange={setMarketingConsent} onClose={() => setShowReviewModal(false)} />}
       </main>
+
+      {/* Before-you-continue disclaimer — unskippable, shown on first visit to the first data step */}
+      {disclaimerVisible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 sm:p-8 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-blue-50">
+                <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round"
+                        d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">{t('otp.disclaimerTitle')}</h2>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">{t('otp.disclaimerLine1')}</p>
+            <p className="text-sm text-gray-600 leading-relaxed">{t('otp.disclaimerLine2')}</p>
+            <p className="text-sm text-gray-600 leading-relaxed">{t('otp.disclaimerLine3')}</p>
+            <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-xl bg-gray-50 border border-gray-200">
+              <div className="mt-0.5 flex-shrink-0">
+                <input
+                  type="checkbox"
+                  checked={marketingConsent}
+                  onChange={(e) => setMarketingConsent(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 accent-primary cursor-pointer"
+                />
+              </div>
+              <span className="text-sm text-gray-600 leading-relaxed group-hover:text-gray-800 transition-colors">
+                {t('accountReview.marketingConsent')}
+              </span>
+            </label>
+            <button
+              type="button"
+              onClick={() => { setDisclaimerAcknowledged(true); setDisclaimerVisible(false) }}
+              className="w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
+                         bg-primary hover:bg-secondary rounded-md shadow-ds-sm
+                         transition-colors duration-200 cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              {t('otp.disclaimerCta')}
+            </button>
+          </div>
+        </div>
+      )}
+      </>
     )
   }
 
@@ -1353,6 +1500,8 @@ export default function OtpVerification() {
             </button>
           </div>
         </div>
+      {lead && <ReviewFab onClick={() => setShowReviewModal(true)} />}
+      {showReviewModal && <ReviewInfoModal lead={lead} marketingConsent={marketingConsent} onConsentChange={setMarketingConsent} onClose={() => setShowReviewModal(false)} />}
       </main>
     )
   }
@@ -1394,7 +1543,7 @@ export default function OtpVerification() {
         window.scrollTo({ top: 0, behavior: 'smooth' })
         return
       }
-      saveProgress(7)
+      saveProgress(6)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       setStep('personalAddress')
     }
@@ -1596,6 +1745,8 @@ export default function OtpVerification() {
             </button>
           </div>
         </div>
+      {lead && <ReviewFab onClick={() => setShowReviewModal(true)} />}
+      {showReviewModal && <ReviewInfoModal lead={lead} marketingConsent={marketingConsent} onConsentChange={setMarketingConsent} onClose={() => setShowReviewModal(false)} />}
       </main>
     )
   }
@@ -1634,7 +1785,7 @@ export default function OtpVerification() {
         window.scrollTo({ top: 0, behavior: 'smooth' })
         return
       }
-      saveProgress(8)
+      saveProgress(7)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       setStep('billingContact')
     }
@@ -1839,6 +1990,8 @@ export default function OtpVerification() {
             </button>
           </div>
         </div>
+      {lead && <ReviewFab onClick={() => setShowReviewModal(true)} />}
+      {showReviewModal && <ReviewInfoModal lead={lead} marketingConsent={marketingConsent} onConsentChange={setMarketingConsent} onClose={() => setShowReviewModal(false)} />}
       </main>
     )
   }
@@ -1873,9 +2026,9 @@ export default function OtpVerification() {
         window.scrollTo({ top: 0, behavior: 'smooth' })
         return
       }
-      saveProgress(9)
+      saveProgress(8)
       window.scrollTo({ top: 0, behavior: 'smooth' })
-      setStep('finalReview')
+      setStep('plaid')
     }
 
     const radioBase = 'flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors duration-200'
@@ -2047,6 +2200,8 @@ export default function OtpVerification() {
             </button>
           </div>
         </div>
+      {lead && <ReviewFab onClick={() => setShowReviewModal(true)} />}
+      {showReviewModal && <ReviewInfoModal lead={lead} marketingConsent={marketingConsent} onConsentChange={setMarketingConsent} onClose={() => setShowReviewModal(false)} />}
       </main>
     )
   }
@@ -2186,7 +2341,7 @@ export default function OtpVerification() {
         <div className="max-w-3xl mx-auto mt-8 flex flex-col sm:flex-row gap-3">
           <button
             type="button"
-            onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('billingContact') }}
+            onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep('plaid') }}
             className="flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold
                        text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-md
                        transition-colors duration-200 cursor-pointer
@@ -2292,6 +2447,8 @@ export default function OtpVerification() {
             </div>
           </div>
         )}
+      {lead && <ReviewFab onClick={() => setShowReviewModal(true)} />}
+      {showReviewModal && <ReviewInfoModal lead={lead} marketingConsent={marketingConsent} onConsentChange={setMarketingConsent} onClose={() => setShowReviewModal(false)} />}
       </main>
     )
   }
@@ -2593,6 +2750,8 @@ export default function OtpVerification() {
             )}
           </div>
         </div>
+      {lead && <ReviewFab onClick={() => setShowReviewModal(true)} />}
+      {showReviewModal && <ReviewInfoModal lead={lead} marketingConsent={marketingConsent} onConsentChange={setMarketingConsent} onClose={() => setShowReviewModal(false)} />}
       </main>
     )
   }
@@ -2737,7 +2896,9 @@ export default function OtpVerification() {
                     setMarketingConsent(modalConsent)
                     setShowModal(false)
                     window.scrollTo({ top: 0, behavior: 'smooth' })
-                    setStep('plaid')
+                    // Plaid moved to the end of the flow — start with the simpler
+                    // address step so customers build momentum before bank linking.
+                    setStep('address')
                   }}
                   className="flex-1 flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold text-white
                              bg-primary hover:bg-secondary rounded-md transition-colors duration-200
@@ -2902,7 +3063,7 @@ export default function OtpVerification() {
                 value={recoveryEmail}
                 onChange={e => setRecoveryEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleRequestNewCode()}
-                placeholder={t('otp.recoveryPlaceholder')}
+                placeholder={t('otp.recoveryPlaceholderEmail')}
                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-gray-400
                            text-gray-900 bg-white text-sm
                            focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors duration-200"
@@ -2951,35 +3112,7 @@ export default function OtpVerification() {
         </div>
       )}
 
-      {/* Disclaimer modal — shown once after successful OTP verification */}
-      {disclaimerVisible && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 sm:p-8 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-blue-50">
-                <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                        d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                </svg>
-              </div>
-              <h2 className="text-lg font-bold text-gray-900">{t('otp.disclaimerTitle')}</h2>
-            </div>
-            <p className="text-sm text-gray-600 leading-relaxed">{t('otp.disclaimerLine1')}</p>
-            <p className="text-sm text-gray-600 leading-relaxed">{t('otp.disclaimerLine2')}</p>
-            <p className="text-sm text-gray-600 leading-relaxed">{t('otp.disclaimerLine3')}</p>
-            <button
-              type="button"
-              onClick={() => setDisclaimerVisible(false)}
-              className="w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
-                         bg-primary hover:bg-secondary rounded-md shadow-ds-sm
-                         transition-colors duration-200 cursor-pointer
-                         focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              {t('otp.disclaimerCta')}
-            </button>
-          </div>
-        </div>
-      )}
+
     </main>
   )
 }

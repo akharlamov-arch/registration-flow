@@ -136,9 +136,9 @@ mismatch between the `base` path and the nginx `root`/`location` path).
 
 ## Quick checklist
 
-- [ ] `.env.production` created with correct `VITE_API_BASE_URL`
-- [ ] `npm ci && npm run build` ran without errors
-- [ ] `dist/` copied to `/var/www/html/registration-flow/` on server
-- [ ] Nginx `location /registration-flow/` block in place
-- [ ] `nginx -t` passes, nginx reloaded
-- [ ] App loads and OTP flow reaches the bank step without console errors
+- [x] `.env.production` created with correct `VITE_API_BASE_URL`
+- [x] `npm ci && npm run build` ran without errors
+- [x] `dist/` copied to `/var/www/html/registration-flow/` on server
+- [x] Nginx `location /registration-flow/` block in place
+- [x] `nginx -t` passes, nginx reloaded
+- [x] App loads and OTP flow reaches the bank step without console errors

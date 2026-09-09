@@ -20,14 +20,19 @@ The app uses `HashRouter` (required for GitHub Pages). All routes are hash-based
 |-----|------|
 | `http://localhost:5173/registration-flow/#/` | LeadForm |
 | `http://localhost:5173/registration-flow/#/registration` | OtpVerification |
+| `http://localhost:5173/registration-flow/#/portal` | PortalPage (existing-customer self-serve) |
 
 A plain path like `/registration-flow/registration` (no `#`) matches no route and renders LeadForm as the catch-all `/`.
 
-## Two distinct flows
+## Distinct flows
 
 **LeadForm** (`src/pages/LeadForm.jsx`) — new applicant self-registration. Collects contact info, account type, business details, fuel program, and referral. Submits to `POST /api/leads/save`. Uses a client-generated 6-digit OTP code (`generateOtpCode()`) that the backend uses to send a verification email.
 
-**OtpVerification** (`src/pages/OtpVerification.jsx`) — post-approval multi-step registration for approved leads. Entry point is the OTP code from that email. Steps (matching `src/obsolete/index.js`): OTP entry → lead summary review → bank/Plaid → company address → mailing address → personal info → personal address → billing contact → document review → contract signing → fuel cards → confirmation.
+**OtpVerification** (`src/pages/OtpVerification.jsx`) — post-approval multi-step registration for approved leads. Entry point is the OTP code from that email. Step order: OTP entry → company address → mailing address → personal info → personal address → billing contact → **bank/Plaid** → final review (summary) → contract signing → fuel cards → confirmation. **Plaid was deliberately moved to the end** (just before the summary/signing) so customers complete the simpler inputs first and don't drop out at the bank step right after OTP — the `src/obsolete/index.js` order (Plaid right after OTP) is no longer authoritative for step ordering. Persisted `completed_step` numbers: address=2–4, personalInfo=5, personalAddress=6, billingContact=7, plaid=8, finalReview=9, contractSigning=10, contractSigned=11, allDone=12 (mapped in `mapObsoleteStepToString`). The "after Plaid" cursor (9) is also stamped server-side in `lib/pijb_web/controllers/lead_controller.ex` (Plaid exchange + skip).
+
+**PortalPage** (`src/pages/PortalPage.jsx`) — self-serve portal for **existing customers** (distinct from leads). Internal view state machine (like `RelinkPage`): OTP-to-email login (`requestCode` → `verifyCode`) → read-only `DASHBOARD` (masked summary + document downloads) → `CHANGE` (propose edits to whitelisted fields + note + S3-uploaded files) → `SUBMITTED`. Talks to `/api/portal/*` (see `src/api/portal.js`); the session token lives in `sessionStorage` under `itrucking-portal-token`. Nothing here mutates the customer record — submissions are change requests an operator reviews in the CRM. Backend contract: `docs/conventions/portal-api-contract.md`.
+
+The read-only summary primitives (`ReviewSection`, `ReviewRow`, `Row`, `US_STATES`, `formatAddress`) are shared via `src/components/ReviewCard.jsx` — used by both `OtpVerification` and `PortalPage`.
 
 The obsolete Alpine.js implementations in `src/obsolete/` are the authoritative reference for business logic — `register.js` maps to LeadForm, `index.js` maps to OtpVerification, `post-signing.js` maps to the post-signing page.
 
@@ -36,6 +41,8 @@ The obsolete Alpine.js implementations in `src/obsolete/` are the authoritative 
 `src/api/leads.js` — all HTTP calls. Uses three internal helpers (`apiFetch`, `apiPost`, `apiGet`) so individual functions are one-liners. Three functions intentionally swallow errors and never reject: `requestNewCode` (anti-enumeration), `completeSigning` (idempotent fire-and-forget), `uploadFuelInvoice`. `updateLead` is also fire-and-forget but does reject — callers use `.catch()` and never `await` it in navigation paths.
 
 `src/api/leadMappers.js` — pure transformation functions, no HTTP. Splits into three sections: response mappers (API snake_case → React camelCase), payload builders (React state → request body), and validation helpers. Import from here when converting API responses or building request bodies.
+
+`src/api/portal.js` + `src/api/portalMappers.js` — the customer-portal API + transforms (same helper style). `portal.js` sends the session token as `Authorization: Bearer`; `requestCode` swallows errors (anti-enumeration). `portalMappers.js` holds the proposable-field whitelist (mirrors the backend's `ChangeRequest.proposable_fields/0`), `initialChangeForm`, and `buildChangeRequestPayload` (diffs the form vs. current so only changed fields are proposed).
 
 **Environment variables** (`.env.local`):
 - `VITE_API_BASE_URL` — backend API base (e.g. `http://localhost:4000`)

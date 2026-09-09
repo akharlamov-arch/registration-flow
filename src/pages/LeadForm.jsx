@@ -567,7 +567,7 @@ export default function LeadForm() {
                     value={otpResetEmail}
                     onChange={e => setOtpResetEmail(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleOtpReset()}
-                    placeholder={t('otp.recoveryPlaceholder')}
+                    placeholder={t('otp.recoveryPlaceholderEmail')}
                     className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-gray-400
                                text-gray-900 bg-white text-sm
                                focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors duration-200"
