@@ -197,6 +197,7 @@ const portalDemoStrings = {
       pendingNote: 'We received your void check and account details through MOOV.',
       changeQ: 'Changed banks, or connected the wrong account?',
       keepBtn: 'Keep current account',
+      stillConnected: 'Still connected:',
     },
     moov: {
       q: 'Having trouble connecting with Plaid?', link: 'Verify your bank with MOOV instead',
@@ -304,6 +305,7 @@ const portalDemoStrings = {
       pendingNote: 'Мы получили ваш void-чек и реквизиты через MOOV.',
       changeQ: 'Сменили банк или подключили не тот счёт?',
       keepBtn: 'Оставить текущий счёт',
+      stillConnected: 'Сейчас подключён:',
     },
     moov: {
       q: 'Не получается подключиться через Plaid?', link: 'Подтвердите счёт через MOOV',
@@ -411,6 +413,7 @@ const portalDemoStrings = {
       pendingNote: 'Ми отримали ваш void-чек і реквізити через MOOV.',
       changeQ: 'Змінили банк або підключили не той рахунок?',
       keepBtn: 'Залишити поточний рахунок',
+      stillConnected: 'Зараз підключено:',
     },
     moov: {
       q: 'Не вдається підключитися через Plaid?', link: 'Підтвердіть рахунок через MOOV',
@@ -518,6 +521,7 @@ const portalDemoStrings = {
       pendingNote: 'Recibimos su cheque anulado y los datos de la cuenta mediante MOOV.',
       changeQ: '¿Cambió de banco o conectó la cuenta equivocada?',
       keepBtn: 'Mantener la cuenta actual',
+      stillConnected: 'Sigue conectada:',
     },
     moov: {
       q: '¿Tiene problemas para conectar con Plaid?', link: 'Verifique su banco con MOOV',

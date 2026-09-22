@@ -60,6 +60,17 @@ const OTHER_BANKS = [
   { institution: 'US Bank', last4: '6074' },
 ]
 let bankSeq = 0
+
+// Arms the next re-link exchange to fail, so the "a failed swap must not touch
+// the stored bank" behaviour can be demonstrated rather than asserted on faith.
+// Set from /mock. Codes are the ones PijbWeb.PlaidRelinkController returns and
+// src/pages/RelinkPage.jsx already maps.
+let relinkFailure = null
+const FAILURES = [
+  ['PLAID_NAME_MISMATCH', 422, 'holder name differs'],
+  ['PLAID_HOLDER_TYPE_MISMATCH', 422, 'business vs personal'],
+  ['PLAID_TOKEN_EXCHANGE_FAILED', 502, 'upstream failure'],
+]
 let tokenSeq = 0
 const STORES = { pwd: passwordTokens, pending: pendingTokens, reset: resetTokens, relink: relinkTokens }
 const mintToken = (kind, email) => {
@@ -292,6 +303,9 @@ const CONTROL_PAGE = () => `<!doctype html>
  code{font:13px ui-monospace,monospace;background:#f3f4f6;padding:2px 6px;border-radius:6px;word-break:break-all}
  .s{display:block;color:#6b7280;font-size:13px;margin-top:2px}
  ul{padding:0;margin:0}
+ a.btn{display:block;text-align:center;text-decoration:none;margin-top:8px;padding:10px;
+       border-radius:10px;font-weight:600;font-size:13px;background:#2563EB;color:#fff}
+ a.ghost{background:#fff;color:#374151;border:1px solid #e5e7eb}
 </style>
 <div class="card">
   <h1>Portal mock</h1>
@@ -303,6 +317,12 @@ const CONTROL_PAGE = () => `<!doctype html>
     Password for accounts that have one: <code>${DEMO_PASSWORD}</code><br>
     Accounts without a password go through create-a-password after the code.
   </p>
+  <p style="margin-top:16px">Next bank re-link:
+    <strong>${relinkFailure ? 'fails with ' + relinkFailure : 'succeeds'}</strong>
+  </p>
+  ${FAILURES.map(([code, status, why]) =>
+    `<a class="btn ghost" href="/mock/relink/${code}">Fail next with ${code} (${status}) — ${why}</a>`).join('')}
+  <a class="btn ghost" href="/mock/relink/none">Let the next one succeed</a>
   <p>Change requests received: <strong>${submitted.length}</strong></p>
 </div>`
 
@@ -311,6 +331,12 @@ const server = createServer(async (req, res) => {
   const { pathname } = new URL(req.url, origin)
 
   if (req.method === 'OPTIONS') return send(res, 204, '')
+
+  if (pathname.startsWith('/mock/relink/')) {
+    const code = pathname.split('/')[3]
+    relinkFailure = code === 'none' ? null : code
+    return send(res, 302, '', { Location: '/mock' })
+  }
 
   if (pathname === '/mock') {
     return send(res, 200, CONTROL_PAGE(), { 'Content-Type': 'text/html; charset=utf-8' })
@@ -516,6 +542,16 @@ const server = createServer(async (req, res) => {
       // 410 for a token that was never issued, already used, or expired —
       // matching the failure mode documented in src/api/relink.js.
       if (!email) return send(res, 410, { success: false, code: 'RELINK_TOKEN_CONSUMED' })
+
+      // A rejected exchange leaves everything alone: the stored bank is
+      // untouched and the token stays usable, so the customer can pick another
+      // account without starting over.
+      if (relinkFailure) {
+        const [code, status] = FAILURES.find((f) => f[0] === relinkFailure) || FAILURES[0]
+        relinkFailure = null
+        console.log(`re-link REJECTED for ${email} → ${code}; bank left as-is`)
+        return send(res, status, { success: false, code })
+      }
 
       relinkTokens.delete(relinkToken)
       bankOverrides.set(email, OTHER_BANKS[bankSeq++ % OTHER_BANKS.length])

@@ -18,6 +18,19 @@ import MoovFallback from './MoovFallback'
 import { createPlaidVerificationSession } from '../../api/portal'
 import { exchangeRelink } from '../../api/relink'
 
+// Server error codes → the copy the project already has for them. Same codes
+// src/pages/RelinkPage.jsx maps; these keys are translated, its literals are not.
+function exchangeErrorCopy(code) {
+  switch (code) {
+    case 'PLAID_NAME_MISMATCH':
+      return ['plaidStub.exchangeErrors.nameMismatchTitle', 'plaidStub.exchangeErrors.nameMismatchBody']
+    case 'PLAID_HOLDER_TYPE_MISMATCH':
+      return ['plaidStub.exchangeErrors.holderMismatchTitle', 'plaidStub.exchangeErrors.holderMismatchBody']
+    default:
+      return ['plaidStub.exchangeErrors.genericTitle', 'plaidStub.exchangeErrors.genericBody']
+  }
+}
+
 function BankIcon() {
   return (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
@@ -92,15 +105,17 @@ export default function Step2Bank({ token, bank, connected, pending, onConnected
   // Swapping banks: the connected account stays in place until a new one is
   // linked, so backing out leaves the customer exactly where they were.
   const [relinking, setRelinking] = useState(false)
-  const [error, setError] = useState('')
+  // [titleKey, bodyKey] — a rejected exchange, shown in full. The connected
+  // account is never cleared on the way through.
+  const [error, setError] = useState(null)
 
   const connect = async () => {
-    setError(''); setBusy(true)
+    setError(null); setBusy(true)
 
     const { ok, data } = await createPlaidVerificationSession(token)
     if (!ok || !data?.success) {
       setBusy(false)
-      return setError(t('otp.errorPlaidUnavailable'))
+      return setError(['otp.errorPlaidUnavailable', null])
     }
 
     // Stands in for the Plaid Link round trip.
@@ -108,7 +123,10 @@ export default function Step2Bank({ token, bank, connected, pending, onConnected
 
     const exchange = await exchangeRelink(data.relink_token, { publicToken: 'public-demo-token' })
     setBusy(false)
-    if (!exchange.ok) return setError(t('otp.errorPlaidFlowFailed'))
+
+    // A rejected exchange changes nothing: the connected account stays exactly
+    // as it was, and the customer can pick a different one and try again.
+    if (!exchange.ok) return setError(exchangeErrorCopy(exchange.data?.code))
 
     setRelinking(false)
     onConnected()
@@ -122,13 +140,29 @@ export default function Step2Bank({ token, bank, connected, pending, onConnected
       </header>
 
       {error && (
-        <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4" role="alert">
-          {error}
-        </p>
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3.5 mb-4" role="alert">
+          <p className="text-sm font-semibold text-red-800">{t(error[0])}</p>
+          {error[1] && <p className="text-sm text-red-700 mt-0.5 leading-relaxed">{t(error[1])}</p>}
+          <p className="text-xs text-red-600 mt-2 leading-relaxed">
+            {t('plaidStub.exchangeErrors.remediation')}
+          </p>
+        </div>
+      )}
+
+      {/* The account in force stays on screen for the whole swap, so it is
+          never in doubt that nothing has been given up yet. */}
+      {connected && relinking && (
+        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 mb-4">
+          <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" aria-hidden="true" />
+          <p className="text-xs text-gray-600 min-w-0">
+            <span className="font-semibold text-gray-800">{t('portalDemo.bank.stillConnected')}</span>{' '}
+            {bank?.institution || 'Chase'} ···· {bank?.last4 || '4471'}
+          </p>
+        </div>
       )}
 
       {connected && !relinking ? (
-        <Connected bank={bank} onRelink={() => { setError(''); setRelinking(true) }} />
+        <Connected bank={bank} onRelink={() => { setError(null); setRelinking(true) }} />
       ) : pending && !relinking ? (
         <PendingReview />
       ) : (
@@ -180,7 +214,7 @@ export default function Step2Bank({ token, bank, connected, pending, onConnected
               {relinking && (
                 <button
                   type="button"
-                  onClick={() => setRelinking(false)}
+                  onClick={() => { setRelinking(false); setError(null) }}
                   className="mt-4 px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200
                              hover:bg-gray-50 rounded-lg transition-colors duration-ds-normal"
                 >
