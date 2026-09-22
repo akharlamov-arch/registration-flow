@@ -200,9 +200,27 @@ export default function PortalDemo() {
   const setValue = (key, v) => setValues((prev) => ({ ...prev, [key]: v }))
   const selectChoice = (id, value) => setChoices((prev) => ({ ...prev, [id]: value }))
 
+  // `validate` walks GROUPS in render order, so the first key is the topmost
+  // invalid field on the page.
+  const revealFirstError = () => {
+    const firstKey = Object.keys(errors)[0]
+    if (!firstKey) return
+    const wrapper = document.getElementById(`field-${firstKey}`)
+    if (!wrapper) return
+    wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // preventScroll: the smooth scroll above is already on its way.
+    wrapper.querySelector('input, select, textarea')?.focus({ preventScroll: true })
+  }
+
   const handleSign = () => {
     setShowErrors(true)
-    if (!complete) return
+    // Pressing Sign on an incomplete form is how most customers will discover
+    // what is missing — they will not scroll looking for it. Mark every
+    // offending field and bring the first one into view.
+    if (!complete) {
+      revealFirstError()
+      return
+    }
     setSigning(true)
     // The payload the backend would receive — logged so it can be compared
     // against the contract while the demo is being walked through.

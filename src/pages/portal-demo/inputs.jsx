@@ -56,6 +56,7 @@ function SecretInput({ value, onChange, invalid, format, digits, placeholder }) 
         inputMode={format === 'ssn' ? 'numeric' : 'text'}
         autoComplete="off"
         className={`${inputCls} pr-16 font-mono tracking-wide ${invalid ? errorCls : ''}`}
+        aria-invalid={invalid}
         value={display}
         placeholder={placeholder}
         onFocus={() => setFocused(true)}
@@ -98,7 +99,7 @@ export default function DemoField({ field, value, error, onChange }) {
   switch (field.type) {
     case 'select':
       control = (
-        <select className={`${inputCls} ${invalid ? errorCls : ''}`} value={value} onChange={(e) => onChange(e.target.value)}>
+        <select className={`${inputCls} ${invalid ? errorCls : ''}`} aria-invalid={invalid} value={value} onChange={(e) => onChange(e.target.value)}>
           <option value="">Select...</option>
           {field.options.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
         </select>
@@ -106,14 +107,14 @@ export default function DemoField({ field, value, error, onChange }) {
       break
     case 'state':
       control = (
-        <select className={`${inputCls} ${invalid ? errorCls : ''}`} value={value} onChange={(e) => onChange(e.target.value)}>
+        <select className={`${inputCls} ${invalid ? errorCls : ''}`} aria-invalid={invalid} value={value} onChange={(e) => onChange(e.target.value)}>
           <option value="">Select state</option>
           {US_STATES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
         </select>
       )
       break
     case 'phone':
-      control = <PhoneInput className={`${inputCls} ${invalid ? errorCls : ''}`} value={value} onChange={onChange} />
+      control = <PhoneInput className={`${inputCls} ${invalid ? errorCls : ''}`} aria-invalid={invalid} value={value} onChange={onChange} />
       break
     case 'secret':
       control = (
@@ -140,6 +141,7 @@ export default function DemoField({ field, value, error, onChange }) {
       control = (
         <input
           className={`${inputCls} ${invalid ? errorCls : ''}`}
+          aria-invalid={invalid}
           inputMode="numeric"
           value={value}
           placeholder={field.placeholder}
@@ -151,6 +153,7 @@ export default function DemoField({ field, value, error, onChange }) {
       control = (
         <input
           className={`${inputCls} ${invalid ? errorCls : ''}`}
+          aria-invalid={invalid}
           inputMode="numeric"
           value={value}
           placeholder={field.placeholder}
@@ -163,6 +166,7 @@ export default function DemoField({ field, value, error, onChange }) {
         <input
           type={field.type === 'email' ? 'email' : 'text'}
           className={`${inputCls} ${invalid ? errorCls : ''}`}
+          aria-invalid={invalid}
           value={value}
           placeholder={field.placeholder}
           onChange={(e) => onChange(e.target.value)}

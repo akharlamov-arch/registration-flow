@@ -66,7 +66,11 @@ function GroupCard({ group, values, errors, choices, onChange, onSelectChoice })
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4">
             {group.fields.map((field) => (
-              <div key={field.key} className={field.span === 2 ? 'sm:col-span-2' : ''}>
+              <div
+                key={field.key}
+                id={`field-${field.key}`}
+                className={field.span === 2 ? 'sm:col-span-2' : ''}
+              >
                 <DemoField
                   field={field}
                   value={values[field.key] ?? ''}
@@ -119,17 +123,17 @@ export default function Step1Contract({
             {complete
               ? 'All required details are filled in.'
               : showErrors && errorCount > 0
-                ? `${errorCount} field${errorCount === 1 ? '' : 's'} still need${errorCount === 1 ? 's' : ''} attention.`
-                : 'Complete every required field to enable signing.'}
+                ? `${errorCount} field${errorCount === 1 ? '' : 's'} still need${errorCount === 1 ? 's' : ''} attention — highlighted in red above.`
+                : 'Fill in every required field, then sign.'}
           </p>
           <button
             type="button"
             onClick={onSign}
-            disabled={!complete || signing}
+            disabled={signing}
             className="px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-secondary rounded-lg
                        shadow-ds-sm transition-colors duration-ds-normal cursor-pointer
                        focus:outline-none focus:ring-2 focus:ring-primary/30
-                       disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-primary"
+                       disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {signing ? 'Signing…' : 'Sign updated contract'}
           </button>
