@@ -106,6 +106,10 @@ export default function Login({ onSignedIn }) {
   const [session, setSession] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  // A rejected password is the one failure where "you may not have a password
+  // yet" is the likely explanation, so the hint under the code button is
+  // highlighted in that case only.
+  const [signInFailed, setSignInFailed] = useState(false)
 
   const fail = (key) => { setError(t(key)); setBusy(false) }
 
@@ -116,12 +120,15 @@ export default function Login({ onSignedIn }) {
     e.preventDefault()
     if (!validEmail()) return setError(t('portalDemo.login.errEmail'))
     if (!password) return setError(t('portalDemo.login.errPasswordRequired'))
-    setError(''); setBusy(true)
+    setError(''); setSignInFailed(false); setBusy(true)
 
     const { ok } = await verifyPassword(email.trim(), password)
     // One message for every failure — a wrong password, an account with no
     // password, and an unknown address must be indistinguishable.
-    if (!ok) return fail('portalDemo.login.errSignIn')
+    if (!ok) {
+      setSignInFailed(true)
+      return fail('portalDemo.login.errSignIn')
+    }
 
     await requestCode(email.trim())
     setBusy(false)
@@ -175,7 +182,7 @@ export default function Login({ onSignedIn }) {
   }[stage]
 
   const restart = () => {
-    setStage('signin'); setCode(''); setPasswordValue(''); setError('')
+    setStage('signin'); setCode(''); setPasswordValue(''); setError(''); setSignInFailed(false)
   }
 
   return (
@@ -207,16 +214,22 @@ export default function Login({ onSignedIn }) {
               {busy ? t('portalDemo.login.verifying') : t('portalDemo.login.signInBtn')}
             </button>
 
-            {/* Prominent, not a footnote: until people have set a password this
-                is the path almost everyone takes. */}
-            <div className="pt-2 border-t border-gray-100">
-              <p className="text-xs text-gray-500 leading-relaxed mt-3 mb-2">
-                {t('portalDemo.login.firstTime')}
-              </p>
-              <button type="button" onClick={sendCode} disabled={busy} className={secondaryBtn}>
-                {busy ? t('portalDemo.login.sending') : t('portalDemo.login.useCodeBtn')}
-              </button>
-            </div>
+            {/* Directly under Continue: until people have set a password this is
+                the path almost everyone takes. The line beneath explains it, and
+                turns red after a rejected password — the likeliest reason being
+                that no password exists for this account yet. */}
+            <button type="button" onClick={sendCode} disabled={busy} className={secondaryBtn}>
+              {busy ? t('portalDemo.login.sending') : t('portalDemo.login.useCodeBtn')}
+            </button>
+
+            <p
+              className={`text-xs leading-relaxed ${
+                signInFailed ? 'text-red-600 font-medium' : 'text-gray-500'
+              }`}
+              role={signInFailed ? 'alert' : undefined}
+            >
+              {t('portalDemo.login.firstTime')}
+            </p>
           </form>
         )}
 
