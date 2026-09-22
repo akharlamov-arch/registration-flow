@@ -190,8 +190,6 @@ export function buildPayload(values, choices) {
 
 export function emptyBankDetails() {
   return {
-    bankName: '',
-    accountType: '',
     accountNumber: '',
     accountNumberConfirm: '',
     routingNumber: '',

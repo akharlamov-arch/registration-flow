@@ -1,20 +1,19 @@
 // Manual bank verification, offered when Plaid will not connect.
 //
-// Fields and validation mirror the main flow's bankInfo step
-// (src/pages/OtpVerification.jsx:790-812, labels from translations.js
-// bankInfo.*): void check, bank name, account type, account number with
-// confirmation, routing number.
+// Fields and validation mirror the main flow's manual bank card
+// (src/pages/OtpVerification.jsx:2620-2672): void check, account number with
+// confirmation, routing number — and nothing else. bankInfo.labelBankName and
+// labelAccountType are display rows in the "Connected via Plaid" section there,
+// not inputs, so they are not asked for here.
 //
 // Unlike the old PortalBankVerificationGate this dialog is opened by the
 // customer, not thrown at them, and Escape or the backdrop closes it.
 
 import { useEffect, useState } from 'react'
 import FormField from '../../components/FormField'
-import FileUpload from '../../components/FileUpload'
+import Attachment from './Attachment'
 import { inputCls, errorCls } from './inputs'
 import { emptyBankDetails, validateBankDetails } from './formState'
-
-const ACCOUNT_TYPES = ['Checking', 'Savings']
 
 export default function MoovFallback({ open, onClose, onSubmitted }) {
   const [values, setValues] = useState(emptyBankDetails)
@@ -99,25 +98,8 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
             error={err('voidCheck')}
             hint="Uploading a void check can help resolve verification issues."
           >
-            <FileUpload
-              id="moov-void-check"
-              accept=".jpg,.jpeg,.png,.heic,.pdf"
-              onChange={(files) => set('voidCheck', files?.[0]?.name || '')}
-            />
+            <Attachment value={values.voidCheck} onChange={(v) => set('voidCheck', v)} invalid={!!err('voidCheck')} />
           </FormField>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Bank Name" optional>
-              <input className={inputCls} value={values.bankName} onChange={(e) => set('bankName', e.target.value)} />
-            </FormField>
-
-            <FormField label="Account Type" optional>
-              <select className={inputCls} value={values.accountType} onChange={(e) => set('accountType', e.target.value)}>
-                <option value="">Select...</option>
-                {ACCOUNT_TYPES.map((v) => <option key={v} value={v}>{v}</option>)}
-              </select>
-            </FormField>
-          </div>
 
           <FormField label="Routing Number" required error={err('routingNumber')}>
             <input
@@ -125,7 +107,7 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
               inputMode="numeric"
               aria-invalid={!!err('routingNumber')}
               value={values.routingNumber}
-              placeholder="123456789"
+              placeholder="000000000"
               onChange={(e) => set('routingNumber', e.target.value.replace(/\D/g, '').slice(0, 9))}
             />
           </FormField>
@@ -136,6 +118,7 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
               inputMode="numeric"
               aria-invalid={!!err('accountNumber')}
               value={values.accountNumber}
+              placeholder="000000000000"
               onChange={(e) => set('accountNumber', e.target.value.replace(/\D/g, '').slice(0, 17))}
             />
           </FormField>
@@ -146,6 +129,7 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
               inputMode="numeric"
               aria-invalid={!!err('accountNumberConfirm')}
               value={values.accountNumberConfirm}
+              placeholder="000000000000"
               onChange={(e) => set('accountNumberConfirm', e.target.value.replace(/\D/g, '').slice(0, 17))}
             />
           </FormField>

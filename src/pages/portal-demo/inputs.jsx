@@ -1,14 +1,15 @@
 // Form controls for the portal demo. Same design tokens as the registration
 // flow, tuned denser: 14px text, tighter rows, left-aligned.
 //
-// The driver-licence attachment uses the shared FileUpload widget — the same
-// drag-and-drop control the main registration flow uses — rather than a
-// bespoke one.
+// The driver-licence attachment uses Attachment, which replicates the control
+// the registration flow itself uses. components/FileUpload.jsx is deliberately
+// not used here: it belongs to the old PortalPage and appears nowhere in the
+// registration flow.
 
 import { useState } from 'react'
 import FormField from '../../components/FormField'
 import PhoneInput from '../../components/PhoneInput'
-import FileUpload from '../../components/FileUpload'
+import Attachment from './Attachment'
 import { US_STATES } from '../../components/ReviewCard'
 
 export const inputCls =
@@ -129,13 +130,7 @@ export default function DemoField({ field, value, error, onChange }) {
       )
       break
     case 'file':
-      control = (
-        <FileUpload
-          id={`portal-demo-${field.key}`}
-          accept=".jpg,.jpeg,.png,.heic,.pdf,.doc,.docx"
-          onChange={(files) => onChange(files?.[0]?.name || '')}
-        />
-      )
+      control = <Attachment value={value} onChange={onChange} invalid={invalid} />
       break
     case 'zip':
       control = (
