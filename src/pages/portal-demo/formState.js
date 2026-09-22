@@ -102,18 +102,6 @@ export function isComplete(values, sameAs) {
   return Object.keys(validate(values, sameAs)).length === 0
 }
 
-/** Values we compute rather than ask for — shown read-only, sent as-is. */
-export function derived(values) {
-  const fullName = [values.first_name, values.last_name].filter(Boolean).join(' ')
-  return {
-    'Full Name': fullName,
-    'Title of the Billing Contact': fullName,
-    'Billing Contact': fullName,
-    'Company Identifier': values.company_name,
-    'Customer Identifier': values.company_name,
-  }
-}
-
 function addressFrom(values, prefix) {
   return {
     line1: values[`${prefix}_line1`] || '',

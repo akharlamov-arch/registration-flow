@@ -93,19 +93,10 @@ function FileInput({ value, onChange, invalid }) {
 }
 
 /** Renders one field from the `fields.js` table. */
-export default function DemoField({ field, value, error, onChange, showCrm }) {
+export default function DemoField({ field, value, error, onChange }) {
   const invalid = !!error
 
-  const label = (
-    <span className="inline-flex items-baseline gap-2">
-      {field.label}
-      {showCrm && (
-        <code className="text-[11px] font-normal text-gray-400 bg-gray-50 border border-gray-200 rounded px-1 py-px">
-          {field.crm}
-        </code>
-      )}
-    </span>
-  )
+  const label = field.label
 
   if (field.type === 'readonly') {
     return (

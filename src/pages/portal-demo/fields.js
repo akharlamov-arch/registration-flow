@@ -104,8 +104,9 @@ export const GROUPS = [
   },
 ]
 
-// Never rendered as inputs. Kept here so the mapping is visible in one place —
-// the demo surfaces them in a collapsed panel for the backend team.
+// Reference only — not rendered anywhere, and not asked of the customer.
+// Kept because this file is the one place the CRM mapping is written down, and
+// which records are derived rather than collected is part of that mapping.
 export const DERIVED_FIELDS = [
   { crm: 'Full Name',                  from: 'First Name + Last Name' },
   { crm: 'Full name',                  from: 'duplicate of Full Name in the source list' },

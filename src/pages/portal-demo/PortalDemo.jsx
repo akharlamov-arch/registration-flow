@@ -38,21 +38,12 @@ const primaryBtn =
 // Account bar — sits inside the page, under the shared site header. Carries
 // only what is specific to a signed-in portal session; the logo, language
 // selector and support phone stay where they always were, in Header.jsx.
-function AccountBar({ company, showCrm, onToggleCrm, onSignOut }) {
+function AccountBar({ company, onSignOut }) {
   return (
     <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-200">
       <span className="text-sm font-semibold text-gray-900 truncate">{company}</span>
 
       <div className="flex items-center gap-4 shrink-0">
-        <label className="hidden sm:flex items-center gap-2 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={showCrm}
-            onChange={(e) => onToggleCrm(e.target.checked)}
-            className="w-3.5 h-3.5 rounded border-gray-300 text-primary focus:ring-primary/30 cursor-pointer"
-          />
-          <span className="text-xs text-gray-500">Show CRM field names</span>
-        </label>
         <button
           type="button"
           onClick={onSignOut}
@@ -171,7 +162,6 @@ export default function PortalDemo() {
   const [values, setValues] = useState(() => initialForm(null))
   const [sameAs, setSameAs] = useState(initialSameAs)
   const [showErrors, setShowErrors] = useState(false)
-  const [showCrm, setShowCrm] = useState(false)
 
   const applyCustomer = useCallback((c) => {
     setCustomer(c)
@@ -246,7 +236,7 @@ export default function PortalDemo() {
 
   const steps = [
     { id: 1, title: 'Updated contract details', state: signed ? 'done' : 'active' },
-    { id: 2, title: 'Bank account', state: linked ? 'done' : signed ? 'active' : 'locked' },
+    { id: 2, title: 'Bank account', state: linked ? 'done' : 'active' },
   ]
 
   const allDone = signed && linked
@@ -255,12 +245,7 @@ export default function PortalDemo() {
   return (
     <div className="min-h-screen bg-surface">
       <main className="max-w-portal mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <AccountBar
-          company={customer?.profile?.cust_name}
-          showCrm={showCrm}
-          onToggleCrm={setShowCrm}
-          onSignOut={handleSignOut}
-        />
+        <AccountBar company={customer?.profile?.cust_name} onSignOut={handleSignOut} />
 
         <div className="mb-6">
           <h1 className="text-lg sm:text-xl font-bold text-gray-900">
@@ -269,7 +254,7 @@ export default function PortalDemo() {
           <p className="text-sm text-gray-500 mt-0.5">
             {allDone
               ? 'Nothing outstanding right now.'
-              : `Step ${signed ? 2 : 1} of 2 · complete these in order.`}
+              : 'You can complete these in any order.'}
           </p>
         </div>
 
@@ -288,7 +273,6 @@ export default function PortalDemo() {
                 values={values}
                 errors={errors}
                 sameAs={sameAs}
-                showCrm={showCrm}
                 showErrors={showErrors}
                 complete={complete}
                 signing={signing}
