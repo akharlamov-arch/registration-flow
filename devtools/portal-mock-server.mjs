@@ -78,7 +78,6 @@ function signedDetails(over = {}) {
       company_trucks: '18',
       company_dot: '3417755',
       company_mc: '881204',
-      company_phone: '+1 (614) 555-0142',
       company_email: 'billing@summithaul.com',
       discount_tier: 'Tier 2',
       company_street1: '1190 Industrial Pkwy',
@@ -197,7 +196,6 @@ const CUSTOMERS = {
     contract_details: signedDetails({
       company_name: 'Northline Transport LLC',
       company_trucks: '34',
-      company_phone: '+1 (813) 555-0119',
       company_email: 'billing@northlinetransport.com',
       company_street1: '2200 Harbor Blvd',
       company_street2: 'Unit 4',

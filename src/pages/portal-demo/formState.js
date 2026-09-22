@@ -162,12 +162,17 @@ export function buildPayload(values, choices) {
     companyTrucks: Number(values.company_trucks) || 0,
     companyDOT: values.company_dot || null,
     companyMC: values.company_mc || null,
-    companyPhoneNumber: values.company_phone,
     companyBillingEmail: values.company_email,
 
     firstName: values.first_name,
     lastName: values.last_name,
+    // One phone, asked once. Registration collects a single lead phone
+    // (api/leadMappers.js:12) and there is no separate company line anywhere in
+    // the project. The CRM does hold a `Company Phone Number` record, so the
+    // same value fills it rather than leaving it empty — for an owner-operator
+    // they are the same number. Drop the second key if that is wrong.
     phone: values.mobile_phone,
+    companyPhoneNumber: values.mobile_phone,
 
     companyAddress: company,
     mailingAddressChoice: choices.mailing === 'other' ? 'custom' : 'same-as-company',

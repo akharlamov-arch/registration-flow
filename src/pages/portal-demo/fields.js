@@ -46,6 +46,17 @@ function addressFields(prefix, crmPrefix) {
 
 export const GROUPS = [
   {
+    id: 'contact',
+    titleKey: 'lead.step1.title',
+    blurbKey: 'lead.step1.desc',
+    fields: [
+      { key: 'first_name',   crm: 'First Name',          labelKey: 'lead.step1.firstName', type: 'text',  required: true, placeholderKey: 'lead.step1.firstNamePlaceholder' },
+      { key: 'last_name',    crm: 'Last Name',           labelKey: 'lead.step1.lastName',  type: 'text',  required: true, placeholderKey: 'lead.step1.lastNamePlaceholder' },
+      { key: 'mobile_phone', crm: 'Mobile Phone Number', labelKey: 'lead.step1.phone',     type: 'phone', required: true },
+    ],
+  },
+
+  {
     id: 'business',
     titleKey: 'lead.stepBusiness.title',
     blurbKey: 'lead.stepBusiness.desc',
@@ -56,7 +67,6 @@ export const GROUPS = [
       { key: 'company_trucks', crm: 'Truck Count',                  labelKey: 'lead.stepBusiness.trucks',       type: 'number', required: true, placeholder: '5' },
       { key: 'company_dot',    crm: 'DOT Number',                   labelKey: 'lead.stepBusiness.dot',          type: 'text',   required: false, placeholder: '1234567' },
       { key: 'company_mc',     crm: 'MC Number',                    labelKey: 'lead.stepBusiness.mc',           type: 'text',   required: false, placeholder: '123456' },
-      { key: 'company_phone',  crm: 'Company Phone Number',         labelKey: 'portalDemo.fields.companyPhone', type: 'phone',  required: true, isNew: true },
       { key: 'company_email',  crm: 'Company Billing Email',        labelKey: 'portalDemo.fields.companyEmail', type: 'email',  required: true, isNew: true, placeholderKey: 'billingContact.placeholderEmail' },
       { key: 'discount_tier',  crm: 'Fuel Discount Tier Level',     labelKey: 'portalDemo.fields.discountTier', type: 'readonly' },
     ],
@@ -85,17 +95,6 @@ export const GROUPS = [
       ],
     },
     fields: addressFields('mailing', 'Mailing'),
-  },
-
-  {
-    id: 'contact',
-    titleKey: 'lead.step1.title',
-    blurbKey: 'lead.step1.desc',
-    fields: [
-      { key: 'first_name',   crm: 'First Name',          labelKey: 'lead.step1.firstName', type: 'text',  required: true, placeholderKey: 'lead.step1.firstNamePlaceholder' },
-      { key: 'last_name',    crm: 'Last Name',           labelKey: 'lead.step1.lastName',  type: 'text',  required: true, placeholderKey: 'lead.step1.lastNamePlaceholder' },
-      { key: 'mobile_phone', crm: 'Mobile Phone Number', labelKey: 'lead.step1.phone',     type: 'phone', required: true },
-    ],
   },
 
   {

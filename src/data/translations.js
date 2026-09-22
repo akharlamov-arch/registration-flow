@@ -112,7 +112,7 @@ const portalStrings = {
 // from the existing keys, which are already translated.
 const portalDemoStrings = {
   en: {
-    fields: { companyPhone: 'Company Phone Number', companyEmail: 'Company Billing Email', discountTier: 'Discount tier' },
+    fields: { companyEmail: 'Company Billing Email', discountTier: 'Discount tier' },
     heroAttention: 'A few things need your attention',
     heroUpToDate: 'Your account is up to date',
     subAnyOrder: 'You can complete these in any order.',
@@ -217,7 +217,7 @@ const portalDemoStrings = {
   },
 
   ru: {
-    fields: { companyPhone: 'Телефон компании', companyEmail: 'Email компании для счетов', discountTier: 'Уровень скидки' },
+    fields: { companyEmail: 'Email компании для счетов', discountTier: 'Уровень скидки' },
     heroAttention: 'Несколько вопросов требуют вашего внимания',
     heroUpToDate: 'Ваш аккаунт в порядке',
     subAnyOrder: 'Их можно выполнить в любом порядке.',
@@ -322,7 +322,7 @@ const portalDemoStrings = {
   },
 
   uk: {
-    fields: { companyPhone: 'Телефон компанії', companyEmail: 'Email компанії для рахунків', discountTier: 'Рівень знижки' },
+    fields: { companyEmail: 'Email компанії для рахунків', discountTier: 'Рівень знижки' },
     heroAttention: 'Кілька питань потребують вашої уваги',
     heroUpToDate: 'Ваш акаунт у порядку',
     subAnyOrder: 'Їх можна виконати в будь-якому порядку.',
@@ -427,7 +427,7 @@ const portalDemoStrings = {
   },
 
   es: {
-    fields: { companyPhone: 'Teléfono de la empresa', companyEmail: 'Correo de facturación', discountTier: 'Nivel de descuento' },
+    fields: { companyEmail: 'Correo de facturación', discountTier: 'Nivel de descuento' },
     heroAttention: 'Algunos asuntos requieren su atención',
     heroUpToDate: 'Su cuenta está al día',
     subAnyOrder: 'Puede completarlos en cualquier orden.',
