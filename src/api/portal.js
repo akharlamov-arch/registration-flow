@@ -118,6 +118,28 @@ export function submitChangeRequest(token, payload) {
   })
 }
 
+// ── Bank verification (Plaid) ───────────────────────────────────────────────
+
+/**
+ * Mints (or re-uses) a Plaid re-link token for the signed-in customer.
+ *
+ * There is no portal-specific Plaid exchange: the returned `relink_token` is
+ * driven through the existing `/api/plaid/relink/:token/*` endpoints in
+ * `api/relink.js`, which is where identity validation and persistence live.
+ * The backend returns the *same* token until it is used or expires, so calling
+ * this twice cannot fan out sessions.
+ *
+ * Response on success: { success, relink_token, expires_at }
+ * Response on failure (503): { success: false, code: "PLAID_SESSION_UNAVAILABLE" }
+ */
+export function createPlaidVerificationSession(token) {
+  return apiFetch(`${BASE}/api/portal/plaid/verification-session`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({}),
+  })
+}
+
 // ── File upload (browser → S3) ───────────────────────────────────────────────
 
 /**

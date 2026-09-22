@@ -7,6 +7,9 @@
 // Single page, internal view state machine (same shape as RelinkPage):
 //   LOADING → LOGIN → DASHBOARD → CHANGE → SUBMITTED
 //
+// The dashboard is blocked by `PortalBankVerificationGate` while the customer
+// holds no Plaid item (PORTAL-PLAID-GATE-01) — see `bankGateRequired` below.
+//
 // Contract: docs/conventions/portal-api-contract.md.
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
@@ -14,6 +17,7 @@ import { useI18n } from '../context/I18nContext'
 import FormField from '../components/FormField'
 import FileUpload from '../components/FileUpload'
 import { ReviewSection, ReviewRow, US_STATES, formatAddress } from '../components/ReviewCard'
+import PortalBankVerificationGate from '../components/PortalBankVerificationGate'
 import {
   requestCode, verifyCode, validateSession, getMe,
   submitChangeRequest, presignUpload, uploadToS3, downloadDocument,
@@ -230,6 +234,12 @@ export default function PortalPage() {
 
   const hasChanges = !!pendingPayload && !isEmptyChangeRequest(pendingPayload)
 
+  // Blocking bank-verification gate (PORTAL-PLAID-GATE-01). Only an explicit
+  // `false` from the backend blocks: a missing key means an older API that does
+  // not report Plaid presence, and locking every customer out of the portal is
+  // a worse failure than showing the dashboard to an unverified one.
+  const bankGateRequired = summary?.bank_verification?.plaid_linked === false
+
   // Loads a fresh summary and resets the editable state around it.
   const applySummary = useCallback((customer) => {
     setSummary(customer)
@@ -317,6 +327,9 @@ export default function PortalPage() {
   // Opens/closes a field's editor. Closing reverts that field to its current
   // value, so a collapsed field never contributes a stray edit.
   const toggleField = (field) => {
+    // The overlay already covers these controls; refusing here too means a
+    // stray keyboard focus or a stale click cannot slip an edit past the gate.
+    if (bankGateRequired) return
     const willOpen = !editing[field]
     if (!willOpen && baseline) setForm((f) => ({ ...f, [field]: baseline[field] }))
     setEditing((prev) => ({ ...prev, [field]: willOpen }))
@@ -348,6 +361,7 @@ export default function PortalPage() {
 
   const handleSubmitChange = async () => {
     setChangeError('')
+    if (bankGateRequired) return
 
     if (!pendingPayload || isEmptyChangeRequest(pendingPayload)) {
       setChangeError(t('portal.change.errorEmpty'))
@@ -364,6 +378,13 @@ export default function PortalPage() {
       setChangeError(formatErrors(data?.errors) || data?.error || t('portal.change.errorGeneric'))
     }
   }
+
+  // Re-read the summary after a successful Plaid link; `plaid_linked` flips to
+  // true and the gate unmounts itself — no page reload.
+  const handleBankVerified = useCallback(async () => {
+    const { ok, data } = await getMe(token)
+    if (ok && data?.success) applySummary(data.customer)
+  }, [token, applySummary])
 
   const backToDashboard = async () => {
     // Refresh the summary so the dashboard reflects any applied change later.
@@ -487,7 +508,8 @@ export default function PortalPage() {
   // DASHBOARD — read-only by default; each editable field has its own toggle,
   // and the request note + submit are always available at the bottom.
   return (
-    <main className={heroMain}>
+    <>
+    <main className={heroMain} aria-hidden={bankGateRequired}>
       <HeroHeading heading={t('portal.dashboard.heading')} subheading={t('portal.dashboard.readOnlyNote')} />
 
       <div className="max-w-3xl mx-auto space-y-3">
@@ -627,11 +649,20 @@ export default function PortalPage() {
           onClick={handleSubmitChange}
           loading={changeBusy}
           loadingLabel={t('portal.change.submitting')}
-          disabled={uploadBusy || !hasChanges}
+          disabled={uploadBusy || !hasChanges || bankGateRequired}
         >
           {t('portal.change.submitBtn')}
         </PrimaryButton>
       </div>
     </main>
+
+    {bankGateRequired && (
+      <PortalBankVerificationGate
+        sessionToken={token}
+        onVerified={handleBankVerified}
+        onSignOut={handleLogout}
+      />
+    )}
+    </>
   )
 }

@@ -84,6 +84,20 @@ const portalStrings = {
     driverLicense: 'Driver license',
     other: 'Other',
   },
+  bankGate: {
+    heading: 'Verify your banking information',
+    body:
+      'We do not have a verified bank account on file for your company. Connect your bank through Plaid to continue using your account.',
+    verifyBtn: 'Verify',
+    connecting: 'Opening Plaid…',
+    verifying: 'Verifying…',
+    errorSession: 'We could not start bank verification. Please try again in a moment.',
+    errorScript: 'The Plaid module failed to load. Please refresh the page and try again.',
+    errorInterrupted: 'Bank verification was interrupted. Please try again.',
+    errorGeneric: 'Bank verification could not be completed. Please try again.',
+    successNote: 'Bank account connected. Loading your account…',
+    logoutBtn: 'Sign out',
+  },
   submitted: {
     heading: 'Request submitted',
     body:
