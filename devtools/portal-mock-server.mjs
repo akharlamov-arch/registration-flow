@@ -37,6 +37,19 @@ const submitted = []
 // first-login path: OTP, then create a password. Everyone else signs in with
 // the password first and an OTP after it.
 const DEMO_PASSWORD = 'demo1234'
+
+// Short-lived tokens that prove ONE factor and grant nothing else. A session
+// token is minted only when both have been proved in the same attempt.
+//   passwordTokens — password accepted, OTP still owed
+//   pendingTokens  — OTP accepted, password still owed
+const passwordTokens = new Map()
+const pendingTokens = new Map()
+let tokenSeq = 0
+const mintToken = (kind, email) => {
+  const token = `${kind}-${++tokenSeq}`
+  ;(kind === 'pwd' ? passwordTokens : pendingTokens).set(token, email)
+  return token
+}
 const passwords = new Map([
   ['itravkin@itrucking.org', DEMO_PASSWORD],
   ['myatsenka@itrucking.org', DEMO_PASSWORD],
@@ -298,7 +311,25 @@ const server = createServer(async (req, res) => {
     if (!stored || stored !== String(body.password || '')) {
       return send(res, 401, { success: false, code: 'SIGN_IN_INVALID' })
     }
-    return send(res, 200, { success: true })
+    // Proof of one factor only — it must be presented back with a valid OTP.
+    return send(res, 200, { success: true, password_token: mintToken('pwd', key) })
+  }
+
+  // Second half of the code-first path: the OTP is already accepted, the
+  // password is still owed.
+  if (pathname === '/api/portal/complete-sign-in') {
+    const body = JSON.parse((await readBody(req)).toString() || '{}')
+    const email = pendingTokens.get(String(body.pending_token || ''))
+    if (!email) return send(res, 401, { success: false, code: 'INVALID_SESSION' })
+    if (passwords.get(email) !== String(body.password || '')) {
+      return send(res, 401, { success: false, code: 'SIGN_IN_INVALID' })
+    }
+    pendingTokens.delete(body.pending_token)
+    return send(res, 200, {
+      success: true,
+      session_token: tokenFor(email),
+      customer: customerFor(email, origin),
+    })
   }
 
   // Sets the password for the signed-in session (first login only).
@@ -316,11 +347,30 @@ const server = createServer(async (req, res) => {
 
   if (pathname === '/api/portal/request-code') return send(res, 200, { success: true })
 
+  // Accepting the OTP is never enough on its own for an account that has a
+  // password. Either the password was already proved in this attempt (the
+  // client presents `password_token`), or it is still owed and the response
+  // carries no session token at all.
   if (pathname === '/api/portal/verify-code') {
     const body = JSON.parse((await readBody(req)).toString() || '{}')
     const key = String(body.email || '').trim().toLowerCase()
     const resolved = CUSTOMERS[key] ? key : FALLBACK
     if (!CUSTOMERS[key]) console.log(`unknown email "${key}" → falling back to ${FALLBACK}`)
+
+    const hasPassword = passwords.has(resolved)
+    const pwToken = String(body.password_token || '')
+    const passwordProved = pwToken && passwordTokens.get(pwToken) === resolved
+
+    if (hasPassword && !passwordProved) {
+      // One factor down, one to go. No session, no customer data.
+      return send(res, 200, {
+        success: true,
+        password_required: true,
+        pending_token: mintToken('pending', resolved),
+      })
+    }
+
+    if (passwordProved) passwordTokens.delete(pwToken)
     return send(res, 200, {
       success: true,
       session_token: tokenFor(resolved),

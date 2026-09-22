@@ -54,3 +54,35 @@ export function setPassword(token, password) {
     body: JSON.stringify({ password }),
   })
 }
+
+/**
+ * Exchanges the emailed code for a session — but only when both factors are in.
+ *
+ * Demo-local rather than reusing src/api/portal.js, because it carries
+ * `password_token`: proof that the password was accepted earlier in this same
+ * attempt. Without it, an account that has a password gets no session and the
+ * response says `password_required` with a `pending_token` instead.
+ *
+ * Response, both factors done: { success, session_token, customer }
+ * Response, password still owed: { success, password_required, pending_token }
+ */
+export function verifyCodeWithFactor(email, code, passwordToken) {
+  return apiFetch(`${BASE}/api/portal/verify-code`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code, password_token: passwordToken || undefined }),
+  })
+}
+
+/**
+ * Finishes a sign-in that started with the emailed code: the OTP is already
+ * accepted, the password is still owed.
+ * Response: { success, session_token, customer } or 401 SIGN_IN_INVALID.
+ */
+export function completeSignIn(pendingToken, password) {
+  return apiFetch(`${BASE}/api/portal/complete-sign-in`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pending_token: pendingToken, password }),
+  })
+}

@@ -1,7 +1,13 @@
 // Sign-in for the portal demo.
 //
 //   email + password → one-time code → in
-//   email, "send me a code" → one-time code → create a password → in
+//   email, "send me a code" → one-time code → password → in
+//   first login only (no password exists yet) → one-time code → create one → in
+//
+// Both factors are always required once a password exists. Asking for the code
+// instead of the password does not skip it: the server withholds the session
+// and asks for the password after the code. The only single-factor sign-in is
+// the very first one, when there is no password to ask for.
 //
 // The screen never asks the server who has a password, and never tells the
 // customer whether an account exists: both paths start from the same form, and
@@ -18,8 +24,8 @@
 
 import { useState } from 'react'
 import { useI18n } from '../../context/I18nContext'
-import { requestCode, verifyCode } from '../../api/portal'
-import { verifyPassword, setPassword } from './api'
+import { requestCode } from '../../api/portal'
+import { verifyPassword, setPassword, verifyCodeWithFactor, completeSignIn } from './api'
 
 const MIN_PASSWORD = 8
 
@@ -94,8 +100,11 @@ function Field({ label, children }) {
 export default function Login({ onSignedIn }) {
   const { t } = useI18n()
 
-  // 'signin' | 'code' | 'create'
+  // 'signin' | 'code' | 'afterCode' | 'create'
   const [stage, setStage] = useState('signin')
+  // Proof of a factor already cleared in this attempt. Neither is a session.
+  const [passwordToken, setPasswordToken] = useState('')
+  const [pendingToken, setPendingToken] = useState('')
 
   const [email, setEmail] = useState('')
   const [password, setPasswordValue] = useState('')
@@ -122,7 +131,7 @@ export default function Login({ onSignedIn }) {
     if (!password) return setError(t('portalDemo.login.errPasswordRequired'))
     setError(''); setSignInFailed(false); setBusy(true)
 
-    const { ok } = await verifyPassword(email.trim(), password)
+    const { ok, data } = await verifyPassword(email.trim(), password)
     // One message for every failure — a wrong password, an account with no
     // password, and an unknown address must be indistinguishable.
     if (!ok) {
@@ -130,6 +139,7 @@ export default function Login({ onSignedIn }) {
       return fail('portalDemo.login.errSignIn')
     }
 
+    setPasswordToken(data.password_token || '')
     await requestCode(email.trim())
     setBusy(false)
     setStage('code')
@@ -149,16 +159,38 @@ export default function Login({ onSignedIn }) {
     if (!code.trim()) return setError(t('portalDemo.login.errCode'))
     setError(''); setBusy(true)
 
-    const { ok, data } = await verifyCode(email.trim(), code.trim())
+    const { ok, data } = await verifyCodeWithFactor(email.trim(), code.trim(), passwordToken)
     if (!ok || !data?.success) return fail('portalDemo.login.errCode')
 
     setBusy(false)
-    // Only now, inside an authenticated response, do we learn whether this
-    // customer has a password — and offer to create one if not.
+
+    // The account has a password and it has not been proved in this attempt —
+    // the server sent no session, only permission to finish with the password.
+    if (data.password_required) {
+      setPendingToken(data.pending_token)
+      return setStage('afterCode')
+    }
+
+    // No password on file: the one sign-in that cannot have two factors.
+    // Creating one is the next step.
     if (data.customer?.has_password === false) {
       setSession({ token: data.session_token, customer: data.customer })
       return setStage('create')
     }
+
+    onSignedIn(data.session_token, data.customer)
+  }
+
+  // Code-first path, second factor.
+  const submitAfterCode = async (e) => {
+    e.preventDefault()
+    if (!password) return setError(t('portalDemo.login.errPasswordRequired'))
+    setError(''); setBusy(true)
+
+    const { ok, data } = await completeSignIn(pendingToken, password)
+    if (!ok || !data?.success) return fail('portalDemo.login.errSignIn')
+
+    setBusy(false)
     onSignedIn(data.session_token, data.customer)
   }
 
@@ -176,13 +208,15 @@ export default function Login({ onSignedIn }) {
   }
 
   const HEAD = {
-    signin: ['portalDemo.login.heading', 'portalDemo.login.sub'],
-    code:   ['portalDemo.login.heading', 'portalDemo.login.sub'],
-    create: ['portalDemo.login.createHeading', 'portalDemo.login.createSub'],
+    signin:    ['portalDemo.login.heading', 'portalDemo.login.sub'],
+    code:      ['portalDemo.login.heading', 'portalDemo.login.sub'],
+    afterCode: ['portalDemo.login.afterCodeHeading', 'portalDemo.login.afterCodeSub'],
+    create:    ['portalDemo.login.createHeading', 'portalDemo.login.createSub'],
   }[stage]
 
   const restart = () => {
     setStage('signin'); setCode(''); setPasswordValue(''); setError(''); setSignInFailed(false)
+    setPasswordToken(''); setPendingToken('')
   }
 
   return (
@@ -257,6 +291,22 @@ export default function Login({ onSignedIn }) {
               </button>
               <button type="button" onClick={sendCode} className="text-primary hover:text-secondary">
                 {t('portalDemo.login.resend')}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {stage === 'afterCode' && (
+          <form onSubmit={submitAfterCode} className="space-y-4">
+            <Field label={t('portalDemo.login.passwordLabel')}>
+              <PasswordInput value={password} onChange={setPasswordValue} autoComplete="current-password" />
+            </Field>
+            <button className={primaryBtn} disabled={busy}>
+              {busy ? t('portalDemo.login.verifying') : t('portalDemo.login.signInBtn')}
+            </button>
+            <div className="text-xs pt-1">
+              <button type="button" onClick={restart} className="text-gray-500 hover:text-gray-800">
+                {t('portalDemo.login.changeEmail')}
               </button>
             </div>
           </form>
