@@ -3,12 +3,53 @@
 // Every field is a live input: no per-field "Edit" toggles. The customer fills
 // the form top to bottom, and the sign button stays disabled until everything
 // required validates.
+//
+// Groups that carry a `choice` render the same radio set as the matching
+// registration step, and reveal their inputs only on the option that needs them.
 
 import { GROUPS } from './fields'
 import DemoField from './inputs'
+import { groupHidden } from './formState'
 
-function GroupCard({ group, values, errors, sameAs, onChange, onToggleSameAs }) {
-  const collapsed = !!group.sameAs && sameAs[group.id]
+function ChoiceRadios({ group, selected, onSelect }) {
+  const { key, options, hint } = group.choice
+
+  return (
+    <div className="space-y-2 mb-5">
+      {options.map(([value, label]) => {
+        const active = selected === value
+        return (
+          <label
+            key={value}
+            className={`flex items-start gap-3 px-3.5 py-3 rounded-xl border cursor-pointer
+                        transition-colors duration-ds-normal
+                        ${active ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}
+          >
+            <input
+              type="radio"
+              name={key}
+              value={value}
+              checked={active}
+              onChange={() => onSelect(group.id, value)}
+              className="mt-0.5 w-4 h-4 border-gray-300 text-primary focus:ring-primary/30 cursor-pointer"
+            />
+            <span className="min-w-0">
+              <span className={`block text-sm ${active ? 'font-medium text-gray-900' : 'text-gray-700'}`}>
+                {label}
+              </span>
+              {active && hint && value === options[0][0] && (
+                <span className="block text-xs text-gray-500 mt-1 leading-relaxed">{hint}</span>
+              )}
+            </span>
+          </label>
+        )
+      })}
+    </div>
+  )
+}
+
+function GroupCard({ group, values, errors, choices, onChange, onSelectChoice }) {
+  const hidden = groupHidden(group, choices)
 
   return (
     <section className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-5 sm:p-6">
@@ -17,39 +58,37 @@ function GroupCard({ group, values, errors, sameAs, onChange, onToggleSameAs }) 
         {group.blurb && <p className="text-sm text-gray-500 mt-0.5">{group.blurb}</p>}
       </div>
 
-      {group.sameAs && (
-        <label className="flex items-center gap-2.5 mb-4 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={!!sameAs[group.id]}
-            onChange={(e) => onToggleSameAs(group.id, e.target.checked)}
-            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30 cursor-pointer"
-          />
-          <span className="text-sm text-gray-700">{group.sameAs.label}</span>
-        </label>
+      {group.choice && (
+        <ChoiceRadios group={group} selected={choices[group.id]} onSelect={onSelectChoice} />
       )}
 
-      {!collapsed && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4">
-          {group.fields.map((field) => (
-            <div key={field.key} className={field.span === 2 ? 'sm:col-span-2' : ''}>
-              <DemoField
-                field={field}
-                value={values[field.key] ?? ''}
-                error={errors[field.key]}
-                onChange={(v) => onChange(field.key, v)}
-              />
-            </div>
-          ))}
-        </div>
+      {!hidden && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4">
+            {group.fields.map((field) => (
+              <div key={field.key} className={field.span === 2 ? 'sm:col-span-2' : ''}>
+                <DemoField
+                  field={field}
+                  value={values[field.key] ?? ''}
+                  error={errors[field.key]}
+                  onChange={(v) => onChange(field.key, v)}
+                />
+              </div>
+            ))}
+          </div>
+
+          {group.notice && (
+            <p className="mt-4 text-xs text-gray-500 leading-relaxed">{group.notice}</p>
+          )}
+        </>
       )}
     </section>
   )
 }
 
 export default function Step1Contract({
-  values, errors, sameAs, showErrors, complete, signing,
-  onChange, onToggleSameAs, onSign,
+  values, errors, choices, showErrors, complete, signing,
+  onChange, onSelectChoice, onSign,
 }) {
   const errorCount = Object.keys(errors).length
 
@@ -68,9 +107,9 @@ export default function Step1Contract({
           group={group}
           values={values}
           errors={showErrors ? errors : {}}
-          sameAs={sameAs}
+          choices={choices}
           onChange={onChange}
-          onToggleSameAs={onToggleSameAs}
+          onSelectChoice={onSelectChoice}
         />
       ))}
 

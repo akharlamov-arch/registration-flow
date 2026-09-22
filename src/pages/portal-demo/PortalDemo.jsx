@@ -15,7 +15,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { requestCode, verifyCode, validateSession, getMe } from '../../api/portal'
-import { initialForm, initialSameAs, validate, isComplete, buildPayload } from './formState'
+import { initialForm, initialChoices, validate, isComplete, buildPayload } from './formState'
 import Stepper from './Stepper'
 import Step1Contract from './Step1Contract'
 import Step2Bank from './Step2Bank'
@@ -167,7 +167,7 @@ export default function PortalDemo() {
   const [signing, setSigning] = useState(false)
 
   const [values, setValues] = useState(() => initialForm(null))
-  const [sameAs, setSameAs] = useState(initialSameAs)
+  const [choices, setChoices] = useState(initialChoices)
   const [showErrors, setShowErrors] = useState(false)
 
   const applyCustomer = useCallback((c) => {
@@ -194,11 +194,11 @@ export default function PortalDemo() {
     })
   }, [applyCustomer])
 
-  const errors = useMemo(() => validate(values, sameAs), [values, sameAs])
-  const complete = useMemo(() => isComplete(values, sameAs), [values, sameAs])
+  const errors = useMemo(() => validate(values, choices), [values, choices])
+  const complete = useMemo(() => isComplete(values, choices), [values, choices])
 
   const setValue = (key, v) => setValues((prev) => ({ ...prev, [key]: v }))
-  const toggleSameAs = (id, on) => setSameAs((prev) => ({ ...prev, [id]: on }))
+  const selectChoice = (id, value) => setChoices((prev) => ({ ...prev, [id]: value }))
 
   const handleSign = () => {
     setShowErrors(true)
@@ -206,7 +206,7 @@ export default function PortalDemo() {
     setSigning(true)
     // The payload the backend would receive — logged so it can be compared
     // against the contract while the demo is being walked through.
-    console.log('[portal-demo] updated-contract payload', buildPayload(values, sameAs))
+    console.log('[portal-demo] updated-contract payload', buildPayload(values, choices))
     setTimeout(() => {
       setSigning(false)
       setSigned(true)
@@ -279,12 +279,12 @@ export default function PortalDemo() {
               <Step1Contract
                 values={values}
                 errors={errors}
-                sameAs={sameAs}
+                choices={choices}
                 showErrors={showErrors}
                 complete={complete}
                 signing={signing}
                 onChange={setValue}
-                onToggleSameAs={toggleSameAs}
+                onSelectChoice={selectChoice}
                 onSign={handleSign}
               />
             ) : (
