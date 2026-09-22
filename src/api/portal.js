@@ -140,6 +140,51 @@ export function createPlaidVerificationSession(token) {
   })
 }
 
+// ── Contract (CONTRACT-REFRESH-01) ──────────────────────────────────────────
+
+/**
+ * The subject the customer's contract would be rendered from, plus the fields
+ * the server refuses to save without and the option lists the form renders.
+ *
+ * SSN and driver-licence numbers are never in this payload — the response says
+ * only whether each is on file (`stored`), and a save that omits them leaves
+ * the stored ones untouched.
+ *
+ * Response: { success, contract: { signed_on, stale },
+ *             subject: { subject, required_fields, stored, options } }
+ */
+export function fetchContractSubject(token) {
+  return apiFetch(`${BASE}/api/portal/contract`, {
+    method: 'GET',
+    headers: authHeaders(token),
+  })
+}
+
+/**
+ * Saves the customer's edits to the contract subject.
+ * Response on failure (422): { success: false, errors: { field: [msg] } } —
+ * the required-field rule is the server's, the same one the CRM enforces.
+ */
+export function saveContractSubject(token, subject) {
+  return apiFetch(`${BASE}/api/portal/contract`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({ subject }),
+  })
+}
+
+/**
+ * Save, render and mail the contract for signature — the form's Done.
+ * Response: { success, sent_to } | 422 errors | 422 CONTRACT_INCOMPLETE | 502.
+ */
+export function submitContractSubject(token, subject) {
+  return apiFetch(`${BASE}/api/portal/contract/send`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({ subject }),
+  })
+}
+
 // ── File upload (browser → S3) ───────────────────────────────────────────────
 
 /**

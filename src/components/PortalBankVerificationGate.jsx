@@ -2,17 +2,23 @@ import { useCallback, useRef, useState } from 'react'
 import { useI18n } from '../context/I18nContext'
 import usePlaidLink from '../hooks/usePlaidLink'
 import PlaidExchangeErrorPanel from './PlaidExchangeErrorPanel'
+import PortalNotice, { Spinner } from './PortalNotice'
 import { createPlaidVerificationSession } from '../api/portal'
 import { fetchRelinkLinkToken, exchangeRelink } from '../api/relink'
 
 /**
  * Blocking bank-verification gate for the customer portal (PORTAL-PLAID-GATE-01).
  *
- * Rendered over the dashboard while `customer.bank_verification.plaid_linked`
- * is false. It is deliberately non-dismissible — no close button, no backdrop
- * click, no Esc — because an unverified account is not a state the customer can
- * postpone. `Sign out` is the only way out other than connecting a bank, so a
- * customer who signed in with the wrong email is not trapped.
+ * The chrome — red modal, collapse control, pinned banner — is `PortalNotice`,
+ * shared with the stale-contract notice. What lives here is the Plaid flow and
+ * the states it produces, at one mount point: collapsing must not drop a mint
+ * in flight or an exchange error the customer still needs to read.
+ *
+ * The overlay cannot be dismissed by a backdrop click or Esc. The only exits are
+ * connecting a bank, `Sign out` (so a customer who signed in with the wrong
+ * email is not trapped), and `Collapse`, which does not clear the requirement:
+ * the host keeps refusing edits while the gate is up, the banner stays pinned to
+ * the top of the page, and the customer can read their data meanwhile.
  *
  * The flow reuses the operator re-link rails end to end: mint a session on the
  * portal (`createPlaidVerificationSession`), then the ordinary
@@ -22,8 +28,22 @@ import { fetchRelinkLinkToken, exchangeRelink } from '../api/relink'
  * @param {Function} props.onVerified — called after a successful exchange; the
  *   host re-fetches the summary, which clears the gate.
  * @param {Function} props.onSignOut — clears the session.
+ * @param {boolean}  [props.collapsed] — render the sticky banner instead of the
+ *   modal. The host owns this so the banner sits in the page flow above the
+ *   dashboard rather than inside the overlay.
+ * @param {Function} [props.onCollapse] — the modal's Collapse button.
+ * @param {Function} [props.onExpand] — re-opens the modal from the banner.
  */
-export default function PortalBankVerificationGate({ sessionToken, onVerified, onSignOut }) {
+export default function PortalBankVerificationGate({
+  sessionToken,
+  onVerified,
+  onSignOut,
+  collapsed = false,
+  onCollapse,
+  onExpand,
+  modalSlot,
+  bannerSlot,
+}) {
   const { t } = useI18n()
 
   const [status, setStatus] = useState('idle') // idle | connecting | verifying | done
@@ -104,97 +124,76 @@ export default function PortalBankVerificationGate({ sessionToken, onVerified, o
     if (opened) setStatus('idle')
   }
 
+  const verifyLabel = busy ? (
+    <>
+      <Spinner />
+      {status === 'verifying' ? t('portal.bankGate.verifying') : t('portal.bankGate.connecting')}
+    </>
+  ) : (
+    <>
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1.5M3 21h18M5.25 21V9.75L12 5.25l6.75 4.5V21M9.75 21v-5.25h4.5V21" />
+      </svg>
+      {t('portal.bankGate.verifyBtn')}
+    </>
+  )
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 bg-black/70 overflow-y-auto"
-      role="alertdialog"
-      aria-modal="true"
-      aria-labelledby="portal-bank-gate-heading"
-    >
-      <div className="w-full max-w-lg my-auto bg-white rounded-2xl shadow-ds-xl border-2 border-red-600 overflow-hidden">
-        <div className="bg-red-600 px-6 py-4 flex items-center gap-3">
-          <svg
-            className="w-7 h-7 text-white flex-shrink-0"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-            />
-          </svg>
-          <h2 id="portal-bank-gate-heading" className="text-lg sm:text-xl font-bold text-white">
-            {t('portal.bankGate.heading')}
-          </h2>
-        </div>
-
-        <div className="px-6 py-6 space-y-5">
-          <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-            {t('portal.bankGate.body')}
-          </p>
-
-          {error && (error.code ? (
-            <PlaidExchangeErrorPanel
-              code={error.code}
-              details={error.details}
-              message={error.message}
-            />
-          ) : (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-              <p className="text-sm text-red-700 font-medium" role="alert">{error.message}</p>
-            </div>
-          ))}
-
-          {status === 'done' && (
-            <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3">
-              <p className="text-sm text-green-700 font-medium">{t('portal.bankGate.successNote')}</p>
-            </div>
+    <PortalNotice
+      heading={t('portal.bankGate.heading')}
+      body={t('portal.bankGate.body')}
+      onAction={handleVerify}
+      actionLabel={verifyLabel}
+      actionDisabled={busy || status === 'done'}
+      collapsed={collapsed}
+      onCollapse={onCollapse}
+      collapseLabel={t('portal.bankGate.collapse')}
+      modalSlot={modalSlot}
+      bannerSlot={bannerSlot}
+      bannerNote={
+        <>
+          {error?.message && !error.code && (
+            <p className="text-xs text-white font-medium mt-1.5">{error.message}</p>
           )}
-
-          <button
-            type="button"
-            onClick={handleVerify}
-            disabled={busy || status === 'done'}
-            className="w-full flex items-center justify-center gap-2 px-7 py-3 text-sm font-semibold text-white
-                       bg-red-600 hover:bg-red-700 rounded-md shadow-ds-sm transition-colors duration-200
-                       cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-300
-                       disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {busy ? (
-              <>
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                {status === 'verifying'
-                  ? t('portal.bankGate.verifying')
-                  : t('portal.bankGate.connecting')}
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1.5M3 21h18M5.25 21V9.75L12 5.25l6.75 4.5V21M9.75 21v-5.25h4.5V21" />
-                </svg>
-                {t('portal.bankGate.verifyBtn')}
-              </>
-            )}
-          </button>
-
-          <div className="text-center">
+          {error?.code && (
             <button
               type="button"
-              onClick={onSignOut}
-              className="text-xs font-medium text-gray-500 hover:text-gray-700 focus:outline-none"
+              onClick={onExpand}
+              className="text-xs text-white font-medium underline mt-1.5 focus:outline-none"
             >
-              {t('portal.bankGate.logoutBtn')}
+              {t('portal.bankGate.showDetails')}
             </button>
-          </div>
+          )}
+          {status === 'done' && (
+            <p className="text-xs text-white font-medium mt-1.5">
+              {t('portal.bankGate.successNote')}
+            </p>
+          )}
+        </>
+      }
+      footer={
+        <button
+          type="button"
+          onClick={onSignOut}
+          className="text-xs font-medium text-gray-500 hover:text-gray-700 focus:outline-none"
+        >
+          {t('portal.bankGate.logoutBtn')}
+        </button>
+      }
+    >
+      {error && (error.code ? (
+        <PlaidExchangeErrorPanel code={error.code} details={error.details} message={error.message} />
+      ) : (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <p className="text-sm text-red-700 font-medium" role="alert">{error.message}</p>
         </div>
-      </div>
-    </div>
+      ))}
+
+      {status === 'done' && (
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3">
+          <p className="text-sm text-green-700 font-medium">{t('portal.bankGate.successNote')}</p>
+        </div>
+      )}
+    </PortalNotice>
   )
 }
