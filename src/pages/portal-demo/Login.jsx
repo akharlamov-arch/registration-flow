@@ -220,6 +220,35 @@ export default function Login({ onSignedIn }) {
           </form>
         )}
 
+        {stage === 'code' && (
+          <form onSubmit={submitCode} className="space-y-4">
+            <Field label={t('portalDemo.login.codeLabel')}>
+              <input
+                type="text" inputMode="text" autoComplete="one-time-code" maxLength={6}
+                className={`${inputCls} text-center text-lg [@media(pointer:coarse)]:text-lg font-bold tracking-[0.3em] uppercase`}
+                value={code} placeholder="000000" onChange={(e) => setCode(e.target.value)}
+              />
+            </Field>
+
+            <p className="text-xs text-gray-500 leading-relaxed">
+              {t('portalDemo.login.codeAfterPassword')}
+            </p>
+
+            <button className={primaryBtn} disabled={busy}>
+              {busy ? t('portalDemo.login.verifying') : t('portalDemo.login.continueBtn')}
+            </button>
+
+            <div className="flex items-center justify-between text-xs pt-1">
+              <button type="button" onClick={restart} className="text-gray-500 hover:text-gray-800">
+                {t('portalDemo.login.changeEmail')}
+              </button>
+              <button type="button" onClick={sendCode} className="text-primary hover:text-secondary">
+                {t('portalDemo.login.resend')}
+              </button>
+            </div>
+          </form>
+        )}
+
         {stage === 'create' && (
           <form onSubmit={submitNewPassword} className="space-y-4">
             <Field label={t('portalDemo.login.newPasswordLabel')}>
