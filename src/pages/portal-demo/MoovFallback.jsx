@@ -15,8 +15,9 @@ import FormField from '../../components/FormField'
 import Attachment from './Attachment'
 import { inputCls, errorCls } from './inputs'
 import { emptyBankDetails, validateBankDetails } from './formState'
+import { submitManualBank } from './api'
 
-export default function MoovFallback({ open, onClose, onSubmitted }) {
+export default function MoovFallback({ open, token, onClose, onSubmitted }) {
   const { t } = useI18n()
   const [values, setValues] = useState(emptyBankDetails)
   const [errors, setErrors] = useState({})
@@ -52,10 +53,17 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
     if (Object.keys(found).length) return
 
     setBusy(true)
-    setTimeout(() => {
+    // Recorded as pending_review — a manager checks it before it takes over,
+    // so the account currently in force stays in force.
+    submitManualBank(token, {
+      bank_name: values.bankName || undefined,
+      account_number: values.accountNumber,
+      routing_number: values.routingNumber,
+      void_check: values.voidCheck,
+    }).then(() => {
       setBusy(false)
       onSubmitted()
-    }, 800)
+    })
   }
 
   // errors hold translation keys; resolve at the point of display

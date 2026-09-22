@@ -129,3 +129,17 @@ export function resetPassword(resetToken, password) {
     body: JSON.stringify({ reset_token: resetToken, password }),
   })
 }
+
+/**
+ * Records a bank submitted through MOOV. It is stored as `pending_review` and
+ * is NOT put in force — a manager checks it first, so the account currently
+ * receiving payments keeps receiving them meanwhile.
+ * Response (201): { success, entry }
+ */
+export function submitManualBank(token, details) {
+  return apiFetch(`${BASE}/api/portal/bank/manual`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(details),
+  })
+}

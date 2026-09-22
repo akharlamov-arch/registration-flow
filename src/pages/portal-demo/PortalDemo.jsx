@@ -323,10 +323,11 @@ export default function PortalDemo() {
               <Step2Bank
                 token={token}
                 bank={customer?.bank}
+                history={customer?.bank_history || []}
                 connected={linked}
                 pending={bankPending}
                 onConnected={() => { setLinked(true); refresh() }}
-                onManualSubmitted={() => setBankPending(true)}
+                onManualSubmitted={() => { setBankPending(true); refresh() }}
               />
             )}
           </div>

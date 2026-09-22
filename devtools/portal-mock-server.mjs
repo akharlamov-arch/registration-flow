@@ -51,9 +51,44 @@ const resetTokens = new Map()
 // /api/portal/plaid/verification-session, consumed by the exchange.
 const relinkTokens = new Map()
 
-// A customer who reconnects lands on a different bank, so the change is
-// visible. Keyed by email; overrides whatever the fixture holds.
-const bankOverrides = new Map()
+// Bank connection history, keyed by email. The newest `active` entry is the
+// account in force; `bank` on the summary is derived from it, never stored
+// separately, so the two can never disagree.
+//
+// Statuses:
+//   active         — the account payments go to
+//   replaced       — superseded by a later connection, kept for the record
+//   pending_review — submitted through MOOV, waiting on a manager. NOT in force
+//                    Approval happens in the CRM, not here: this mock has no
+//                    way to approve, and a pending entry simply stays pending.
+//
+// The invariant "there is always at least one connected bank" falls out of the
+// design: a new entry only becomes active once it is verified, so nothing is
+// ever given up before its replacement is good. A pending MOOV submission
+// leaves the current account exactly where it is.
+const bankHistory = new Map()
+let entrySeq = 0
+
+function addEntry(email, entry) {
+  const list = bankHistory.get(email) || []
+  list.unshift({ id: `bank-${++entrySeq}`, connected_at: new Date().toISOString(), ...entry })
+  bankHistory.set(email, list)
+  return list[0]
+}
+
+// Promotes an entry to active and demotes whatever held that place.
+function makeActive(email, id) {
+  const list = bankHistory.get(email) || []
+  for (const e of list) if (e.status === 'active') e.status = 'replaced'
+  const entry = list.find((e) => e.id === id)
+  if (entry) {
+    entry.status = 'active'
+    entry.verified_at = new Date().toISOString()
+  }
+  return entry
+}
+
+const activeBank = (email) => (bankHistory.get(email) || []).find((e) => e.status === 'active')
 const OTHER_BANKS = [
   { institution: 'Wells Fargo', last4: '8830' },
   { institution: 'Bank of America', last4: '2215' },
@@ -240,6 +275,14 @@ const CUSTOMERS = {
   }),
 }
 
+// Seeded so the completed customer arrives with a history rather than one row.
+bankHistory.set('myatsenka@itrucking.org', [
+  { id: 'bank-seed-2', institution: 'Chase', last4: '4471', method: 'plaid', status: 'active',
+    connected_at: '2026-06-03T11:12:00Z', verified_at: '2026-06-03T11:12:00Z' },
+  { id: 'bank-seed-1', institution: 'Regions Bank', last4: '9903', method: 'moov', status: 'replaced',
+    connected_at: '2025-11-18T09:40:00Z', verified_at: '2025-11-20T14:05:00Z' },
+])
+
 const PERSONAS = [
   ['akharlamov@itrucking.org', 'contract pending · bank not linked · no password yet'],
   ['itravkin@itrucking.org', 'contract signed · bank not linked · password set'],
@@ -262,11 +305,16 @@ function customerFor(email, origin) {
   const key = String(email || '').trim().toLowerCase()
   const resolved = CUSTOMERS[key] ? key : FALLBACK
   const base = CUSTOMERS[resolved](origin)
-  const override = bankOverrides.get(resolved)
-  if (override) {
-    base.bank = override
-    base.bank_verification = { plaid_linked: true }
+
+  const history = bankHistory.get(resolved) || []
+  const active = activeBank(resolved)
+  if (history.length) {
+    base.bank = active ? { institution: active.institution, last4: active.last4 } : null
+    base.bank_verification = { plaid_linked: !!active }
   }
+  // PROPOSED field — the current portal contract has no history.
+  base.bank_history = history
+
   return { has_password: passwords.has(resolved), ...base }
 }
 
@@ -485,6 +533,25 @@ const server = createServer(async (req, res) => {
     return send(res, 200, { success: true, policies: policies(origin) })
   }
 
+  // ── Manual bank verification (MOOV) ──────────────────────────────────────
+  // Recorded as pending_review, never active: a person checks it first, so the
+  // account currently in force stays in force meanwhile.
+  if (pathname === '/api/portal/bank/manual') {
+    const token = (req.headers.authorization || '').replace('Bearer ', '')
+    const email = emailForToken(token)
+    if (!email) return send(res, 401, { success: false, code: 'INVALID_SESSION' })
+
+    const body = JSON.parse((await readBody(req)).toString() || '{}')
+    const entry = addEntry(email, {
+      institution: body.bank_name || 'Pending review',
+      last4: String(body.account_number || '').slice(-4),
+      method: 'moov',
+      status: 'pending_review',
+    })
+    console.log(`manual bank submitted for ${email} → awaiting a manager`)
+    return send(res, 201, { success: true, entry })
+  }
+
   // ── Change requests ──────────────────────────────────────────────────────
   if (pathname === '/api/portal/change-requests') {
     const body = JSON.parse((await readBody(req)).toString() || '{}')
@@ -554,9 +621,12 @@ const server = createServer(async (req, res) => {
       }
 
       relinkTokens.delete(relinkToken)
-      bankOverrides.set(email, OTHER_BANKS[bankSeq++ % OTHER_BANKS.length])
-      console.log(`bank re-linked for ${email} → ${bankOverrides.get(email).institution}`)
-      return send(res, 200, { success: true, bank: bankOverrides.get(email) })
+      const picked = OTHER_BANKS[bankSeq++ % OTHER_BANKS.length]
+      // Plaid verifies the customer itself, so the entry is active immediately.
+      const entry = addEntry(email, { ...picked, method: 'plaid', status: 'pending_review' })
+      makeActive(email, entry.id)
+      console.log(`bank re-linked for ${email} → ${picked.institution} (plaid, active at once)`)
+      return send(res, 200, { success: true, bank: picked })
     }
 
     return send(res, 200, { success: true })

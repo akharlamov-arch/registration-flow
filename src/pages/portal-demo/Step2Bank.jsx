@@ -15,6 +15,7 @@
 import { useI18n } from '../../context/I18nContext'
 import { useState } from 'react'
 import MoovFallback from './MoovFallback'
+import BankHistory from './BankHistory'
 import { createPlaidVerificationSession } from '../../api/portal'
 import { exchangeRelink } from '../../api/relink'
 
@@ -98,7 +99,7 @@ function PendingReview() {
   )
 }
 
-export default function Step2Bank({ token, bank, connected, pending, onConnected, onManualSubmitted }) {
+export default function Step2Bank({ token, bank, history = [], connected, pending, onConnected, onManualSubmitted }) {
   const { t } = useI18n()
   const [busy, setBusy] = useState(false)
   const [moovOpen, setMoovOpen] = useState(false)
@@ -226,8 +227,12 @@ export default function Step2Bank({ token, bank, connected, pending, onConnected
         </div>
       )}
 
+      {/* Shown in every state: what is in force, what was, and what is waiting. */}
+      <BankHistory entries={history} />
+
       <MoovFallback
         open={moovOpen}
+        token={token}
         onClose={() => setMoovOpen(false)}
         onSubmitted={() => { setMoovOpen(false); onManualSubmitted() }}
       />
