@@ -15,7 +15,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useI18n } from '../../context/I18nContext'
-import { requestCode, verifyCode, validateSession, getMe, submitChangeRequest } from '../../api/portal'
+import { validateSession, getMe, submitChangeRequest } from '../../api/portal'
 import { getPolicies } from './api'
 import { initialForm, initialChoices, validate, isComplete, buildPayload } from './formState'
 import Stepper from './Stepper'
@@ -24,25 +24,9 @@ import Step2Bank from './Step2Bank'
 import BankReminder from './BankReminder'
 import ContractSigned from './ContractSigned'
 import PoliciesLibrary from './PoliciesLibrary'
+import Login from './Login'
 
 const TOKEN_KEY = 'itrucking-portal-demo-token'
-
-const inputCls =
-  // 16px on touch devices: anything smaller makes mobile Safari zoom the
-  // page on focus. Desktop keeps the denser 14px.
-  'w-full px-3 py-2.5 text-sm [@media(pointer:coarse)]:text-base rounded-lg border border-gray-300 text-gray-900 bg-white ' +
-  'placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary ' +
-  'transition-colors duration-ds-normal'
-
-// The OTP field re-asserts its 18px on touch: inputCls's coarse-pointer rule
-// sits in a media query and would otherwise cap it at 16px.
-const codeInputCls =
-  `${inputCls} text-center text-lg [@media(pointer:coarse)]:text-lg font-bold tracking-[0.3em] uppercase`
-
-const primaryBtn =
-  'w-full px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-secondary rounded-lg ' +
-  'shadow-ds-sm transition-colors duration-ds-normal cursor-pointer ' +
-  'focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60 disabled:cursor-not-allowed'
 
 // ── Chrome ──────────────────────────────────────────────────────────────────
 
@@ -98,80 +82,6 @@ function ChangeSubmitted({ onBack }) {
         </div>
       </div>
     </div>
-  )
-}
-
-// ── Login ───────────────────────────────────────────────────────────────────
-
-function Login({ onSignedIn }) {
-  const { t } = useI18n()
-  const [email, setEmail] = useState('')
-  const [code, setCode] = useState('')
-  const [sent, setSent] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-
-  const send = async (e) => {
-    e.preventDefault()
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setError(t('portalDemo.login.errEmail'))
-    setError(''); setBusy(true)
-    await requestCode(email.trim())
-    setBusy(false); setSent(true)
-  }
-
-  const verify = async (e) => {
-    e.preventDefault()
-    if (!code.trim()) return setError(t('portalDemo.login.errEmail'))
-    setError(''); setBusy(true)
-    const { ok, data } = await verifyCode(email.trim(), code.trim())
-    setBusy(false)
-    if (ok && data?.success) {
-      sessionStorage.setItem(TOKEN_KEY, data.session_token)
-      onSignedIn(data.session_token, data.customer)
-    } else {
-      setError(t('portalDemo.login.errCode'))
-    }
-  }
-
-  return (
-    <main className="max-w-md mx-auto px-4 py-16">
-      <h1 className="text-xl font-bold text-gray-900 mb-1">{t('portalDemo.login.heading')}</h1>
-      <p className="text-sm text-gray-500 mb-6">{t('portalDemo.login.sub')}</p>
-
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
-        {error && (
-          <p className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">
-            {error}
-          </p>
-        )}
-
-        {!sent ? (
-          <form onSubmit={send} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-900 mb-1.5">{t('portalDemo.login.emailLabel')}</label>
-              <input type="email" autoComplete="email" className={inputCls} value={email}
-                     placeholder="you@company.com" onChange={(e) => setEmail(e.target.value)} />
-            </div>
-            <button className={primaryBtn} disabled={busy}>{busy ? t('portalDemo.login.sending') : t('portalDemo.login.sendBtn')}</button>
-          </form>
-        ) : (
-          <form onSubmit={verify} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-900 mb-1.5">{t('portalDemo.login.codeLabel')}</label>
-              <input type="text" inputMode="text" autoComplete="one-time-code" maxLength={6}
-                     className={codeInputCls}
-                     value={code} placeholder="000000" onChange={(e) => setCode(e.target.value)} />
-            </div>
-            <button className={primaryBtn} disabled={busy}>{busy ? t('portalDemo.login.verifying') : t('portalDemo.login.continueBtn')}</button>
-            <div className="flex items-center justify-between text-xs pt-1">
-              <button type="button" onClick={() => { setSent(false); setCode(''); setError('') }}
-                      className="text-gray-500 hover:text-gray-800">{t('portalDemo.login.changeEmail')}</button>
-              <button type="button" onClick={send} className="text-primary hover:text-secondary">{t('portalDemo.login.resend')}</button>
-            </div>
-          </form>
-        )}
-      </div>
-    </main>
   )
 }
 

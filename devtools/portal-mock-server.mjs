@@ -33,6 +33,16 @@ const PORT = Number(process.env.PORT || 8787)
 // so backend devs can see the exact payload the frontend sends.
 const submitted = []
 
+// Passwords, by email. A customer who has never set one goes through the
+// first-login path: OTP, then create a password. Everyone else signs in with
+// the password first and an OTP after it.
+const DEMO_PASSWORD = 'demo1234'
+const passwords = new Map([
+  ['itravkin@itrucking.org', DEMO_PASSWORD],
+  ['myatsenka@itrucking.org', DEMO_PASSWORD],
+  // akharlamov@itrucking.org deliberately absent — that is the first-login demo.
+])
+
 // ── Fixtures ───────────────────────────────────────────────────────────────
 // Three personas, selected by the email typed at login. Each represents one
 // state of the portal.
@@ -192,9 +202,9 @@ const CUSTOMERS = {
 }
 
 const PERSONAS = [
-  ['akharlamov@itrucking.org', 'contract pending · bank not linked'],
-  ['itravkin@itrucking.org', 'contract signed · bank not linked'],
-  ['myatsenka@itrucking.org', 'contract signed · bank linked'],
+  ['akharlamov@itrucking.org', 'contract pending · bank not linked · no password yet'],
+  ['itravkin@itrucking.org', 'contract signed · bank not linked · password set'],
+  ['myatsenka@itrucking.org', 'contract signed · bank linked · password set'],
 ]
 
 // An unknown email falls through to the complete persona rather than dead-ending,
@@ -254,7 +264,11 @@ const CONTROL_PAGE = () => `<!doctype html>
   <ul>
     ${PERSONAS.map(([email, state]) => `<li><code>${email}</code><span class="s">${state}</span></li>`).join('')}
   </ul>
-  <p style="margin-top:16px">Change requests received: <strong>${submitted.length}</strong></p>
+  <p style="margin-top:16px">
+    Password for accounts that have one: <code>${DEMO_PASSWORD}</code><br>
+    Accounts without a password go through create-a-password after the code.
+  </p>
+  <p>Change requests received: <strong>${submitted.length}</strong></p>
 </div>`
 
 const server = createServer(async (req, res) => {
@@ -268,6 +282,42 @@ const server = createServer(async (req, res) => {
   }
 
   // ── Auth ─────────────────────────────────────────────────────────────────
+
+  // Which way this email signs in. NOTE for the backend team: answering this
+  // truthfully reveals whether an account exists, which /request-code
+  // deliberately avoids. See the frontend comment on loginMethod().
+  if (pathname === '/api/portal/login-method') {
+    const body = JSON.parse((await readBody(req)).toString() || '{}')
+    const key = String(body.email || '').trim().toLowerCase()
+    const known = CUSTOMERS[key] ? key : FALLBACK
+    return send(res, 200, { success: true, has_password: passwords.has(known) })
+  }
+
+  // Step one of a returning sign-in. A correct password alone does not sign
+  // anyone in — the client then requests an OTP and exchanges that for a token.
+  if (pathname === '/api/portal/verify-password') {
+    const body = JSON.parse((await readBody(req)).toString() || '{}')
+    const key = String(body.email || '').trim().toLowerCase()
+    const known = CUSTOMERS[key] ? key : FALLBACK
+    if (passwords.get(known) !== String(body.password || '')) {
+      return send(res, 401, { success: false, code: 'PASSWORD_INVALID' })
+    }
+    return send(res, 200, { success: true })
+  }
+
+  // Sets the password for the signed-in session (first login only).
+  if (pathname === '/api/portal/set-password') {
+    const token = (req.headers.authorization || '').replace('Bearer ', '')
+    const email = emailForToken(token)
+    if (!email) return send(res, 401, { success: false, code: 'INVALID_SESSION' })
+    const body = JSON.parse((await readBody(req)).toString() || '{}')
+    const pw = String(body.password || '')
+    if (pw.length < 8) return send(res, 422, { success: false, code: 'PASSWORD_TOO_SHORT' })
+    passwords.set(email, pw)
+    console.log(`password set for ${email}`)
+    return send(res, 200, { success: true })
+  }
+
   if (pathname === '/api/portal/request-code') return send(res, 200, { success: true })
 
   if (pathname === '/api/portal/verify-code') {
