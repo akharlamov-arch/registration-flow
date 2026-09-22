@@ -24,9 +24,16 @@ import BankReminder from './BankReminder'
 const TOKEN_KEY = 'itrucking-portal-demo-token'
 
 const inputCls =
-  'w-full px-3 py-2.5 text-sm rounded-lg border border-gray-300 text-gray-900 bg-white ' +
+  // 16px on touch devices: anything smaller makes mobile Safari zoom the
+  // page on focus. Desktop keeps the denser 14px.
+  'w-full px-3 py-2.5 text-sm [@media(pointer:coarse)]:text-base rounded-lg border border-gray-300 text-gray-900 bg-white ' +
   'placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary ' +
   'transition-colors duration-ds-normal'
+
+// The OTP field re-asserts its 18px on touch: inputCls's coarse-pointer rule
+// sits in a media query and would otherwise cap it at 16px.
+const codeInputCls =
+  `${inputCls} text-center text-lg [@media(pointer:coarse)]:text-lg font-bold tracking-[0.3em] uppercase`
 
 const primaryBtn =
   'w-full px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-secondary rounded-lg ' +
@@ -131,7 +138,7 @@ function Login({ onSignedIn }) {
             <div>
               <label className="block text-sm font-medium text-slate-900 mb-1.5">Verification code</label>
               <input type="text" inputMode="text" autoComplete="one-time-code" maxLength={6}
-                     className={`${inputCls} text-center text-lg font-bold tracking-[0.3em] uppercase`}
+                     className={codeInputCls}
                      value={code} placeholder="000000" onChange={(e) => setCode(e.target.value)} />
             </div>
             <button className={primaryBtn} disabled={busy}>{busy ? 'Verifying…' : 'Continue'}</button>

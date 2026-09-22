@@ -7,7 +7,9 @@ import PhoneInput from '../../components/PhoneInput'
 import { US_STATES } from '../../components/ReviewCard'
 
 export const inputCls =
-  'w-full px-3 py-2 text-sm rounded-lg border border-gray-300 text-gray-900 bg-white ' +
+  // 16px on touch devices: anything smaller makes mobile Safari zoom the
+  // page on focus. Desktop keeps the denser 14px.
+  'w-full px-3 py-2 text-sm [@media(pointer:coarse)]:text-base rounded-lg border border-gray-300 text-gray-900 bg-white ' +
   'placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 ' +
   'focus:border-primary transition-colors duration-ds-normal'
 
