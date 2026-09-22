@@ -182,3 +182,38 @@ export function buildPayload(values, choices) {
         },
   }
 }
+
+// ── Manual bank verification (MOOV fallback) ────────────────────────────────
+// Mirrors handleBankSubmit in src/pages/OtpVerification.jsx:790-812 exactly:
+// account number 5–17 digits, confirmation must match, routing exactly 9
+// digits, and a void check is required. Error copy is bankInfo.* verbatim.
+
+export function emptyBankDetails() {
+  return {
+    bankName: '',
+    accountType: '',
+    accountNumber: '',
+    accountNumberConfirm: '',
+    routingNumber: '',
+    voidCheck: '',
+  }
+}
+
+export function validateBankDetails(v) {
+  const errors = {}
+
+  if (!v.voidCheck) errors.voidCheck = 'Please upload a void check to continue.'
+
+  const acct = String(v.accountNumber || '').replace(/\D/g, '')
+  if (!acct) errors.accountNumber = 'Account number is required'
+  else if (!/^\d{5,17}$/.test(acct)) errors.accountNumber = 'Account number must contain only digits'
+
+  const confirm = String(v.accountNumberConfirm || '').replace(/\D/g, '')
+  if (confirm !== acct) errors.accountNumberConfirm = 'Account numbers do not match'
+
+  const routing = String(v.routingNumber || '').trim()
+  if (!routing) errors.routingNumber = 'Routing number is required'
+  else if (!/^\d{9}$/.test(routing)) errors.routingNumber = 'Routing number must be exactly 9 digits'
+
+  return errors
+}

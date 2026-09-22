@@ -3,8 +3,14 @@
 // Simulated happy path: the real SDK needs a live link_token from the backend,
 // which the local mock cannot mint. The point here is the surrounding UX —
 // where the step sits, what it says, and what "verified" looks like afterwards.
+//
+// A customer Plaid will not connect can fall back to manual verification
+// through MOOV — the same void check + account/routing details the main flow's
+// bankInfo step collects. That submission is reviewed by a person, so it lands
+// in a pending state rather than a verified one.
 
 import { useState } from 'react'
+import MoovFallback from './MoovFallback'
 
 function BankIcon() {
   return (
@@ -43,8 +49,32 @@ function Connected({ bank }) {
   )
 }
 
-export default function Step2Bank({ bank, connected, onConnected }) {
+function PendingReview() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
+      <div className="flex items-start gap-4">
+        <span className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-gray-900">Bank details submitted for review</p>
+          <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">
+            An iTrucking manager will contact you to complete verification. You do not need to do anything else for now.
+          </p>
+          <p className="text-xs text-gray-400 mt-2">
+            We received your void check and account details through MOOV.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function Step2Bank({ bank, connected, pending, onConnected, onManualSubmitted }) {
   const [busy, setBusy] = useState(false)
+  const [moovOpen, setMoovOpen] = useState(false)
 
   const connect = () => {
     setBusy(true)
@@ -66,6 +96,8 @@ export default function Step2Bank({ bank, connected, onConnected }) {
 
       {connected ? (
         <Connected bank={bank} />
+      ) : pending ? (
+        <PendingReview />
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6 sm:p-8">
           <div className="flex items-start gap-4 max-w-2xl">
@@ -101,11 +133,29 @@ export default function Step2Bank({ bank, connected, onConnected }) {
               >
                 {busy ? 'Opening Plaid…' : 'Connect with Plaid'}
               </button>
-              <p className="text-[11px] text-gray-400 mt-2">Demo — simulates the Plaid Link round trip.</p>
+              <p className="text-sm text-gray-500 mt-4 leading-relaxed">
+                Having trouble connecting with Plaid?{' '}
+                <button
+                  type="button"
+                  onClick={() => setMoovOpen(true)}
+                  className="font-semibold text-primary hover:text-secondary underline underline-offset-2
+                             transition-colors duration-ds-normal focus:outline-none focus:ring-2
+                             focus:ring-primary/30 rounded"
+                >
+                  Verify your bank with MOOV instead
+                </button>
+                .
+              </p>
             </div>
           </div>
         </div>
       )}
+
+      <MoovFallback
+        open={moovOpen}
+        onClose={() => setMoovOpen(false)}
+        onSubmitted={() => { setMoovOpen(false); onManualSubmitted() }}
+      />
     </div>
   )
 }

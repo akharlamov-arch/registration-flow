@@ -148,6 +148,9 @@ export default function PortalDemo() {
 
   const [signed, setSigned] = useState(false)
   const [linked, setLinked] = useState(false)
+  // Manual MOOV details submitted — a person reviews them, so this is neither
+  // unconnected nor verified.
+  const [bankPending, setBankPending] = useState(false)
   const [step, setStep] = useState(1)
   const [signing, setSigning] = useState(false)
 
@@ -160,6 +163,7 @@ export default function PortalDemo() {
     setValues(initialForm(c))
     setSigned(c?.contract?.status === 'signed')
     setLinked(c?.bank_verification?.plaid_linked === true)
+    setBankPending(false)
     setStep(c?.contract?.status === 'signed' ? 2 : 1)
   }, [])
 
@@ -246,11 +250,13 @@ export default function PortalDemo() {
 
   const steps = [
     { id: 1, title: 'Updated contract details', state: signed ? 'done' : 'active' },
-    { id: 2, title: 'Bank account', state: linked ? 'done' : 'active' },
+    { id: 2, title: 'Bank account', state: linked ? 'done' : bankPending ? 'pending' : 'active' },
   ]
 
   const allDone = signed && linked
-  const remind = signed && !linked
+  // Once manual details are in, the customer has done their part — keep the
+  // red reminder for the case where nothing has been submitted at all.
+  const remind = signed && !linked && !bankPending
 
   return (
     <div className="min-h-screen bg-surface">
@@ -296,7 +302,9 @@ export default function PortalDemo() {
               <Step2Bank
                 bank={customer?.bank}
                 connected={linked}
+                pending={bankPending}
                 onConnected={() => { setLinked(true); refresh() }}
+                onManualSubmitted={() => setBankPending(true)}
               />
             )}
           </div>

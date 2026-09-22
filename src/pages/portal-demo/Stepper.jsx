@@ -10,18 +10,21 @@ function CheckIcon() {
 }
 
 const DOT = {
-  done:   'bg-green-600 text-white border-green-600',
-  active: 'bg-primary text-white border-primary',
+  done:    'bg-green-600 text-white border-green-600',
+  active:  'bg-primary text-white border-primary',
+  pending: 'bg-amber-500 text-white border-amber-500',
 }
 
 const LABEL = {
-  done:   'text-gray-500',
-  active: 'text-gray-900',
+  done:    'text-gray-500',
+  active:  'text-gray-900',
+  pending: 'text-gray-900',
 }
 
 const STATUS_TEXT = {
-  done:   'Completed',
-  active: 'Action required',
+  done:    'Completed',
+  active:  'Action required',
+  pending: 'Awaiting review',
 }
 
 export default function Stepper({ steps, current, onSelect }) {
@@ -46,7 +49,9 @@ export default function Stepper({ steps, current, onSelect }) {
               <span className="min-w-0">
                 <span className={`block text-sm font-semibold ${LABEL[step.state]}`}>{step.title}</span>
                 <span className={`block text-xs mt-0.5 ${
-                  step.state === 'active' ? 'text-primary font-medium' : 'text-gray-400'
+                  step.state === 'active' ? 'text-primary font-medium'
+                  : step.state === 'pending' ? 'text-amber-600 font-medium'
+                  : 'text-gray-400'
                 }`}>
                   {STATUS_TEXT[step.state]}
                 </span>
