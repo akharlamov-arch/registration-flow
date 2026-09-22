@@ -133,14 +133,17 @@ export default function Step2Bank({ bank, connected, pending, onConnected, onMan
               >
                 {busy ? 'Opening Plaid…' : 'Connect with Plaid'}
               </button>
-              <p className="text-sm text-gray-500 mt-4 leading-relaxed">
+              {/* Deliberately quiet: Plaid is the path we want people on, so the
+                  fallback is smaller and carries no accent colour. The underline
+                  keeps it discoverable as a control without competing for the eye. */}
+              <p className="text-xs text-gray-500 mt-4 leading-relaxed">
                 Having trouble connecting with Plaid?{' '}
                 <button
                   type="button"
                   onClick={() => setMoovOpen(true)}
-                  className="font-semibold text-primary hover:text-secondary underline underline-offset-2
+                  className="font-medium text-gray-600 hover:text-gray-900 underline underline-offset-2
                              transition-colors duration-ds-normal focus:outline-none focus:ring-2
-                             focus:ring-primary/30 rounded"
+                             focus:ring-gray-300 rounded"
                 >
                   Verify your bank with MOOV instead
                 </button>
