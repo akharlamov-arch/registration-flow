@@ -9,6 +9,7 @@
 // Unlike the old PortalBankVerificationGate this dialog is opened by the
 // customer, not thrown at them, and Escape or the backdrop closes it.
 
+import { useI18n } from '../../context/I18nContext'
 import { useEffect, useState } from 'react'
 import FormField from '../../components/FormField'
 import Attachment from './Attachment'
@@ -16,6 +17,7 @@ import { inputCls, errorCls } from './inputs'
 import { emptyBankDetails, validateBankDetails } from './formState'
 
 export default function MoovFallback({ open, onClose, onSubmitted }) {
+  const { t } = useI18n()
   const [values, setValues] = useState(emptyBankDetails)
   const [errors, setErrors] = useState({})
   const [showErrors, setShowErrors] = useState(false)
@@ -56,7 +58,8 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
     }, 800)
   }
 
-  const err = (key) => (showErrors ? errors[key] : undefined)
+  // errors hold translation keys; resolve at the point of display
+  const err = (key) => (showErrors && errors[key] ? t(errors[key]) : undefined)
   const cls = (key) => `${inputCls} ${err(key) ? errorCls : ''}`
 
   return (
@@ -65,7 +68,7 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Verify your bank with MOOV"
+      aria-label={t('portalDemo.moov.title')}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -74,15 +77,13 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
       >
         <div className="sticky top-0 bg-white border-b border-gray-200 px-5 sm:px-6 py-4 flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h3 className="text-base font-semibold text-gray-900">Verify your bank with MOOV</h3>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Enter the account you plan to use for payments and attach a void check.
-            </p>
+            <h3 className="text-base font-semibold text-gray-900">{t('portalDemo.moov.title')}</h3>
+            <p className="text-sm text-gray-500 mt-0.5">{t('portalDemo.moov.sub')}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('portalDemo.moov.close')}
             className="shrink-0 -mr-1 p-1.5 text-gray-400 hover:text-gray-700 rounded-lg transition-colors duration-ds-normal"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -93,15 +94,15 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
 
         <form onSubmit={submit} className="px-5 sm:px-6 py-5 space-y-4">
           <FormField
-            label="Void Check"
+            label={t('bankInfo.voidCheckLabel')}
             required
             error={err('voidCheck')}
-            hint="Uploading a void check can help resolve verification issues."
+            hint={t('bankInfo.voidCheckDesc')}
           >
             <Attachment value={values.voidCheck} onChange={(v) => set('voidCheck', v)} invalid={!!err('voidCheck')} />
           </FormField>
 
-          <FormField label="Routing Number" required error={err('routingNumber')}>
+          <FormField label={t('bankInfo.labelRouting')} required error={err('routingNumber')}>
             <input
               className={cls('routingNumber')}
               inputMode="numeric"
@@ -112,7 +113,7 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
             />
           </FormField>
 
-          <FormField label="Account Number" required error={err('accountNumber')}>
+          <FormField label={t('bankInfo.labelAccountNumber')} required error={err('accountNumber')}>
             <input
               className={cls('accountNumber')}
               inputMode="numeric"
@@ -123,7 +124,7 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
             />
           </FormField>
 
-          <FormField label="Confirm Account Number" required error={err('accountNumberConfirm')}>
+          <FormField label={t('bankInfo.labelConfirmAccount')} required error={err('accountNumberConfirm')}>
             <input
               className={cls('accountNumberConfirm')}
               inputMode="numeric"
@@ -134,9 +135,7 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
             />
           </FormField>
 
-          <p className="text-xs text-gray-500 leading-relaxed">
-            Enter the bank account details you plan to use for payments for our services.
-          </p>
+          <p className="text-xs text-gray-500 leading-relaxed">{t('bankInfo.infoNotice')}</p>
 
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-1">
             <button
@@ -145,7 +144,7 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
               className="px-4 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200
                          hover:bg-gray-50 rounded-lg transition-colors duration-ds-normal"
             >
-              Cancel
+              {t('portalDemo.cancel')}
             </button>
             <button
               type="submit"
@@ -154,7 +153,7 @@ export default function MoovFallback({ open, onClose, onSubmitted }) {
                          shadow-ds-sm transition-colors duration-ds-normal
                          focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
             >
-              {busy ? 'Submitting…' : 'Submit for verification'}
+              {busy ? t('portalDemo.moov.submitting') : t('portalDemo.moov.submit')}
             </button>
           </div>
         </form>

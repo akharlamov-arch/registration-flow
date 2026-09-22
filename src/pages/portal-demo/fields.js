@@ -1,21 +1,22 @@
 // Field map for the updated-contract step of the customer portal.
 //
-// Every label, placeholder, option value and required/optional flag below is
-// copied from the registration flow so the two ask for the same thing in the
-// same words. Sources:
-//   labels/placeholders  src/data/translations.js — lead.step1, lead.stepBusiness,
-//                        address, personalInfo, personalAddress, billingContact,
-//                        portalStrings.dashboard.labelTier
-//   select options       src/pages/LeadForm.jsx:894-897 (businessType)
-//                        src/pages/LeadForm.jsx:915-920 (companyTitle)
-//   state shape          src/pages/OtpVerification.jsx:157-176
-//   choice values        prompts/LEAD_API_CONTRACT.md + src/api/leadMappers.js
+// Labels, placeholders and section headings are translation KEYS, not literals.
+// Almost every one points at a key the registration flow already owns, so the
+// portal asks for the same thing in the same words — and inherits EN/RU/UK/ES
+// for free. Only copy with no counterpart there lives under `portalDemo.*`.
 //
-// `crm` is the record name on our side. Fields carrying a crm name with no
-// counterpart in registration (company phone, billing email) are the ones the
-// updated contract adds — they are marked `isNew`.
+// Sources:
+//   select options   src/pages/LeadForm.jsx:894-897 (businessType)
+//                    src/pages/LeadForm.jsx:915-920 (companyTitle)
+//   state shape      src/pages/OtpVerification.jsx:157-176
+//   choice values    prompts/LEAD_API_CONTRACT.md + src/api/leadMappers.js
+//
+// `crm` is the record name on our side. Fields marked `isNew` are what the
+// updated contract adds.
+//
+// Option labels are literals because LeadForm hardcodes them in English for
+// every language — matching it keeps the two consistent.
 
-// src/pages/LeadForm.jsx:894-897 — these four, no others.
 export const BUSINESS_TYPES = [
   ['sole',        'Sole Proprietorship'],
   ['partnership', 'Partnership'],
@@ -23,7 +24,6 @@ export const BUSINESS_TYPES = [
   ['corporation', 'Corporation'],
 ]
 
-// src/pages/LeadForm.jsx:915-920
 export const COMPANY_TITLES = [
   ['ceo',        'CEO'],
   ['cfo',        'CFO'],
@@ -33,59 +33,55 @@ export const COMPANY_TITLES = [
   ['other',      'Other'],
 ]
 
-// Reused by every address block so the three stay identical, as they are in
-// registration (addressForm / mailingForm / personalAddressForm all carry
-// street1, street2, city, state, zip).
+// All three address blocks are identical, as they are in registration.
 function addressFields(prefix, crmPrefix) {
   return [
-    { key: `${prefix}_street1`, crm: `${crmPrefix} Street Address`, label: 'Street Address 1', type: 'text',  required: true,  span: 2, placeholder: '123 Main St' },
-    { key: `${prefix}_street2`, crm: `${crmPrefix} apt, Unit`,      label: 'Street Address 2', type: 'text',  required: false, span: 2, placeholder: 'Suite 200 (optional)' },
-    { key: `${prefix}_city`,    crm: `${crmPrefix} City`,           label: 'City',             type: 'text',  required: true,  placeholder: 'Sacramento' },
-    { key: `${prefix}_state`,   crm: `${crmPrefix} State`,          label: 'State',            type: 'state', required: true },
-    { key: `${prefix}_zip`,     crm: `${crmPrefix} ZIP`,            label: 'ZIP Code',         type: 'zip',   required: true,  placeholder: '95814' },
+    { key: `${prefix}_street1`, crm: `${crmPrefix} Street Address`, labelKey: 'address.labelStreet1', type: 'text',  required: true,  span: 2, placeholderKey: 'address.placeholderStreet1' },
+    { key: `${prefix}_street2`, crm: `${crmPrefix} apt, Unit`,      labelKey: 'address.labelStreet2', type: 'text',  required: false, span: 2, placeholderKey: 'address.placeholderStreet2' },
+    { key: `${prefix}_city`,    crm: `${crmPrefix} City`,           labelKey: 'address.labelCity',    type: 'text',  required: true,  placeholderKey: 'address.placeholderCity' },
+    { key: `${prefix}_state`,   crm: `${crmPrefix} State`,          labelKey: 'address.labelState',   type: 'state', required: true },
+    { key: `${prefix}_zip`,     crm: `${crmPrefix} ZIP`,            labelKey: 'address.labelZip',     type: 'zip',   required: true,  placeholderKey: 'address.placeholderZip' },
   ]
 }
 
 export const GROUPS = [
   {
     id: 'business',
-    title: 'Business Details',
-    blurb: 'Tell us a bit more about your company so we can set up your account correctly.',
+    titleKey: 'lead.stepBusiness.title',
+    blurbKey: 'lead.stepBusiness.desc',
     fields: [
-      { key: 'company_name',   crm: 'Company name',             label: 'Company Name',                type: 'text',   required: true, placeholder: 'Acme Trucking LLC' },
-      { key: 'business_type',  crm: 'Business Formation Type',  label: 'Business Type',               type: 'select', required: true, options: BUSINESS_TYPES },
-      { key: 'company_title',  crm: 'Title of the Primary Contact', label: 'Your Title',              type: 'select', required: true, options: COMPANY_TITLES },
-      { key: 'company_trucks', crm: 'Truck Count',              label: 'How many trucks do you have?', type: 'number', required: true, placeholder: '5' },
-      { key: 'company_dot',    crm: 'DOT Number',               label: 'Company DOT',                 type: 'text',   required: false, placeholder: '1234567' },
-      { key: 'company_mc',     crm: 'MC Number',                label: 'Company MC',                  type: 'text',   required: false, placeholder: '123456' },
-      { key: 'company_phone',  crm: 'Company Phone Number',     label: 'Company Phone Number',        type: 'phone',  required: true, isNew: true },
-      { key: 'company_email',  crm: 'Company Billing Email',    label: 'Company Billing Email',       type: 'email',  required: true, isNew: true, placeholder: 'billing@company.com' },
-      { key: 'discount_tier',  crm: 'Fuel Discount Tier Level', label: 'Discount tier',               type: 'readonly' },
+      { key: 'company_name',   crm: 'Company name',                 labelKey: 'lead.stepBusiness.companyName',  type: 'text',   required: true, placeholderKey: 'lead.stepBusiness.companyNamePlaceholder' },
+      { key: 'business_type',  crm: 'Business Formation Type',      labelKey: 'lead.stepBusiness.businessType', type: 'select', required: true, options: BUSINESS_TYPES },
+      { key: 'company_title',  crm: 'Title of the Primary Contact', labelKey: 'lead.stepBusiness.companyTitle', type: 'select', required: true, options: COMPANY_TITLES },
+      { key: 'company_trucks', crm: 'Truck Count',                  labelKey: 'lead.stepBusiness.trucks',       type: 'number', required: true, placeholder: '5' },
+      { key: 'company_dot',    crm: 'DOT Number',                   labelKey: 'lead.stepBusiness.dot',          type: 'text',   required: false, placeholder: '1234567' },
+      { key: 'company_mc',     crm: 'MC Number',                    labelKey: 'lead.stepBusiness.mc',           type: 'text',   required: false, placeholder: '123456' },
+      { key: 'company_phone',  crm: 'Company Phone Number',         labelKey: 'portalDemo.fields.companyPhone', type: 'phone',  required: true, isNew: true },
+      { key: 'company_email',  crm: 'Company Billing Email',        labelKey: 'portalDemo.fields.companyEmail', type: 'email',  required: true, isNew: true, placeholderKey: 'billingContact.placeholderEmail' },
+      { key: 'discount_tier',  crm: 'Fuel Discount Tier Level',     labelKey: 'portalDemo.fields.discountTier', type: 'readonly' },
     ],
-    // translations.js lead.stepBusiness.dotMcHint
-    notice: "If you have a DOT or MC number, enter it below. If not — just skip this field, it's optional.",
+    noticeKey: 'lead.stepBusiness.dotMcHint',
   },
 
   {
     id: 'billing_address',
-    title: 'Billing Address',
-    blurb: 'Enter your business or personal address. This information will be used for account setup and correspondence.',
+    titleKey: 'address.heading',
+    blurbKey: 'address.subheading',
     fields: addressFields('company', 'Company Billing'),
   },
 
   {
     id: 'mailing',
-    title: 'Mailing Address',
-    blurb: 'Enter the address where you would like to receive mail and official correspondence.',
-    // translations.js address.radioSame / address.radioDifferent
+    titleKey: 'mailingAddress.heading',
+    blurbKey: 'mailingAddress.subheading',
     choice: {
       key: 'mailingAddressChoice',
       crm: 'mailingAddressChoice',
       default: 'same-as-company',
       revealOn: 'other',
       options: [
-        ['same-as-company', 'Use this address for all mail deliveries'],
-        ['other',           'I want to provide a different mailing address'],
+        ['same-as-company', 'address.radioSame'],
+        ['other',           'address.radioDifferent'],
       ],
     },
     fields: addressFields('mailing', 'Mailing'),
@@ -93,44 +89,41 @@ export const GROUPS = [
 
   {
     id: 'contact',
-    title: 'Contact Information',
-    blurb: 'Please provide your basic contact details.',
+    titleKey: 'lead.step1.title',
+    blurbKey: 'lead.step1.desc',
     fields: [
-      { key: 'first_name',   crm: 'First Name',          label: 'First Name',          type: 'text',  required: true, placeholder: 'John' },
-      { key: 'last_name',    crm: 'Last Name',           label: 'Last Name',           type: 'text',  required: true, placeholder: 'McDavid' },
-      { key: 'mobile_phone', crm: 'Mobile Phone Number', label: 'Phone Number',        type: 'phone', required: true },
+      { key: 'first_name',   crm: 'First Name',          labelKey: 'lead.step1.firstName', type: 'text',  required: true, placeholderKey: 'lead.step1.firstNamePlaceholder' },
+      { key: 'last_name',    crm: 'Last Name',           labelKey: 'lead.step1.lastName',  type: 'text',  required: true, placeholderKey: 'lead.step1.lastNamePlaceholder' },
+      { key: 'mobile_phone', crm: 'Mobile Phone Number', labelKey: 'lead.step1.phone',     type: 'phone', required: true },
     ],
   },
 
   {
     id: 'personal',
-    title: 'Personal Information & Guarantee',
-    blurb: 'Required by our bank partner for identity verification. Your data is securely stored, kept confidential, and protected under privacy regulations.',
+    titleKey: 'personalInfo.heading',
+    blurbKey: 'personalInfo.subheading',
     fields: [
-      { key: 'ssn',        crm: 'Full Social Security Number',       label: 'Social Security Number',        type: 'secret', required: true, digits: 9, format: 'ssn', placeholder: '•••••••••' },
-      { key: 'dl_number',  crm: 'Driver License',                    label: 'Driver License Number',         type: 'secret', required: true, placeholder: 'Enter your DL number' },
-      { key: 'dl_confirm', crm: 'Driver License',                    label: 'Re-enter Driver License Number', type: 'secret', required: true, matches: 'dl_number', placeholder: 'Re-enter your DL number' },
-      { key: 'dl_file',    crm: 'Driver License Attached File Name', label: 'Driver License (photo or scan)', type: 'file',  required: true, span: 2,
-        hint: 'JPG, PNG, HEIC, PDF, DOC — max 10 MB' },
+      { key: 'ssn',        crm: 'Full Social Security Number',       labelKey: 'personalInfo.labelSsn',       type: 'secret', required: true, digits: 9, format: 'ssn', placeholderKey: 'personalInfo.placeholderSsn' },
+      { key: 'dl_number',  crm: 'Driver License',                    labelKey: 'personalInfo.labelDl',        type: 'secret', required: true, placeholderKey: 'personalInfo.placeholderDl' },
+      { key: 'dl_confirm', crm: 'Driver License',                    labelKey: 'personalInfo.labelDlConfirm', type: 'secret', required: true, matches: 'dl_number', placeholderKey: 'personalInfo.placeholderDlConfirm' },
+      { key: 'dl_file',    crm: 'Driver License Attached File Name', labelKey: 'personalInfo.labelDlFile',    type: 'file',   required: true, span: 2 },
     ],
-    // translations.js personalInfo.ownerNotice
-    notice: 'The information on the driver license must match the business owner, account holder, and contract signatory.',
+    noticeKey: 'personalInfo.ownerNotice',
   },
 
   {
     id: 'home',
-    title: 'Personal Address',
-    blurb: 'Your personal home address may differ from your business or mailing address. Please select or enter the address on file with your ID.',
-    // translations.js personalAddress.radio* — three options, not two.
+    titleKey: 'personalAddress.heading',
+    blurbKey: 'personalAddress.subheading',
     choice: {
       key: 'personalAddressChoice',
       crm: 'personalAddressChoice',
       default: 'same-as-business',
       revealOn: 'other',
       options: [
-        ['same-as-business', 'Same as business address'],
-        ['same-as-mailing',  'Same as mailing address'],
-        ['other',            'Enter a different home address'],
+        ['same-as-business', 'personalAddress.radioBusinessLabel'],
+        ['same-as-mailing',  'personalAddress.radioMailingLabel'],
+        ['other',            'personalAddress.radioNewLabel'],
       ],
     },
     fields: addressFields('home', 'Personal Home'),
@@ -138,26 +131,25 @@ export const GROUPS = [
 
   {
     id: 'billing_contact',
-    title: 'Who will be responsible for billing?',
-    blurb: 'This contact will receive invoices and payment notifications from iTrucking.',
+    titleKey: 'billingContact.heading',
+    blurbKey: 'billingContact.subheading',
     choice: {
       key: 'billingChoice',
       crm: 'billingChoice',
       default: 'self',
       revealOn: 'other',
       options: [
-        ['self',  'I am the billing contact'],
-        ['other', 'Someone else in my company'],
+        ['self',  'billingContact.radioSelfLabel'],
+        ['other', 'billingContact.radioOtherLabel'],
       ],
-      // translations.js billingContact.radioSelfDesc
-      hint: 'We will use your email for invoices and billing notifications. Please make sure it is correct and accessible.',
+      hintKey: 'billingContact.radioSelfDesc',
     },
     fields: [
-      { key: 'billing_first_name', crm: 'Billing Contact',                 label: 'First Name',    type: 'text',  required: true,  placeholder: 'Jane' },
-      { key: 'billing_last_name',  crm: 'Billing Contact',                 label: 'Last Name',     type: 'text',  required: true,  placeholder: 'Smith' },
-      { key: 'billing_email',      crm: 'Billing Contact',                 label: 'Email Address', type: 'email', required: true,  placeholder: 'billing@company.com' },
-      { key: 'billing_phone',      crm: 'Billing Contact',                 label: 'Phone Number',  type: 'phone', required: true },
-      { key: 'billing_title',      crm: 'Title of the Billing Contact',    label: 'Job Title',     type: 'text',  required: false, placeholder: 'Accountant (optional)' },
+      { key: 'billing_first_name', crm: 'Billing Contact',              labelKey: 'billingContact.labelFirstName', type: 'text',  required: true,  placeholderKey: 'billingContact.placeholderFirstName' },
+      { key: 'billing_last_name',  crm: 'Billing Contact',              labelKey: 'billingContact.labelLastName',  type: 'text',  required: true,  placeholderKey: 'billingContact.placeholderLastName' },
+      { key: 'billing_email',      crm: 'Billing Contact',              labelKey: 'billingContact.labelEmail',     type: 'email', required: true,  placeholderKey: 'billingContact.placeholderEmail' },
+      { key: 'billing_phone',      crm: 'Billing Contact',              labelKey: 'billingContact.labelPhone',     type: 'phone', required: true },
+      { key: 'billing_title',      crm: 'Title of the Billing Contact', labelKey: 'billingContact.labelTitle',     type: 'text',  required: false, placeholderKey: 'billingContact.placeholderTitle' },
     ],
   },
 ]
@@ -166,11 +158,11 @@ export const GROUPS = [
 // file is the one place the CRM mapping is written down, and which records are
 // derived rather than collected is part of that mapping.
 export const DERIVED_FIELDS = [
-  { crm: 'Full Name',    from: 'First Name + Last Name' },
-  { crm: 'Full name',    from: 'duplicate of Full Name in the source list' },
+  { crm: 'Full Name',           from: 'First Name + Last Name' },
+  { crm: 'Full name',           from: 'duplicate of Full Name in the source list' },
   { crm: 'Company Identifier',  from: 'Company name' },
   { crm: 'Customer Identifier', from: 'Company name' },
-  { crm: 'Customer ID',  from: 'our record id — never shown to the customer' },
+  { crm: 'Customer ID',         from: 'our record id — never shown to the customer' },
 ]
 
 export const CHOICE_GROUPS = GROUPS.filter((g) => g.choice)

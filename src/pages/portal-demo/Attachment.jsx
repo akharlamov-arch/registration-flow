@@ -6,12 +6,9 @@
 // Note this is NOT components/FileUpload.jsx — that widget belongs to the old
 // PortalPage and is used nowhere in the registration flow.
 
+import { useI18n } from '../../context/I18nContext'
 const ACCEPT = '.pdf,.jpg,.jpeg,.png,.heic,.doc,.docx'
 
-// translations.js personalInfo.uploadBtn / uploadHint / tapToChange
-const UPLOAD_LABEL = 'Click to attach file'
-const UPLOAD_HINT = 'JPG, PNG, HEIC, PDF, DOC — max 10 MB'
-const CHANGE_LABEL = 'Click to change file'
 
 function CheckIcon() {
   return (
@@ -30,6 +27,7 @@ function UploadIcon() {
 }
 
 export default function Attachment({ value, onChange, invalid }) {
+  const { t } = useI18n()
   const boxCls = [
     'flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed',
     'cursor-pointer transition-colors duration-ds-normal text-center',
@@ -52,13 +50,13 @@ export default function Attachment({ value, onChange, invalid }) {
         <>
           <CheckIcon />
           <p className="text-sm font-medium text-gray-700 break-all">{value}</p>
-          <p className="text-xs text-gray-400">{CHANGE_LABEL}</p>
+          <p className="text-xs text-gray-400">{t('personalInfo.tapToChange')}</p>
         </>
       ) : (
         <>
           <UploadIcon />
-          <p className="text-sm font-medium text-gray-700">{UPLOAD_LABEL}</p>
-          <p className="text-xs text-gray-400">{UPLOAD_HINT}</p>
+          <p className="text-sm font-medium text-gray-700">{t('personalInfo.uploadBtn')}</p>
+          <p className="text-xs text-gray-400">{t('personalInfo.uploadHint')}</p>
         </>
       )}
     </label>

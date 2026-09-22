@@ -9,6 +9,7 @@
 // bankInfo step collects. That submission is reviewed by a person, so it lands
 // in a pending state rather than a verified one.
 
+import { useI18n } from '../../context/I18nContext'
 import { useState } from 'react'
 import MoovFallback from './MoovFallback'
 
@@ -29,6 +30,7 @@ function ShieldIcon() {
 }
 
 function Connected({ bank }) {
+  const { t } = useI18n()
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
       <div className="flex items-start gap-4">
@@ -36,13 +38,11 @@ function Connected({ bank }) {
           <ShieldIcon />
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900">Bank account verified</p>
+          <p className="text-sm font-semibold text-gray-900">{t('portalDemo.bank.verifiedTitle')}</p>
           <p className="text-sm text-gray-500 mt-0.5">
             {bank?.institution || 'Chase'} ···· {bank?.last4 || '4471'} · Checking
           </p>
-          <p className="text-xs text-gray-400 mt-2">
-            Connected through Plaid. We never see or store your banking credentials.
-          </p>
+          <p className="text-xs text-gray-400 mt-2">{t('portalDemo.bank.verifiedNote')}</p>
         </div>
       </div>
     </div>
@@ -50,6 +50,7 @@ function Connected({ bank }) {
 }
 
 function PendingReview() {
+  const { t } = useI18n()
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
       <div className="flex items-start gap-4">
@@ -59,13 +60,9 @@ function PendingReview() {
           </svg>
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900">Bank details submitted for review</p>
-          <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">
-            An iTrucking manager will contact you to complete verification. You do not need to do anything else for now.
-          </p>
-          <p className="text-xs text-gray-400 mt-2">
-            We received your void check and account details through MOOV.
-          </p>
+          <p className="text-sm font-semibold text-gray-900">{t('portalDemo.bank.pendingTitle')}</p>
+          <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">{t('portalDemo.bank.pendingBody')}</p>
+          <p className="text-xs text-gray-400 mt-2">{t('portalDemo.bank.pendingNote')}</p>
         </div>
       </div>
     </div>
@@ -73,6 +70,7 @@ function PendingReview() {
 }
 
 export default function Step2Bank({ bank, connected, pending, onConnected, onManualSubmitted }) {
+  const { t } = useI18n()
   const [busy, setBusy] = useState(false)
   const [moovOpen, setMoovOpen] = useState(false)
 
@@ -88,10 +86,8 @@ export default function Step2Bank({ bank, connected, pending, onConnected, onMan
   return (
     <div className="space-y-4">
       <header className="mb-2">
-        <h2 className="text-xl font-bold text-gray-900">Connect your bank account</h2>
-        <p className="text-sm text-gray-500 mt-1 max-w-2xl">
-          We use Plaid to confirm your account is real and belongs to your business. This is how payments reach you.
-        </p>
+        <h2 className="text-xl font-bold text-gray-900">{t('portalDemo.bank.heading')}</h2>
+        <p className="text-sm text-gray-500 mt-1 max-w-2xl">{t('portalDemo.bank.blurb')}</p>
       </header>
 
       {connected ? (
@@ -105,20 +101,14 @@ export default function Step2Bank({ bank, connected, pending, onConnected, onMan
               <BankIcon />
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-900">No account connected</p>
-              <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-                You will be taken to Plaid to pick your bank and sign in. It takes about a minute.
-              </p>
+              <p className="text-sm font-semibold text-gray-900">{t('portalDemo.bank.noneTitle')}</p>
+              <p className="text-sm text-gray-500 mt-1 leading-relaxed">{t('portalDemo.bank.noneBody')}</p>
 
               <ul className="mt-4 space-y-2">
-                {[
-                  'Your credentials go to your bank, never to iTrucking.',
-                  'We receive only the account and routing numbers needed for payment.',
-                  'You can disconnect at any time from this portal.',
-                ].map((line) => (
-                  <li key={line} className="flex items-start gap-2 text-xs text-gray-500">
+                {['b1', 'b2', 'b3'].map((k) => (
+                  <li key={k} className="flex items-start gap-2 text-xs text-gray-500">
                     <span className="text-green-600 mt-0.5 shrink-0"><ShieldIcon /></span>
-                    {line}
+                    {t(`portalDemo.bank.${k}`)}
                   </li>
                 ))}
               </ul>
@@ -131,13 +121,13 @@ export default function Step2Bank({ bank, connected, pending, onConnected, onMan
                            shadow-ds-sm transition-colors duration-ds-normal cursor-pointer
                            focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
               >
-                {busy ? 'Opening Plaid…' : 'Connect with Plaid'}
+                {busy ? t('portalDemo.bank.opening') : t('portalDemo.bank.connect')}
               </button>
               {/* Deliberately quiet: Plaid is the path we want people on, so the
                   fallback is smaller and carries no accent colour. The underline
                   keeps it discoverable as a control without competing for the eye. */}
               <p className="text-xs text-gray-500 mt-4 leading-relaxed">
-                Having trouble connecting with Plaid?{' '}
+                {t('portalDemo.moov.q')}{' '}
                 <button
                   type="button"
                   onClick={() => setMoovOpen(true)}
@@ -145,7 +135,7 @@ export default function Step2Bank({ bank, connected, pending, onConnected, onMan
                              transition-colors duration-ds-normal focus:outline-none focus:ring-2
                              focus:ring-gray-300 rounded"
                 >
-                  Verify your bank with MOOV instead
+                  {t('portalDemo.moov.link')}
                 </button>
                 .
               </p>

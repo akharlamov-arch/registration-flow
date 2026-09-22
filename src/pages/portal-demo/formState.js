@@ -77,33 +77,34 @@ function digits(value) {
   return String(value || '').replace(/\D/g, '')
 }
 
+// Returns a translation KEY, not a message — the component resolves it, so the
+// same validation speaks all four languages. Keys are the registration flow's
+// own error strings.
 function fieldError(field, values) {
   const raw = String(values[field.key] || '').trim()
 
-  if (field.required && !raw) return 'This field is required'
+  if (field.required && !raw) return 'common.required'
   if (!raw) return ''
 
-  // Confirmation fields must match their source (personalInfo.errorDlMismatch).
   if (field.matches) {
     const other = String(values[field.matches] || '').trim()
-    if (raw !== other) return 'Driver License Numbers do not match'
-    return ''
+    return raw === other ? '' : 'personalInfo.errorDlMismatch'
   }
 
   switch (field.type) {
     case 'email':
-      return EMAIL_RE.test(raw) ? '' : 'Please enter a valid email address'
+      return EMAIL_RE.test(raw) ? '' : 'common.invalidEmail'
     case 'phone': {
       const d = digits(raw)
       const local = d.length === 11 ? d.slice(1) : d
-      return local.length === 10 ? '' : 'Enter a valid 10-digit phone number'
+      return local.length === 10 ? '' : 'common.phoneInvalid'
     }
     case 'zip':
-      return digits(raw).length === 5 ? '' : 'ZIP code must be 5 digits'
+      return digits(raw).length === 5 ? '' : 'address.errorZipFormat'
     case 'number':
-      return Number(raw) > 0 ? '' : 'Please enter a valid number'
+      return Number(raw) > 0 ? '' : 'lead.stepBusiness.trucksRequired'
     case 'secret':
-      if (field.format === 'ssn') return digits(raw).length === 9 ? '' : 'SSN must be exactly 9 digits'
+      if (field.format === 'ssn') return digits(raw).length === 9 ? '' : 'personalInfo.errorSsnFormat'
       return ''
     default:
       return ''
@@ -203,7 +204,7 @@ export function buildPayload(values, choices) {
 // ── Manual bank verification (MOOV fallback) ────────────────────────────────
 // Mirrors handleBankSubmit in src/pages/OtpVerification.jsx:790-812 exactly:
 // account number 5–17 digits, confirmation must match, routing exactly 9
-// digits, and a void check is required. Error copy is bankInfo.* verbatim.
+// digits, and a void check is required. Returns bankInfo.* translation keys.
 
 export function emptyBankDetails() {
   return {
@@ -217,18 +218,18 @@ export function emptyBankDetails() {
 export function validateBankDetails(v) {
   const errors = {}
 
-  if (!v.voidCheck) errors.voidCheck = 'Please upload a void check to continue.'
+  if (!v.voidCheck) errors.voidCheck = 'bankInfo.errorVoidCheckRequired'
 
   const acct = String(v.accountNumber || '').replace(/\D/g, '')
-  if (!acct) errors.accountNumber = 'Account number is required'
-  else if (!/^\d{5,17}$/.test(acct)) errors.accountNumber = 'Account number must contain only digits'
+  if (!acct) errors.accountNumber = 'bankInfo.errorAccountRequired'
+  else if (!/^\d{5,17}$/.test(acct)) errors.accountNumber = 'bankInfo.errorAccountDigits'
 
   const confirm = String(v.accountNumberConfirm || '').replace(/\D/g, '')
-  if (confirm !== acct) errors.accountNumberConfirm = 'Account numbers do not match'
+  if (confirm !== acct) errors.accountNumberConfirm = 'bankInfo.errorAccountMismatch'
 
   const routing = String(v.routingNumber || '').trim()
-  if (!routing) errors.routingNumber = 'Routing number is required'
-  else if (!/^\d{9}$/.test(routing)) errors.routingNumber = 'Routing number must be exactly 9 digits'
+  if (!routing) errors.routingNumber = 'bankInfo.errorRoutingRequired'
+  else if (!/^\d{9}$/.test(routing)) errors.routingNumber = 'bankInfo.errorRoutingFormat'
 
   return errors
 }

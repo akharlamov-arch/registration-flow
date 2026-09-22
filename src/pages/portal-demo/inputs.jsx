@@ -7,6 +7,7 @@
 // registration flow.
 
 import { useState } from 'react'
+import { useI18n } from '../../context/I18nContext'
 import FormField from '../../components/FormField'
 import PhoneInput from '../../components/PhoneInput'
 import Attachment from './Attachment'
@@ -80,18 +81,24 @@ function SecretInput({ value, onChange, invalid, format, digits, placeholder }) 
   )
 }
 
-/** Renders one field from the `fields.js` table. */
+/** Renders one field from the `fields.js` table. Labels, placeholders and the
+ *  error message arrive as translation keys and are resolved here. */
 export default function DemoField({ field, value, error, onChange }) {
+  const { t } = useI18n()
   const invalid = !!error
+  const label = field.labelKey ? t(field.labelKey) : field.label
+  const placeholder = field.placeholderKey ? t(field.placeholderKey) : field.placeholder
+  const hint = field.hintKey ? t(field.hintKey) : field.hint
+  const message = error ? t(error) : undefined
 
   if (field.type === 'readonly') {
     return (
       <div>
-        <span className="block text-sm font-medium text-slate-900 mb-1.5">{field.label}</span>
+        <span className="block text-sm font-medium text-slate-900 mb-1.5">{label}</span>
         <div className="px-3 py-2 text-sm rounded-lg bg-gray-50 border border-gray-200 text-gray-600">
           {value || '—'}
         </div>
-        {field.hint && <p className="mt-1 text-xs text-slate-400">{field.hint}</p>}
+        {hint && <p className="mt-1 text-xs text-slate-400">{hint}</p>}
       </div>
     )
   }
@@ -101,7 +108,7 @@ export default function DemoField({ field, value, error, onChange }) {
     case 'select':
       control = (
         <select className={`${inputCls} ${invalid ? errorCls : ''}`} aria-invalid={invalid} value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">Select...</option>
+          <option value="">{t('common.selectPlaceholder')}</option>
           {field.options.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
         </select>
       )
@@ -109,7 +116,7 @@ export default function DemoField({ field, value, error, onChange }) {
     case 'state':
       control = (
         <select className={`${inputCls} ${invalid ? errorCls : ''}`} aria-invalid={invalid} value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">Select state</option>
+          <option value="">{t('address.placeholderState')}</option>
           {US_STATES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
         </select>
       )
@@ -125,7 +132,7 @@ export default function DemoField({ field, value, error, onChange }) {
           invalid={invalid}
           format={field.format}
           digits={field.digits}
-          placeholder={field.placeholder}
+          placeholder={placeholder}
         />
       )
       break
@@ -139,7 +146,7 @@ export default function DemoField({ field, value, error, onChange }) {
           aria-invalid={invalid}
           inputMode="numeric"
           value={value}
-          placeholder={field.placeholder}
+          placeholder={placeholder}
           onChange={(e) => onChange(digitsOnly(e.target.value).slice(0, 5))}
         />
       )
@@ -151,7 +158,7 @@ export default function DemoField({ field, value, error, onChange }) {
           aria-invalid={invalid}
           inputMode="numeric"
           value={value}
-          placeholder={field.placeholder}
+          placeholder={placeholder}
           onChange={(e) => onChange(digitsOnly(e.target.value).slice(0, 5))}
         />
       )
@@ -163,14 +170,14 @@ export default function DemoField({ field, value, error, onChange }) {
           className={`${inputCls} ${invalid ? errorCls : ''}`}
           aria-invalid={invalid}
           value={value}
-          placeholder={field.placeholder}
+          placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
         />
       )
   }
 
   return (
-    <FormField label={field.label} required={field.required} optional={!field.required} error={error} hint={field.hint}>
+    <FormField label={label} required={field.required} optional={!field.required} error={message} hint={hint}>
       {control}
     </FormField>
   )

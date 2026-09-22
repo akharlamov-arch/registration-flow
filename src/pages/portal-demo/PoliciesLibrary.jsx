@@ -4,6 +4,7 @@
 // who is told "our terms have changed" can see exactly what changed and when,
 // and read any earlier revision they agreed to.
 
+import { useI18n } from '../../context/I18nContext'
 import { useState } from 'react'
 
 function formatDate(iso) {
@@ -21,6 +22,7 @@ function DocIcon() {
 }
 
 function PolicyCard({ policy }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const older = policy.history.slice(1)
 
@@ -39,7 +41,7 @@ function PolicyCard({ policy }) {
             </span>
           </div>
           <p className="text-xs text-gray-400 mt-0.5">
-            In effect since {formatDate(policy.effective_date)}
+            {t('portalDemo.policies.inEffect')} {formatDate(policy.effective_date)}
           </p>
 
           {policy.history[0]?.summary && (
@@ -53,7 +55,7 @@ function PolicyCard({ policy }) {
               rel="noreferrer"
               className="text-xs font-semibold text-primary hover:text-secondary transition-colors duration-ds-normal"
             >
-              Read current version
+              {t('portalDemo.policies.readCurrent')}
             </a>
 
             {older.length > 0 && (
@@ -62,7 +64,7 @@ function PolicyCard({ policy }) {
                 onClick={() => setOpen((o) => !o)}
                 className="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors duration-ds-normal"
               >
-                {open ? 'Hide' : `Earlier versions (${older.length})`}
+                {open ? t('portalDemo.policies.hide') : `${t('portalDemo.policies.earlier')} (${older.length})`}
               </button>
             )}
           </div>
@@ -82,7 +84,7 @@ function PolicyCard({ policy }) {
                     rel="noreferrer"
                     className="inline-block text-xs font-medium text-gray-500 hover:text-gray-900 underline underline-offset-2 mt-1"
                   >
-                    Read this version
+                    {t('portalDemo.policies.readThis')}
                   </a>
                 </li>
               ))}
@@ -95,13 +97,12 @@ function PolicyCard({ policy }) {
 }
 
 export default function PoliciesLibrary({ policies, loading }) {
+  const { t } = useI18n()
   return (
     <div className="space-y-4">
       <header className="mb-2">
-        <h2 className="text-xl font-bold text-gray-900">Documents &amp; policies</h2>
-        <p className="text-sm text-gray-500 mt-1 max-w-2xl">
-          The agreements and policies that govern your account, and what changed in each revision.
-        </p>
+        <h2 className="text-xl font-bold text-gray-900">{t('portalDemo.policies.heading')}</h2>
+        <p className="text-sm text-gray-500 mt-1 max-w-2xl">{t('portalDemo.policies.blurb')}</p>
       </header>
 
       {loading ? (
@@ -111,7 +112,7 @@ export default function PoliciesLibrary({ policies, loading }) {
         </div>
       ) : policies.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
-          <p className="text-sm text-gray-500">No documents are published yet.</p>
+          <p className="text-sm text-gray-500">{t('portalDemo.policies.empty')}</p>
         </div>
       ) : (
         policies.map((p) => <PolicyCard key={p.id} policy={p} />)

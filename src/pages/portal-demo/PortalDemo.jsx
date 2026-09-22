@@ -14,6 +14,7 @@
 // three mock personas drive which state you land in.
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useI18n } from '../../context/I18nContext'
 import { requestCode, verifyCode, validateSession, getMe, submitChangeRequest } from '../../api/portal'
 import { getPolicies } from './api'
 import { initialForm, initialChoices, validate, isComplete, buildPayload } from './formState'
@@ -49,6 +50,7 @@ const primaryBtn =
 // only what is specific to a signed-in portal session; the logo, language
 // selector and support phone stay where they always were, in Header.jsx.
 function AccountBar({ company, onSignOut }) {
+  const { t } = useI18n()
   return (
     <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-200">
       <span className="text-sm font-semibold text-gray-900 truncate">{company}</span>
@@ -59,7 +61,7 @@ function AccountBar({ company, onSignOut }) {
           onClick={onSignOut}
           className="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors duration-ds-normal"
         >
-          Sign out
+          {t('portalDemo.signOut')}
         </button>
       </div>
     </div>
@@ -67,10 +69,11 @@ function AccountBar({ company, onSignOut }) {
 }
 
 function ChangeSubmitted({ onBack }) {
+  const { t } = useI18n()
   return (
     <div className="space-y-4">
       <header className="mb-2">
-        <h2 className="text-xl font-bold text-gray-900">Change request sent</h2>
+        <h2 className="text-xl font-bold text-gray-900">{t('portalDemo.submitted.heading')}</h2>
       </header>
 
       <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
@@ -81,17 +84,15 @@ function ChangeSubmitted({ onBack }) {
             </svg>
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900">We have your updated details</p>
-            <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">
-              Our team reviews the request and applies it to your account. Nothing on your account changes until it is approved, and your contract stays signed.
-            </p>
+            <p className="text-sm font-semibold text-gray-900">{t('portalDemo.submitted.title')}</p>
+            <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">{t('portalDemo.submitted.body')}</p>
             <button
               type="button"
               onClick={onBack}
               className="mt-4 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200
                          hover:bg-gray-50 rounded-lg transition-colors duration-ds-normal"
             >
-              Back to my details
+              {t('portalDemo.submitted.back')}
             </button>
           </div>
         </div>
@@ -103,6 +104,7 @@ function ChangeSubmitted({ onBack }) {
 // ── Login ───────────────────────────────────────────────────────────────────
 
 function Login({ onSignedIn }) {
+  const { t } = useI18n()
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [sent, setSent] = useState(false)
@@ -111,7 +113,7 @@ function Login({ onSignedIn }) {
 
   const send = async (e) => {
     e.preventDefault()
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setError('Enter a valid email address')
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setError(t('portalDemo.login.errEmail'))
     setError(''); setBusy(true)
     await requestCode(email.trim())
     setBusy(false); setSent(true)
@@ -119,7 +121,7 @@ function Login({ onSignedIn }) {
 
   const verify = async (e) => {
     e.preventDefault()
-    if (!code.trim()) return setError('Enter the code from your email')
+    if (!code.trim()) return setError(t('portalDemo.login.errEmail'))
     setError(''); setBusy(true)
     const { ok, data } = await verifyCode(email.trim(), code.trim())
     setBusy(false)
@@ -127,16 +129,14 @@ function Login({ onSignedIn }) {
       sessionStorage.setItem(TOKEN_KEY, data.session_token)
       onSignedIn(data.session_token, data.customer)
     } else {
-      setError('That code is not valid or has already been used')
+      setError(t('portalDemo.login.errCode'))
     }
   }
 
   return (
     <main className="max-w-md mx-auto px-4 py-16">
-      <h1 className="text-xl font-bold text-gray-900 mb-1">Sign in to your account</h1>
-      <p className="text-sm text-gray-500 mb-6">
-        We will email you a one-time code. No password needed.
-      </p>
+      <h1 className="text-xl font-bold text-gray-900 mb-1">{t('portalDemo.login.heading')}</h1>
+      <p className="text-sm text-gray-500 mb-6">{t('portalDemo.login.sub')}</p>
 
       <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
         {error && (
@@ -148,25 +148,25 @@ function Login({ onSignedIn }) {
         {!sent ? (
           <form onSubmit={send} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-900 mb-1.5">Email address</label>
+              <label className="block text-sm font-medium text-slate-900 mb-1.5">{t('portalDemo.login.emailLabel')}</label>
               <input type="email" autoComplete="email" className={inputCls} value={email}
                      placeholder="you@company.com" onChange={(e) => setEmail(e.target.value)} />
             </div>
-            <button className={primaryBtn} disabled={busy}>{busy ? 'Sending…' : 'Send code'}</button>
+            <button className={primaryBtn} disabled={busy}>{busy ? t('portalDemo.login.sending') : t('portalDemo.login.sendBtn')}</button>
           </form>
         ) : (
           <form onSubmit={verify} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-900 mb-1.5">Verification code</label>
+              <label className="block text-sm font-medium text-slate-900 mb-1.5">{t('portalDemo.login.codeLabel')}</label>
               <input type="text" inputMode="text" autoComplete="one-time-code" maxLength={6}
                      className={codeInputCls}
                      value={code} placeholder="000000" onChange={(e) => setCode(e.target.value)} />
             </div>
-            <button className={primaryBtn} disabled={busy}>{busy ? 'Verifying…' : 'Continue'}</button>
+            <button className={primaryBtn} disabled={busy}>{busy ? t('portalDemo.login.verifying') : t('portalDemo.login.continueBtn')}</button>
             <div className="flex items-center justify-between text-xs pt-1">
               <button type="button" onClick={() => { setSent(false); setCode(''); setError('') }}
-                      className="text-gray-500 hover:text-gray-800">Change email</button>
-              <button type="button" onClick={send} className="text-primary hover:text-secondary">Resend code</button>
+                      className="text-gray-500 hover:text-gray-800">{t('portalDemo.login.changeEmail')}</button>
+              <button type="button" onClick={send} className="text-primary hover:text-secondary">{t('portalDemo.login.resend')}</button>
             </div>
           </form>
         )}
@@ -178,6 +178,7 @@ function Login({ onSignedIn }) {
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function PortalDemo() {
+  const { t } = useI18n()
   const [view, setView] = useState('loading')
   const [token, setToken] = useState('')
   const [customer, setCustomer] = useState(null)
@@ -328,8 +329,8 @@ export default function PortalDemo() {
   }
 
   const steps = [
-    { id: 1, title: 'Updated contract details', state: signed ? 'done' : 'active' },
-    { id: 2, title: 'Bank account', state: linked ? 'done' : bankPending ? 'pending' : 'active' },
+    { id: 1, title: t('portalDemo.steps.contract'), state: signed ? 'done' : 'active' },
+    { id: 2, title: t('portalDemo.steps.bank'), state: linked ? 'done' : bankPending ? 'pending' : 'active' },
   ]
 
   const allDone = signed && linked
@@ -344,12 +345,10 @@ export default function PortalDemo() {
 
         <div className="mb-6">
           <h1 className="text-lg sm:text-xl font-bold text-gray-900">
-            {allDone ? 'Your account is up to date' : 'A few things need your attention'}
+            {allDone ? t('portalDemo.heroUpToDate') : t('portalDemo.heroAttention')}
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {allDone
-              ? 'Nothing outstanding right now.'
-              : 'You can complete these in any order.'}
+            {allDone ? t('portalDemo.subNothing') : t('portalDemo.subAnyOrder')}
           </p>
         </div>
 
@@ -374,9 +373,9 @@ export default function PortalDemo() {
                 </span>
                 <span className="min-w-0">
                   <span className={`block text-sm font-semibold ${step === 'policies' ? 'text-gray-900' : 'text-gray-500'}`}>
-                    Documents &amp; policies
+                    {t('portalDemo.docsNav.title')}
                   </span>
-                  <span className="block text-xs text-gray-400 mt-0.5">Always available</span>
+                  <span className="block text-xs text-gray-400 mt-0.5">{t('portalDemo.docsNav.sub')}</span>
                 </span>
               </button>
             </div>

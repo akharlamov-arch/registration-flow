@@ -1,6 +1,7 @@
 // Vertical step rail. Steps are numbered so the customer knows what is being
 // asked, but neither is gated — both can be opened and completed in any order.
 
+import { useI18n } from '../../context/I18nContext'
 function CheckIcon() {
   return (
     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3} aria-hidden="true">
@@ -21,13 +22,14 @@ const LABEL = {
   pending: 'text-gray-900',
 }
 
-const STATUS_TEXT = {
-  done:    'Completed',
-  active:  'Action required',
-  pending: 'Awaiting review',
+const STATUS_KEY = {
+  done:    'portalDemo.steps.done',
+  active:  'portalDemo.steps.active',
+  pending: 'portalDemo.steps.pending',
 }
 
 export default function Stepper({ steps, current, onSelect }) {
+  const { t } = useI18n()
   return (
     <ol className="space-y-1">
       {steps.map((step, i) => {
@@ -53,7 +55,7 @@ export default function Stepper({ steps, current, onSelect }) {
                   : step.state === 'pending' ? 'text-amber-600 font-medium'
                   : 'text-gray-400'
                 }`}>
-                  {STATUS_TEXT[step.state]}
+                  {t(STATUS_KEY[step.state])}
                 </span>
               </span>
             </button>

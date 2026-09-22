@@ -7,16 +7,18 @@
 // Groups that carry a `choice` render the same radio set as the matching
 // registration step, and reveal their inputs only on the option that needs them.
 
+import { useI18n } from '../../context/I18nContext'
 import { GROUPS } from './fields'
 import DemoField from './inputs'
 import { groupHidden } from './formState'
 
 function ChoiceRadios({ group, selected, onSelect }) {
-  const { key, options, hint } = group.choice
+  const { t } = useI18n()
+  const { key, options, hintKey } = group.choice
 
   return (
     <div className="space-y-2 mb-5">
-      {options.map(([value, label]) => {
+      {options.map(([value, labelKey]) => {
         const active = selected === value
         return (
           <label
@@ -35,10 +37,10 @@ function ChoiceRadios({ group, selected, onSelect }) {
             />
             <span className="min-w-0">
               <span className={`block text-sm ${active ? 'font-medium text-gray-900' : 'text-gray-700'}`}>
-                {label}
+                {t(labelKey)}
               </span>
-              {active && hint && value === options[0][0] && (
-                <span className="block text-xs text-gray-500 mt-1 leading-relaxed">{hint}</span>
+              {active && hintKey && value === options[0][0] && (
+                <span className="block text-xs text-gray-500 mt-1 leading-relaxed">{t(hintKey)}</span>
               )}
             </span>
           </label>
@@ -49,13 +51,14 @@ function ChoiceRadios({ group, selected, onSelect }) {
 }
 
 function GroupCard({ group, values, errors, choices, onChange, onSelectChoice }) {
+  const { t } = useI18n()
   const hidden = groupHidden(group, choices)
 
   return (
     <section className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-5 sm:p-6">
       <div className="mb-4">
-        <h3 className="text-base font-semibold text-gray-900">{group.title}</h3>
-        {group.blurb && <p className="text-sm text-gray-500 mt-0.5">{group.blurb}</p>}
+        <h3 className="text-base font-semibold text-gray-900">{t(group.titleKey)}</h3>
+        {group.blurbKey && <p className="text-sm text-gray-500 mt-0.5">{t(group.blurbKey)}</p>}
       </div>
 
       {group.choice && (
@@ -81,8 +84,8 @@ function GroupCard({ group, values, errors, choices, onChange, onSelectChoice })
             ))}
           </div>
 
-          {group.notice && (
-            <p className="mt-4 text-xs text-gray-500 leading-relaxed">{group.notice}</p>
+          {group.noticeKey && (
+            <p className="mt-4 text-xs text-gray-500 leading-relaxed">{t(group.noticeKey)}</p>
           )}
         </>
       )}
@@ -93,37 +96,20 @@ function GroupCard({ group, values, errors, choices, onChange, onSelectChoice })
 // Copy differs between first signing and a later change request; everything
 // else — fields, validation, the red-highlight behaviour — is identical, so the
 // customer edits the same form they filled originally.
-const COPY = {
-  sign: {
-    heading: 'Review your updated contract details',
-    blurb: 'Our updated agreement asks for a few details we did not collect before. Fill them in, then sign.',
-    submit: 'Sign updated contract',
-    busy: 'Signing…',
-    ready: 'All required details are filled in.',
-    idle: 'Fill in every required field, then sign.',
-  },
-  change: {
-    heading: 'Request a change to your details',
-    blurb: 'Update anything that has changed and send it to us. Our team reviews the request — nothing changes on your account until it is approved, and the contract does not need signing again.',
-    submit: 'Submit changes',
-    busy: 'Submitting…',
-    ready: 'Ready to send for review.',
-    idle: 'Every required field must still be filled in.',
-  },
-}
 
 export default function Step1Contract({
   values, errors, choices, showErrors, complete, signing, mode = 'sign',
   onChange, onSelectChoice, onSign, onCancel,
 }) {
+  const { t } = useI18n()
   const errorCount = Object.keys(errors).length
-  const copy = COPY[mode]
+  const copy = (k) => t(`portalDemo.${mode}.${k}`)
 
   return (
     <div className="space-y-4">
       <header className="mb-2">
-        <h2 className="text-xl font-bold text-gray-900">{copy.heading}</h2>
-        <p className="text-sm text-gray-500 mt-1 max-w-2xl">{copy.blurb}</p>
+        <h2 className="text-xl font-bold text-gray-900">{copy('heading')}</h2>
+        <p className="text-sm text-gray-500 mt-1 max-w-2xl">{copy('blurb')}</p>
       </header>
 
       {GROUPS.map((group) => (
@@ -142,10 +128,10 @@ export default function Step1Contract({
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
           <p className="text-sm text-gray-500">
             {complete
-              ? copy.ready
+              ? copy('ready')
               : showErrors && errorCount > 0
-                ? `${errorCount} field${errorCount === 1 ? '' : 's'} still need${errorCount === 1 ? 's' : ''} attention — highlighted in red above.`
-                : copy.idle}
+                ? `${errorCount} ${t(errorCount === 1 ? 'portalDemo.needAttentionOne' : 'portalDemo.needAttentionMany')}`
+                : copy('idle')}
           </p>
           <div className="flex flex-col-reverse sm:flex-row gap-2 sm:items-center">
           {onCancel && (
@@ -155,7 +141,7 @@ export default function Step1Contract({
               className="px-4 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200
                          hover:bg-gray-50 rounded-lg transition-colors duration-ds-normal"
             >
-              Cancel
+              {t('portalDemo.cancel')}
             </button>
           )}
           <button
@@ -167,7 +153,7 @@ export default function Step1Contract({
                        focus:outline-none focus:ring-2 focus:ring-primary/30
                        disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {signing ? copy.busy : copy.submit}
+            {signing ? copy('busy') : copy('submit')}
           </button>
           </div>
         </div>

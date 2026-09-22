@@ -4,6 +4,7 @@
 // button — the rail already calls it Completed, and pressing Sign again would
 // re-submit. This panel is what a done step 1 looks like.
 
+import { useI18n } from '../../context/I18nContext'
 function CheckBadge() {
   return (
     <span className="w-10 h-10 rounded-full bg-green-50 border border-green-200 text-green-600 flex items-center justify-center shrink-0">
@@ -22,28 +23,26 @@ function formatSignedAt(iso) {
 }
 
 export default function ContractSigned({ signedAt, onRequestChange }) {
+  const { t } = useI18n()
   const when = formatSignedAt(signedAt)
 
   return (
     <div className="space-y-4">
       <header className="mb-2">
-        <h2 className="text-xl font-bold text-gray-900">Updated contract details</h2>
-        <p className="text-sm text-gray-500 mt-1 max-w-2xl">
-          Nothing further is needed here.
-        </p>
+        <h2 className="text-xl font-bold text-gray-900">{t('portalDemo.signed.heading')}</h2>
+        <p className="text-sm text-gray-500 mt-1 max-w-2xl">{t('portalDemo.signed.sub')}</p>
       </header>
 
       <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
         <div className="flex items-start gap-4">
           <CheckBadge />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900">Updated contract signed</p>
+            <p className="text-sm font-semibold text-gray-900">{t('portalDemo.signed.title')}</p>
             <p className="text-sm text-gray-500 mt-0.5">
-              {when ? `Signed on ${when}.` : 'Signed just now.'} Your details are on file with our team.
+              {when ? `${t('portalDemo.signed.on')} ${when}.` : t('portalDemo.signed.justNow')}{' '}
+              {t('portalDemo.signed.body')}
             </p>
-            <p className="text-xs text-gray-400 mt-2">
-              Your details can change at any time — the contract itself does not need signing again.
-            </p>
+            <p className="text-xs text-gray-400 mt-2">{t('portalDemo.signed.note')}</p>
 
             <button
               type="button"
@@ -52,7 +51,7 @@ export default function ContractSigned({ signedAt, onRequestChange }) {
                          rounded-lg shadow-ds-sm transition-colors duration-ds-normal cursor-pointer
                          focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
-              Change request
+              {t('portalDemo.signed.changeBtn')}
             </button>
           </div>
         </div>
