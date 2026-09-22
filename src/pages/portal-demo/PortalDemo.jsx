@@ -14,7 +14,6 @@
 // three mock personas drive which state you land in.
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import logoUrl from '../../assets/logo.svg'
 import { requestCode, verifyCode, validateSession, getMe } from '../../api/portal'
 import { initialForm, initialSameAs, validate, isComplete, buildPayload } from './formState'
 import Stepper from './Stepper'
@@ -36,42 +35,33 @@ const primaryBtn =
 
 // ── Chrome ──────────────────────────────────────────────────────────────────
 
-function Header({ company, showCrm, onToggleCrm, onSignOut }) {
+// Account bar — sits inside the page, under the shared site header. Carries
+// only what is specific to a signed-in portal session; the logo, language
+// selector and support phone stay where they always were, in Header.jsx.
+function AccountBar({ company, showCrm, onToggleCrm, onSignOut }) {
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-      <div className="max-w-portal mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <img src={logoUrl} alt="iTrucking" className="h-6 w-auto shrink-0" />
-          {company && (
-            <>
-              <span className="text-gray-200" aria-hidden="true">|</span>
-              <span className="text-sm font-medium text-gray-700 truncate">{company}</span>
-            </>
-          )}
-        </div>
+    <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-200">
+      <span className="text-sm font-semibold text-gray-900 truncate">{company}</span>
 
-        {company && (
-          <div className="flex items-center gap-4 shrink-0">
-            <label className="hidden sm:flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={showCrm}
-                onChange={(e) => onToggleCrm(e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-gray-300 text-primary focus:ring-primary/30 cursor-pointer"
-              />
-              <span className="text-xs text-gray-500">Show CRM field names</span>
-            </label>
-            <button
-              type="button"
-              onClick={onSignOut}
-              className="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors duration-ds-normal"
-            >
-              Sign out
-            </button>
-          </div>
-        )}
+      <div className="flex items-center gap-4 shrink-0">
+        <label className="hidden sm:flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={showCrm}
+            onChange={(e) => onToggleCrm(e.target.checked)}
+            className="w-3.5 h-3.5 rounded border-gray-300 text-primary focus:ring-primary/30 cursor-pointer"
+          />
+          <span className="text-xs text-gray-500">Show CRM field names</span>
+        </label>
+        <button
+          type="button"
+          onClick={onSignOut}
+          className="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors duration-ds-normal"
+        >
+          Sign out
+        </button>
       </div>
-    </header>
+    </div>
   )
 }
 
@@ -249,7 +239,6 @@ export default function PortalDemo() {
   if (view === 'login') {
     return (
       <div className="min-h-screen bg-surface">
-        <Header />
         <Login onSignedIn={(t, c) => { setToken(t); applyCustomer(c); setView('portal') }} />
       </div>
     )
@@ -265,14 +254,14 @@ export default function PortalDemo() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <Header
-        company={customer?.profile?.cust_name}
-        showCrm={showCrm}
-        onToggleCrm={setShowCrm}
-        onSignOut={handleSignOut}
-      />
-
       <main className="max-w-portal mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <AccountBar
+          company={customer?.profile?.cust_name}
+          showCrm={showCrm}
+          onToggleCrm={setShowCrm}
+          onSignOut={handleSignOut}
+        />
+
         <div className="mb-6">
           <h1 className="text-lg sm:text-xl font-bold text-gray-900">
             {allDone ? 'Your account is up to date' : 'A few things need your attention'}

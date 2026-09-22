@@ -17,10 +17,6 @@ function TitleUpdater() {
   const location = useLocation()
 
   useEffect(() => {
-    if (location.pathname.startsWith('/portal-demo')) {
-      document.title = 'iTrucking — Customer Portal'
-      return
-    }
     if (location.pathname.startsWith('/portal')) {
       document.title = t('portal.title')
       return
@@ -46,15 +42,11 @@ function PageFallback() {
 }
 
 function AppShell() {
-  // The redesign demo ships its own compact header, so the shared chrome
-  // (logo bar + language prompt) is skipped on that route only.
-  const isDemo = useLocation().pathname.startsWith('/portal-demo')
-
   return (
     <div className="min-h-screen bg-white font-sans">
       <TitleUpdater />
-      {!isDemo && <Header />}
-      {!isDemo && <LanguagePromptModal />}
+      <Header />
+      <LanguagePromptModal />
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/" element={<LeadForm />} />
