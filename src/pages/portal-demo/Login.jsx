@@ -3,6 +3,7 @@
 //   email + password → one-time code → in
 //   email, "send me a code" → one-time code → password → in
 //   first login only (no password exists yet) → one-time code → create one → in
+//   forgotten password → a fresh reset code → set a new one → in
 //
 // Both factors are always required once a password exists. Asking for the code
 // instead of the password does not skip it: the server withholds the session
@@ -25,7 +26,10 @@
 import { useState } from 'react'
 import { useI18n } from '../../context/I18nContext'
 import { requestCode } from '../../api/portal'
-import { verifyPassword, setPassword, verifyCodeWithFactor, completeSignIn } from './api'
+import {
+  verifyPassword, setPassword, verifyCodeWithFactor, completeSignIn,
+  requestReset, verifyReset, resetPassword,
+} from './api'
 
 const MIN_PASSWORD = 8
 
@@ -100,11 +104,12 @@ function Field({ label, children }) {
 export default function Login({ onSignedIn }) {
   const { t } = useI18n()
 
-  // 'signin' | 'code' | 'afterCode' | 'create'
+  // 'signin' | 'code' | 'afterCode' | 'create' | 'resetCode' | 'reset'
   const [stage, setStage] = useState('signin')
   // Proof of a factor already cleared in this attempt. Neither is a session.
   const [passwordToken, setPasswordToken] = useState('')
   const [pendingToken, setPendingToken] = useState('')
+  const [resetToken, setResetToken] = useState('')
 
   const [email, setEmail] = useState('')
   const [password, setPasswordValue] = useState('')
@@ -194,6 +199,44 @@ export default function Login({ onSignedIn }) {
     onSignedIn(data.session_token, data.customer)
   }
 
+  // ── Forgotten password ────────────────────────────────────────────────────
+  // A fresh code on its own endpoint, never the sign-in one, so a code already
+  // in flight cannot be turned into a reset.
+  const startReset = async () => {
+    setError(''); setBusy(true)
+    await requestReset(email.trim())
+    setCode('')
+    setBusy(false)
+    setStage('resetCode')
+  }
+
+  const submitResetCode = async (e) => {
+    e.preventDefault()
+    if (!code.trim()) return setError(t('portalDemo.login.errCode'))
+    setError(''); setBusy(true)
+
+    const { ok, data } = await verifyReset(email.trim(), code.trim())
+    if (!ok || !data?.success) return fail('portalDemo.login.errCode')
+
+    setResetToken(data.reset_token)
+    setNewPassword(''); setConfirm('')
+    setBusy(false)
+    setStage('reset')
+  }
+
+  const submitReset = async (e) => {
+    e.preventDefault()
+    if (newPassword.length < MIN_PASSWORD) return setError(t('portalDemo.login.errPasswordShort'))
+    if (newPassword !== confirm) return setError(t('portalDemo.login.errPasswordMismatch'))
+    setError(''); setBusy(true)
+
+    const { ok, data } = await resetPassword(resetToken, newPassword)
+    if (!ok || !data?.success) return fail('portalDemo.login.errPasswordShort')
+
+    setBusy(false)
+    onSignedIn(data.session_token, data.customer)
+  }
+
   const submitNewPassword = async (e) => {
     e.preventDefault()
     if (newPassword.length < MIN_PASSWORD) return setError(t('portalDemo.login.errPasswordShort'))
@@ -212,11 +255,13 @@ export default function Login({ onSignedIn }) {
     code:      ['portalDemo.login.heading', 'portalDemo.login.sub'],
     afterCode: ['portalDemo.login.afterCodeHeading', 'portalDemo.login.afterCodeSub'],
     create:    ['portalDemo.login.createHeading', 'portalDemo.login.createSub'],
+    resetCode: ['portalDemo.login.resetCodeHeading', 'portalDemo.login.resetCodeSub'],
+    reset:     ['portalDemo.login.resetHeading', 'portalDemo.login.resetSub'],
   }[stage]
 
   const restart = () => {
     setStage('signin'); setCode(''); setPasswordValue(''); setError(''); setSignInFailed(false)
-    setPasswordToken(''); setPendingToken('')
+    setPasswordToken(''); setPendingToken(''); setResetToken('')
   }
 
   return (
@@ -304,11 +349,57 @@ export default function Login({ onSignedIn }) {
             <button className={primaryBtn} disabled={busy}>
               {busy ? t('portalDemo.login.verifying') : t('portalDemo.login.signInBtn')}
             </button>
-            <div className="text-xs pt-1">
+            <div className="flex items-center justify-between text-xs pt-1">
               <button type="button" onClick={restart} className="text-gray-500 hover:text-gray-800">
                 {t('portalDemo.login.changeEmail')}
               </button>
+              <button
+                type="button"
+                onClick={startReset}
+                disabled={busy}
+                className="font-medium text-primary hover:text-secondary transition-colors duration-ds-normal"
+              >
+                {t('portalDemo.login.forgotBtn')}
+              </button>
             </div>
+          </form>
+        )}
+
+        {stage === 'resetCode' && (
+          <form onSubmit={submitResetCode} className="space-y-4">
+            <Field label={t('portalDemo.login.codeLabel')}>
+              <input
+                type="text" inputMode="text" autoComplete="one-time-code" maxLength={6}
+                className={`${inputCls} text-center text-lg [@media(pointer:coarse)]:text-lg font-bold tracking-[0.3em] uppercase`}
+                value={code} placeholder="000000" onChange={(e) => setCode(e.target.value)}
+              />
+            </Field>
+            <button className={primaryBtn} disabled={busy}>
+              {busy ? t('portalDemo.login.verifying') : t('portalDemo.login.continueBtn')}
+            </button>
+            <div className="flex items-center justify-between text-xs pt-1">
+              <button type="button" onClick={restart} className="text-gray-500 hover:text-gray-800">
+                {t('portalDemo.login.changeEmail')}
+              </button>
+              <button type="button" onClick={startReset} className="text-primary hover:text-secondary">
+                {t('portalDemo.login.resend')}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {stage === 'reset' && (
+          <form onSubmit={submitReset} className="space-y-4">
+            <Field label={t('portalDemo.login.newPasswordLabel')}>
+              <PasswordInput value={newPassword} onChange={setNewPassword} autoComplete="new-password" />
+            </Field>
+            <Field label={t('portalDemo.login.confirmLabel')}>
+              <PasswordInput value={confirm} onChange={setConfirm} autoComplete="new-password" />
+            </Field>
+            <p className="text-xs text-gray-400">{t('portalDemo.login.errPasswordShort')}</p>
+            <button className={primaryBtn} disabled={busy}>
+              {busy ? t('portalDemo.login.saving') : t('portalDemo.login.resetSaveBtn')}
+            </button>
           </form>
         )}
 

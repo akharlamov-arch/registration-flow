@@ -44,10 +44,13 @@ const DEMO_PASSWORD = 'demo1234'
 //   pendingTokens  — OTP accepted, password still owed
 const passwordTokens = new Map()
 const pendingTokens = new Map()
+// Proof that a reset code was accepted. Exchanged once for a new password.
+const resetTokens = new Map()
 let tokenSeq = 0
+const STORES = { pwd: passwordTokens, pending: pendingTokens, reset: resetTokens }
 const mintToken = (kind, email) => {
   const token = `${kind}-${++tokenSeq}`
-  ;(kind === 'pwd' ? passwordTokens : pendingTokens).set(token, email)
+  STORES[kind].set(token, email)
   return token
 }
 const passwords = new Map([
@@ -313,6 +316,52 @@ const server = createServer(async (req, res) => {
     }
     // Proof of one factor only — it must be presented back with a valid OTP.
     return send(res, 200, { success: true, password_token: mintToken('pwd', key) })
+  }
+
+  // ── Password reset ───────────────────────────────────────────────────────
+  // A separate code from the sign-in one, on its own endpoints, so the backend
+  // can rate-limit and audit resets apart from ordinary sign-ins.
+  //
+  // NOTE: a reset driven by an emailed code means control of the mailbox is by
+  // itself enough to take over the account — the second factor is only as
+  // strong as the inbox. That is a deliberate product decision, not an
+  // oversight. Rate-limit this endpoint and alert the customer when it fires.
+  if (pathname === '/api/portal/request-reset') {
+    // Always the same answer, like /request-code — never reveal who exists.
+    return send(res, 200, { success: true })
+  }
+
+  if (pathname === '/api/portal/verify-reset') {
+    const body = JSON.parse((await readBody(req)).toString() || '{}')
+    const key = String(body.email || '').trim().toLowerCase()
+    const resolved = CUSTOMERS[key] ? key : FALLBACK
+    if (!String(body.code || '').trim()) {
+      return send(res, 401, { success: false, code: 'OTP_INVALID_OR_USED' })
+    }
+    return send(res, 200, { success: true, reset_token: mintToken('reset', resolved) })
+  }
+
+  // Exchanges a verified reset code for a new password and a session.
+  if (pathname === '/api/portal/reset-password') {
+    const body = JSON.parse((await readBody(req)).toString() || '{}')
+    const email = resetTokens.get(String(body.reset_token || ''))
+    if (!email) return send(res, 401, { success: false, code: 'INVALID_SESSION' })
+    const pw = String(body.password || '')
+    if (pw.length < 8) return send(res, 422, { success: false, code: 'PASSWORD_TOO_SHORT' })
+
+    resetTokens.delete(body.reset_token)
+    passwords.set(email, pw)
+    // Any half-finished sign-in for this customer is void once the password
+    // changes.
+    for (const [tok, who] of pendingTokens) if (who === email) pendingTokens.delete(tok)
+    for (const [tok, who] of passwordTokens) if (who === email) passwordTokens.delete(tok)
+    console.log(`password reset for ${email}`)
+
+    return send(res, 200, {
+      success: true,
+      session_token: tokenFor(email),
+      customer: customerFor(email, origin),
+    })
   }
 
   // Second half of the code-first path: the OTP is already accepted, the

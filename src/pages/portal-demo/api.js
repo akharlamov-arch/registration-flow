@@ -86,3 +86,46 @@ export function completeSignIn(pendingToken, password) {
     body: JSON.stringify({ pending_token: pendingToken, password }),
   })
 }
+
+// ── Password reset ──────────────────────────────────────────────────────────
+// Separate endpoints from ordinary sign-in so the backend can rate-limit and
+// audit resets on their own.
+//
+// NOTE: a reset driven by an emailed code makes control of the mailbox
+// sufficient to take over the account — the second factor ends up only as
+// strong as the inbox. A deliberate product decision; worth an alert to the
+// customer whenever it fires.
+
+/** Sends a reset code. Always resolves the same way — never reveals who exists. */
+export function requestReset(email) {
+  return apiFetch(`${BASE}/api/portal/request-reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+}
+
+/**
+ * Checks the reset code.
+ * Response: { success, reset_token } — proof of mailbox control, nothing else.
+ */
+export function verifyReset(email, code) {
+  return apiFetch(`${BASE}/api/portal/verify-reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code }),
+  })
+}
+
+/**
+ * Exchanges a verified reset code for a new password and a session. Single use;
+ * it also voids any half-finished sign-in for that customer.
+ * Response: { success, session_token, customer }
+ */
+export function resetPassword(resetToken, password) {
+  return apiFetch(`${BASE}/api/portal/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reset_token: resetToken, password }),
+  })
+}
