@@ -90,19 +90,40 @@ function GroupCard({ group, values, errors, choices, onChange, onSelectChoice })
   )
 }
 
+// Copy differs between first signing and a later change request; everything
+// else — fields, validation, the red-highlight behaviour — is identical, so the
+// customer edits the same form they filled originally.
+const COPY = {
+  sign: {
+    heading: 'Review your updated contract details',
+    blurb: 'Our updated agreement asks for a few details we did not collect before. Fill them in, then sign.',
+    submit: 'Sign updated contract',
+    busy: 'Signing…',
+    ready: 'All required details are filled in.',
+    idle: 'Fill in every required field, then sign.',
+  },
+  change: {
+    heading: 'Request a change to your details',
+    blurb: 'Update anything that has changed and send it to us. Our team reviews the request — nothing changes on your account until it is approved, and the contract does not need signing again.',
+    submit: 'Submit changes',
+    busy: 'Submitting…',
+    ready: 'Ready to send for review.',
+    idle: 'Every required field must still be filled in.',
+  },
+}
+
 export default function Step1Contract({
-  values, errors, choices, showErrors, complete, signing,
-  onChange, onSelectChoice, onSign,
+  values, errors, choices, showErrors, complete, signing, mode = 'sign',
+  onChange, onSelectChoice, onSign, onCancel,
 }) {
   const errorCount = Object.keys(errors).length
+  const copy = COPY[mode]
 
   return (
     <div className="space-y-4">
       <header className="mb-2">
-        <h2 className="text-xl font-bold text-gray-900">Review your updated contract details</h2>
-        <p className="text-sm text-gray-500 mt-1 max-w-2xl">
-          Our updated agreement asks for a few details we did not collect before. Fill them in, then sign.
-        </p>
+        <h2 className="text-xl font-bold text-gray-900">{copy.heading}</h2>
+        <p className="text-sm text-gray-500 mt-1 max-w-2xl">{copy.blurb}</p>
       </header>
 
       {GROUPS.map((group) => (
@@ -121,11 +142,22 @@ export default function Step1Contract({
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
           <p className="text-sm text-gray-500">
             {complete
-              ? 'All required details are filled in.'
+              ? copy.ready
               : showErrors && errorCount > 0
                 ? `${errorCount} field${errorCount === 1 ? '' : 's'} still need${errorCount === 1 ? 's' : ''} attention — highlighted in red above.`
-                : 'Fill in every required field, then sign.'}
+                : copy.idle}
           </p>
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:items-center">
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200
+                         hover:bg-gray-50 rounded-lg transition-colors duration-ds-normal"
+            >
+              Cancel
+            </button>
+          )}
           <button
             type="button"
             onClick={onSign}
@@ -135,8 +167,9 @@ export default function Step1Contract({
                        focus:outline-none focus:ring-2 focus:ring-primary/30
                        disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {signing ? 'Signing…' : 'Sign updated contract'}
+            {signing ? copy.busy : copy.submit}
           </button>
+          </div>
         </div>
       </div>
     </div>

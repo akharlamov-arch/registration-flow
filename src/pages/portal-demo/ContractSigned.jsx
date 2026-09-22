@@ -21,7 +21,7 @@ function formatSignedAt(iso) {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-export default function ContractSigned({ signedAt }) {
+export default function ContractSigned({ signedAt, onRequestChange }) {
   const when = formatSignedAt(signedAt)
 
   return (
@@ -42,8 +42,18 @@ export default function ContractSigned({ signedAt }) {
               {when ? `Signed on ${when}.` : 'Signed just now.'} Your details are on file with our team.
             </p>
             <p className="text-xs text-gray-400 mt-2">
-              To change any of these details, contact iTrucking and we will send a new agreement.
+              Your details can change at any time — the contract itself does not need signing again.
             </p>
+
+            <button
+              type="button"
+              onClick={onRequestChange}
+              className="mt-4 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-secondary
+                         rounded-lg shadow-ds-sm transition-colors duration-ds-normal cursor-pointer
+                         focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              Change request
+            </button>
           </div>
         </div>
       </div>

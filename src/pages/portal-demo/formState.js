@@ -14,11 +14,24 @@ export function emptyForm() {
 }
 
 /**
- * Pre-fills what the portal already knows. Everything the updated contract
- * newly asks for starts empty — which is the point of the step.
+ * Pre-fills the form.
+ *
+ * Once a contract is signed the backend holds everything that was submitted,
+ * so a change request opens on the real values rather than a blank form. Before
+ * signing, only what the portal already knows is filled — everything the
+ * updated contract newly asks for starts empty, which is the point of the step.
  */
 export function initialForm(customer) {
   const values = emptyForm()
+
+  const saved = customer?.contract_details?.values
+  if (saved) {
+    for (const key of Object.keys(values)) {
+      if (saved[key] != null) values[key] = saved[key]
+    }
+    return values
+  }
+
   const profile = customer?.profile || {}
   const addresses = customer?.addresses || {}
   const company = addresses.company_address || {}
@@ -42,10 +55,14 @@ export function initialForm(customer) {
   return values
 }
 
-/** Radio selections, keyed by group id. Defaults match the registration flow. */
-export function initialChoices() {
+/**
+ * Radio selections, keyed by group id. Restores what was submitted with a
+ * signed contract; otherwise the registration flow's defaults.
+ */
+export function initialChoices(customer) {
+  const saved = customer?.contract_details?.choices
   return CHOICE_GROUPS.reduce((acc, g) => {
-    acc[g.id] = g.choice.default
+    acc[g.id] = saved?.[g.id] ?? g.choice.default
     return acc
   }, {})
 }

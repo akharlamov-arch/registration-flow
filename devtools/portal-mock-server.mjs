@@ -41,6 +41,82 @@ function doc(origin, name, type) {
   return { name, type, download_url: `${origin}/api/portal/documents/${name}` }
 }
 
+// What the customer submitted when they signed. Keys match
+// src/pages/portal-demo/fields.js so a change request opens pre-filled.
+function signedDetails(over = {}) {
+  return {
+    values: {
+      company_name: 'Summit Haul Inc',
+      business_type: 'llc',
+      company_title: 'owner',
+      company_trucks: '18',
+      company_dot: '3417755',
+      company_mc: '881204',
+      company_phone: '+1 (614) 555-0142',
+      company_email: 'billing@summithaul.com',
+      discount_tier: 'Tier 2',
+      company_street1: '1190 Industrial Pkwy',
+      company_street2: 'Bldg C',
+      company_city: 'Columbus',
+      company_state: 'OH',
+      company_zip: '43219',
+      mailing_street1: '', mailing_street2: '', mailing_city: '', mailing_state: '', mailing_zip: '',
+      first_name: 'Ivan',
+      last_name: 'Travkin',
+      mobile_phone: '+1 (614) 555-0177',
+      ssn: '412556690',
+      dl_number: 'OH4471902',
+      dl_confirm: 'OH4471902',
+      dl_file: 'driver-license.pdf',
+      home_street1: '', home_street2: '', home_city: '', home_state: '', home_zip: '',
+      billing_first_name: '', billing_last_name: '', billing_email: '', billing_phone: '', billing_title: '',
+      ...over,
+    },
+    choices: { mailing: 'same-as-company', home: 'same-as-business', billing_contact: 'self' },
+  }
+}
+
+// Internal documents the customer can review. Titles are the ones the app
+// already names — translations.js:266 (Terms of Service, Privacy Policy) and
+// translations.js:494 (Terms and Conditions, accepted at signing). Any further
+// documents are for the backend team to supply.
+function policies(origin) {
+  const url = (slug, v) => `${origin}/api/portal/documents/${slug}-v${v}.pdf`
+  return [
+    {
+      id: 'terms-of-service',
+      title: 'Terms of Service',
+      current_version: '4.2',
+      effective_date: '2026-09-01',
+      history: [
+        { version: '4.2', effective_date: '2026-09-01', summary: 'Added the updated contract details customers are asked to confirm in the portal.', url: url('terms-of-service', '4.2') },
+        { version: '4.1', effective_date: '2026-03-15', summary: 'Clarified payment timing for factored invoices.', url: url('terms-of-service', '4.1') },
+        { version: '4.0', effective_date: '2025-11-02', summary: 'Rewritten for the new fuel discount tiers.', url: url('terms-of-service', '4.0') },
+      ],
+    },
+    {
+      id: 'privacy-policy',
+      title: 'Privacy Policy',
+      current_version: '2.4',
+      effective_date: '2026-07-20',
+      history: [
+        { version: '2.4', effective_date: '2026-07-20', summary: 'Describes how bank data received through Plaid and MOOV is stored.', url: url('privacy-policy', '2.4') },
+        { version: '2.3', effective_date: '2025-12-08', summary: 'Added retention periods for driver licence scans.', url: url('privacy-policy', '2.3') },
+      ],
+    },
+    {
+      id: 'terms-and-conditions',
+      title: 'Terms and Conditions',
+      current_version: '3.1',
+      effective_date: '2026-06-03',
+      history: [
+        { version: '3.1', effective_date: '2026-06-03', summary: 'Updated the agreement accepted at contract signing.', url: url('terms-and-conditions', '3.1') },
+        { version: '3.0', effective_date: '2025-09-19', summary: 'Separated carrier and broker obligations.', url: url('terms-and-conditions', '3.0') },
+      ],
+    },
+  ]
+}
+
 const CUSTOMERS = {
   // 1 — nothing done: contract unsigned AND no bank linked.
   'akharlamov@itrucking.org': (origin) => ({
@@ -74,6 +150,7 @@ const CUSTOMERS = {
     bank: null,
     bank_verification: { plaid_linked: false },
     contract: { status: 'signed', signed_at: '2026-08-14T15:22:00Z' },
+    contract_details: signedDetails(),
     documents: [doc(origin, 'driver-license.pdf', 'Driver license')],
   }),
 
@@ -91,6 +168,22 @@ const CUSTOMERS = {
     bank: { institution: 'Chase', last4: '4471' },
     bank_verification: { plaid_linked: true },
     contract: { status: 'signed', signed_at: '2026-06-03T11:05:00Z' },
+    contract_details: signedDetails({
+      company_name: 'Northline Transport LLC',
+      company_trucks: '34',
+      company_phone: '+1 (813) 555-0119',
+      company_email: 'billing@northlinetransport.com',
+      company_street1: '2200 Harbor Blvd',
+      company_street2: 'Unit 4',
+      company_city: 'Tampa',
+      company_state: 'FL',
+      company_zip: '33602',
+      first_name: 'Maria',
+      last_name: 'Yatsenka',
+      mobile_phone: '+1 (813) 555-0164',
+      dl_number: 'FL8820341',
+      dl_confirm: 'FL8820341',
+    }),
     documents: [
       doc(origin, 'void-check.pdf', 'Void check'),
       doc(origin, 'driver-license.pdf', 'Driver license'),
@@ -194,6 +287,13 @@ const server = createServer(async (req, res) => {
     const email = emailForToken(token)
     if (!email) return send(res, 401, { success: false, code: 'INVALID_SESSION' })
     return send(res, 200, { success: true, customer: customerFor(email, origin) })
+  }
+
+  // ── Internal documents ───────────────────────────────────────────────────
+  if (pathname === '/api/portal/policies') {
+    const token = (req.headers.authorization || '').replace('Bearer ', '')
+    if (!emailForToken(token)) return send(res, 401, { success: false, code: 'INVALID_SESSION' })
+    return send(res, 200, { success: true, policies: policies(origin) })
   }
 
   // ── Change requests ──────────────────────────────────────────────────────
