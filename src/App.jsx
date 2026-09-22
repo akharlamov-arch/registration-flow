@@ -10,12 +10,17 @@ const OtpVerification  = lazy(() => import('./pages/OtpVerification'))
 const PostSigning      = lazy(() => import('./pages/PostSigning'))
 const RelinkPage       = lazy(() => import('./pages/RelinkPage'))
 const PortalPage       = lazy(() => import('./pages/PortalPage'))
+const PortalDemo       = lazy(() => import('./pages/portal-demo/PortalDemo'))
 
 function TitleUpdater() {
   const { t } = useI18n()
   const location = useLocation()
 
   useEffect(() => {
+    if (location.pathname.startsWith('/portal-demo')) {
+      document.title = 'iTrucking — Customer Portal'
+      return
+    }
     if (location.pathname.startsWith('/portal')) {
       document.title = t('portal.title')
       return
@@ -41,11 +46,15 @@ function PageFallback() {
 }
 
 function AppShell() {
+  // The redesign demo ships its own compact header, so the shared chrome
+  // (logo bar + language prompt) is skipped on that route only.
+  const isDemo = useLocation().pathname.startsWith('/portal-demo')
+
   return (
     <div className="min-h-screen bg-white font-sans">
       <TitleUpdater />
-      <Header />
-      <LanguagePromptModal />
+      {!isDemo && <Header />}
+      {!isDemo && <LanguagePromptModal />}
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/" element={<LeadForm />} />
@@ -53,6 +62,7 @@ function AppShell() {
           <Route path="/post-signing" element={<PostSigning />} />
           <Route path="/relink" element={<RelinkPage />} />
           <Route path="/portal" element={<PortalPage />} />
+          <Route path="/portal-demo" element={<PortalDemo />} />
         </Routes>
       </Suspense>
     </div>
