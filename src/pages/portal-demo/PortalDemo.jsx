@@ -321,6 +321,7 @@ export default function PortalDemo() {
               )
             ) : (
               <Step2Bank
+                token={token}
                 bank={customer?.bank}
                 connected={linked}
                 pending={bankPending}

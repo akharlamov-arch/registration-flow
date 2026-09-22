@@ -195,6 +195,8 @@ const portalDemoStrings = {
       pendingTitle: 'Bank details submitted for review',
       pendingBody: 'An iTrucking manager will contact you to complete verification. You do not need to do anything else for now.',
       pendingNote: 'We received your void check and account details through MOOV.',
+      changeQ: 'Changed banks, or connected the wrong account?',
+      keepBtn: 'Keep current account',
     },
     moov: {
       q: 'Having trouble connecting with Plaid?', link: 'Verify your bank with MOOV instead',
@@ -300,6 +302,8 @@ const portalDemoStrings = {
       pendingTitle: 'Банковские данные отправлены на проверку',
       pendingBody: 'Менеджер iTrucking свяжется с вами для завершения верификации. Пока от вас больше ничего не требуется.',
       pendingNote: 'Мы получили ваш void-чек и реквизиты через MOOV.',
+      changeQ: 'Сменили банк или подключили не тот счёт?',
+      keepBtn: 'Оставить текущий счёт',
     },
     moov: {
       q: 'Не получается подключиться через Plaid?', link: 'Подтвердите счёт через MOOV',
@@ -405,6 +409,8 @@ const portalDemoStrings = {
       pendingTitle: 'Банківські дані надіслані на перевірку',
       pendingBody: 'Менеджер iTrucking зв’яжеться з вами для завершення верифікації. Наразі від вас більше нічого не потрібно.',
       pendingNote: 'Ми отримали ваш void-чек і реквізити через MOOV.',
+      changeQ: 'Змінили банк або підключили не той рахунок?',
+      keepBtn: 'Залишити поточний рахунок',
     },
     moov: {
       q: 'Не вдається підключитися через Plaid?', link: 'Підтвердіть рахунок через MOOV',
@@ -510,6 +516,8 @@ const portalDemoStrings = {
       pendingTitle: 'Datos bancarios enviados a revisión',
       pendingBody: 'Un gerente de iTrucking se comunicará con usted para completar la verificación. Por ahora no necesita hacer nada más.',
       pendingNote: 'Recibimos su cheque anulado y los datos de la cuenta mediante MOOV.',
+      changeQ: '¿Cambió de banco o conectó la cuenta equivocada?',
+      keepBtn: 'Mantener la cuenta actual',
     },
     moov: {
       q: '¿Tiene problemas para conectar con Plaid?', link: 'Verifique su banco con MOOV',

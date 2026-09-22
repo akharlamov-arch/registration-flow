@@ -1,8 +1,11 @@
 // Step 2 — bank connection via Plaid.
 //
-// Simulated happy path: the real SDK needs a live link_token from the backend,
-// which the local mock cannot mint. The point here is the surrounding UX —
-// where the step sits, what it says, and what "verified" looks like afterwards.
+// Plaid Link itself is simulated — a mock link_token cannot drive the real SDK
+// — but the two calls around it are real: a re-link session is minted, and the
+// exchange is posted. Connecting for the first time and swapping to a different
+// bank run the same path, which is how the backend already works
+// (src/api/portal.js createPlaidVerificationSession → src/api/relink.js
+// exchangeRelink).
 //
 // A customer Plaid will not connect can fall back to manual verification
 // through MOOV — the same void check + account/routing details the main flow's
@@ -12,6 +15,8 @@
 import { useI18n } from '../../context/I18nContext'
 import { useState } from 'react'
 import MoovFallback from './MoovFallback'
+import { createPlaidVerificationSession } from '../../api/portal'
+import { exchangeRelink } from '../../api/relink'
 
 function BankIcon() {
   return (
@@ -29,7 +34,7 @@ function ShieldIcon() {
   )
 }
 
-function Connected({ bank }) {
+function Connected({ bank, onRelink }) {
   const { t } = useI18n()
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
@@ -43,6 +48,17 @@ function Connected({ bank }) {
             {bank?.institution || 'Chase'} ···· {bank?.last4 || '4471'} · Checking
           </p>
           <p className="text-xs text-gray-400 mt-2">{t('portalDemo.bank.verifiedNote')}</p>
+
+          <p className="text-xs text-gray-500 mt-4 mb-2">{t('portalDemo.bank.changeQ')}</p>
+          <button
+            type="button"
+            onClick={onRelink}
+            className="px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300
+                       hover:bg-gray-50 rounded-lg transition-colors duration-ds-normal cursor-pointer
+                       focus:outline-none focus:ring-2 focus:ring-gray-300"
+          >
+            {t('plaidStub.retryDifferentAccountBtn')}
+          </button>
         </div>
       </div>
     </div>
@@ -69,18 +85,33 @@ function PendingReview() {
   )
 }
 
-export default function Step2Bank({ bank, connected, pending, onConnected, onManualSubmitted }) {
+export default function Step2Bank({ token, bank, connected, pending, onConnected, onManualSubmitted }) {
   const { t } = useI18n()
   const [busy, setBusy] = useState(false)
   const [moovOpen, setMoovOpen] = useState(false)
+  // Swapping banks: the connected account stays in place until a new one is
+  // linked, so backing out leaves the customer exactly where they were.
+  const [relinking, setRelinking] = useState(false)
+  const [error, setError] = useState('')
 
-  const connect = () => {
-    setBusy(true)
-    // Stands in for the Plaid Link round trip.
-    setTimeout(() => {
+  const connect = async () => {
+    setError(''); setBusy(true)
+
+    const { ok, data } = await createPlaidVerificationSession(token)
+    if (!ok || !data?.success) {
       setBusy(false)
-      onConnected()
-    }, 1400)
+      return setError(t('otp.errorPlaidUnavailable'))
+    }
+
+    // Stands in for the Plaid Link round trip.
+    await new Promise((r) => setTimeout(r, 1200))
+
+    const exchange = await exchangeRelink(data.relink_token, { publicToken: 'public-demo-token' })
+    setBusy(false)
+    if (!exchange.ok) return setError(t('otp.errorPlaidFlowFailed'))
+
+    setRelinking(false)
+    onConnected()
   }
 
   return (
@@ -90,9 +121,15 @@ export default function Step2Bank({ bank, connected, pending, onConnected, onMan
         <p className="text-sm text-gray-500 mt-1 max-w-2xl">{t('portalDemo.bank.blurb')}</p>
       </header>
 
-      {connected ? (
-        <Connected bank={bank} />
-      ) : pending ? (
+      {error && (
+        <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4" role="alert">
+          {error}
+        </p>
+      )}
+
+      {connected && !relinking ? (
+        <Connected bank={bank} onRelink={() => { setError(''); setRelinking(true) }} />
+      ) : pending && !relinking ? (
         <PendingReview />
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6 sm:p-8">
@@ -139,6 +176,17 @@ export default function Step2Bank({ bank, connected, pending, onConnected, onMan
                 </button>
                 .
               </p>
+
+              {relinking && (
+                <button
+                  type="button"
+                  onClick={() => setRelinking(false)}
+                  className="mt-4 px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200
+                             hover:bg-gray-50 rounded-lg transition-colors duration-ds-normal"
+                >
+                  {t('portalDemo.bank.keepBtn')}
+                </button>
+              )}
             </div>
           </div>
         </div>

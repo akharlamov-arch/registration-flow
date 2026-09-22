@@ -46,8 +46,22 @@ const passwordTokens = new Map()
 const pendingTokens = new Map()
 // Proof that a reset code was accepted. Exchanged once for a new password.
 const resetTokens = new Map()
+
+// Re-link sessions: relink_token → email. Minted by
+// /api/portal/plaid/verification-session, consumed by the exchange.
+const relinkTokens = new Map()
+
+// A customer who reconnects lands on a different bank, so the change is
+// visible. Keyed by email; overrides whatever the fixture holds.
+const bankOverrides = new Map()
+const OTHER_BANKS = [
+  { institution: 'Wells Fargo', last4: '8830' },
+  { institution: 'Bank of America', last4: '2215' },
+  { institution: 'US Bank', last4: '6074' },
+]
+let bankSeq = 0
 let tokenSeq = 0
-const STORES = { pwd: passwordTokens, pending: pendingTokens, reset: resetTokens }
+const STORES = { pwd: passwordTokens, pending: pendingTokens, reset: resetTokens, relink: relinkTokens }
 const mintToken = (kind, email) => {
   const token = `${kind}-${++tokenSeq}`
   STORES[kind].set(token, email)
@@ -236,7 +250,13 @@ function emailForToken(token) {
 function customerFor(email, origin) {
   const key = String(email || '').trim().toLowerCase()
   const resolved = CUSTOMERS[key] ? key : FALLBACK
-  return { has_password: passwords.has(resolved), ...CUSTOMERS[resolved](origin) }
+  const base = CUSTOMERS[resolved](origin)
+  const override = bankOverrides.get(resolved)
+  if (override) {
+    base.bank = override
+    base.bank_verification = { plaid_linked: true }
+  }
+  return { has_password: passwords.has(resolved), ...base }
 }
 
 // ── HTTP plumbing ──────────────────────────────────────────────────────────
@@ -469,18 +489,40 @@ const server = createServer(async (req, res) => {
   // ── Plaid ────────────────────────────────────────────────────────────────
   // A mock link_token cannot satisfy the real Plaid SDK, so the gate is
   // reviewable but not completable. Log in as the linked persona to get past it.
+  // Mints a re-link session for the signed-in customer. Used both to connect a
+  // bank for the first time and to swap to a different one.
   if (pathname === '/api/portal/plaid/verification-session') {
+    const token = (req.headers.authorization || '').replace('Bearer ', '')
+    const email = emailForToken(token)
+    if (!email) return send(res, 401, { success: false, code: 'INVALID_SESSION' })
     return send(res, 200, {
       success: true,
-      relink_token: 'mock-relink-token',
+      relink_token: mintToken('relink', email),
       expires_at: new Date(Date.now() + 3600e3).toISOString(),
     })
   }
 
   if (pathname.startsWith('/api/plaid/relink/')) {
+    // A mock link_token cannot satisfy the real Plaid SDK, so Link itself is
+    // simulated client-side; the session and the exchange are real calls.
     if (pathname.endsWith('/link-token')) {
       return send(res, 503, { success: false, code: 'PLAID_SESSION_UNAVAILABLE' })
     }
+
+    if (pathname.endsWith('/exchange')) {
+      await readBody(req)
+      const relinkToken = decodeURIComponent(pathname.split('/')[4] || '')
+      const email = relinkTokens.get(relinkToken)
+      // 410 for a token that was never issued, already used, or expired —
+      // matching the failure mode documented in src/api/relink.js.
+      if (!email) return send(res, 410, { success: false, code: 'RELINK_TOKEN_CONSUMED' })
+
+      relinkTokens.delete(relinkToken)
+      bankOverrides.set(email, OTHER_BANKS[bankSeq++ % OTHER_BANKS.length])
+      console.log(`bank re-linked for ${email} → ${bankOverrides.get(email).institution}`)
+      return send(res, 200, { success: true, bank: bankOverrides.get(email) })
+    }
+
     return send(res, 200, { success: true })
   }
 
