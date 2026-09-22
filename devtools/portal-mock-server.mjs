@@ -221,7 +221,8 @@ function emailForToken(token) {
 
 function customerFor(email, origin) {
   const key = String(email || '').trim().toLowerCase()
-  return (CUSTOMERS[key] || CUSTOMERS[FALLBACK])(origin)
+  const resolved = CUSTOMERS[key] ? key : FALLBACK
+  return { has_password: passwords.has(resolved), ...CUSTOMERS[resolved](origin) }
 }
 
 // ── HTTP plumbing ──────────────────────────────────────────────────────────
@@ -283,24 +284,19 @@ const server = createServer(async (req, res) => {
 
   // ── Auth ─────────────────────────────────────────────────────────────────
 
-  // Which way this email signs in. NOTE for the backend team: answering this
-  // truthfully reveals whether an account exists, which /request-code
-  // deliberately avoids. See the frontend comment on loginMethod().
-  if (pathname === '/api/portal/login-method') {
-    const body = JSON.parse((await readBody(req)).toString() || '{}')
-    const key = String(body.email || '').trim().toLowerCase()
-    const known = CUSTOMERS[key] ? key : FALLBACK
-    return send(res, 200, { success: true, has_password: passwords.has(known) })
-  }
-
-  // Step one of a returning sign-in. A correct password alone does not sign
-  // anyone in — the client then requests an OTP and exchanges that for a token.
+  // Step one of a sign-in with a password. A correct password alone does not
+  // sign anyone in — the client then requests an OTP and exchanges that for a
+  // token.
+  //
+  // The same 401 comes back for an unknown email, an email with no password
+  // set, and a wrong password. Distinguishing them would tell an anonymous
+  // caller which accounts exist, which is exactly what /request-code avoids.
   if (pathname === '/api/portal/verify-password') {
     const body = JSON.parse((await readBody(req)).toString() || '{}')
     const key = String(body.email || '').trim().toLowerCase()
-    const known = CUSTOMERS[key] ? key : FALLBACK
-    if (passwords.get(known) !== String(body.password || '')) {
-      return send(res, 401, { success: false, code: 'PASSWORD_INVALID' })
+    const stored = passwords.get(key)
+    if (!stored || stored !== String(body.password || '')) {
+      return send(res, 401, { success: false, code: 'SIGN_IN_INVALID' })
     }
     return send(res, 200, { success: true })
   }

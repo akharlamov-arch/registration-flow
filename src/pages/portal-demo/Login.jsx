@@ -1,16 +1,25 @@
 // Sign-in for the portal demo.
 //
-// First login:      email → one-time code → create a password → in
-// Every login after: email → password → one-time code → in
+//   email + password → one-time code → in
+//   email, "send me a code" → one-time code → create a password → in
 //
-// The password never mints a session on its own: a correct password is
-// followed by an OTP, and only /verify-code returns the token. So the second
-// factor stays in place for returning customers too.
+// The screen never asks the server who has a password, and never tells the
+// customer whether an account exists: both paths start from the same form, and
+// a failed password returns one message for a wrong password, an account with
+// no password, and an address we have never seen.
+//
+// Whether to offer creating a password is decided *after* the OTP, from
+// `customer.has_password` on the authenticated response. At launch nobody has
+// one, so the one-time code is the path most people take — which is why it is
+// a full-width button rather than a footnote.
+//
+// A password alone never mints a session: only /verify-code returns a token,
+// so the second factor stays in place for returning customers too.
 
 import { useState } from 'react'
 import { useI18n } from '../../context/I18nContext'
 import { requestCode, verifyCode } from '../../api/portal'
-import { loginMethod, verifyPassword, setPassword } from './api'
+import { verifyPassword, setPassword } from './api'
 
 const MIN_PASSWORD = 8
 
@@ -24,6 +33,11 @@ const primaryBtn =
   'w-full px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-secondary rounded-lg ' +
   'shadow-ds-sm transition-colors duration-ds-normal cursor-pointer ' +
   'focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60 disabled:cursor-not-allowed'
+
+const secondaryBtn =
+  'w-full px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 ' +
+  'hover:bg-gray-50 rounded-lg transition-colors duration-ds-normal cursor-pointer ' +
+  'focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-60'
 
 function EyeIcon({ open }) {
   return (
@@ -80,9 +94,8 @@ function Field({ label, children }) {
 export default function Login({ onSignedIn }) {
   const { t } = useI18n()
 
-  // 'email' | 'password' | 'code' | 'create'
-  const [stage, setStage] = useState('email')
-  const [firstLogin, setFirstLogin] = useState(false)
+  // 'signin' | 'code' | 'create'
+  const [stage, setStage] = useState('signin')
 
   const [email, setEmail] = useState('')
   const [password, setPasswordValue] = useState('')
@@ -96,33 +109,29 @@ export default function Login({ onSignedIn }) {
 
   const fail = (key) => { setError(t(key)); setBusy(false) }
 
-  const submitEmail = async (e) => {
-    e.preventDefault()
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setError(t('portalDemo.login.errEmail'))
-    setError(''); setBusy(true)
+  const validEmail = () => /^\S+@\S+\.\S+$/.test(email.trim())
 
-    const { ok, data } = await loginMethod(email.trim())
-    if (ok && data?.has_password) {
-      setBusy(false)
-      setFirstLogin(false)
-      return setStage('password')
-    }
-    // No password on file — this is a first login: code first, password after.
-    await requestCode(email.trim())
-    setBusy(false)
-    setFirstLogin(true)
-    setStage('code')
-  }
-
-  const submitPassword = async (e) => {
+  // Password path: verify, then still require an OTP.
+  const submitSignIn = async (e) => {
     e.preventDefault()
+    if (!validEmail()) return setError(t('portalDemo.login.errEmail'))
     if (!password) return setError(t('portalDemo.login.errPasswordRequired'))
     setError(''); setBusy(true)
 
     const { ok } = await verifyPassword(email.trim(), password)
-    if (!ok) return fail('portalDemo.login.errPasswordWrong')
+    // One message for every failure — a wrong password, an account with no
+    // password, and an unknown address must be indistinguishable.
+    if (!ok) return fail('portalDemo.login.errSignIn')
 
-    // Correct password still earns only an OTP, never a session.
+    await requestCode(email.trim())
+    setBusy(false)
+    setStage('code')
+  }
+
+  // Code path: no password needed to reach the OTP screen.
+  const sendCode = async () => {
+    if (!validEmail()) return setError(t('portalDemo.login.errEmail'))
+    setError(''); setBusy(true)
     await requestCode(email.trim())
     setBusy(false)
     setStage('code')
@@ -137,7 +146,9 @@ export default function Login({ onSignedIn }) {
     if (!ok || !data?.success) return fail('portalDemo.login.errCode')
 
     setBusy(false)
-    if (firstLogin) {
+    // Only now, inside an authenticated response, do we learn whether this
+    // customer has a password — and offer to create one if not.
+    if (data.customer?.has_password === false) {
       setSession({ token: data.session_token, customer: data.customer })
       return setStage('create')
     }
@@ -158,14 +169,13 @@ export default function Login({ onSignedIn }) {
   }
 
   const HEAD = {
-    email:    ['portalDemo.login.heading', 'portalDemo.login.sub'],
-    password: ['portalDemo.login.passwordHeading', 'portalDemo.login.passwordSub'],
-    code:     ['portalDemo.login.heading', 'portalDemo.login.sub'],
-    create:   ['portalDemo.login.createHeading', 'portalDemo.login.createSub'],
+    signin: ['portalDemo.login.heading', 'portalDemo.login.sub'],
+    code:   ['portalDemo.login.heading', 'portalDemo.login.sub'],
+    create: ['portalDemo.login.createHeading', 'portalDemo.login.createSub'],
   }[stage]
 
   const restart = () => {
-    setStage('email'); setCode(''); setPasswordValue(''); setError('')
+    setStage('signin'); setCode(''); setPasswordValue(''); setError('')
   }
 
   return (
@@ -180,61 +190,31 @@ export default function Login({ onSignedIn }) {
           </p>
         )}
 
-        {stage === 'email' && (
-          <form onSubmit={submitEmail} className="space-y-4">
+        {stage === 'signin' && (
+          <form onSubmit={submitSignIn} className="space-y-4">
             <Field label={t('portalDemo.login.emailLabel')}>
               <input
                 type="email" autoComplete="email" className={inputCls} value={email}
                 placeholder="you@company.com" onChange={(e) => setEmail(e.target.value)}
               />
             </Field>
-            <button className={primaryBtn} disabled={busy}>
-              {busy ? t('portalDemo.login.sending') : t('portalDemo.login.continueBtn')}
-            </button>
-          </form>
-        )}
 
-        {stage === 'password' && (
-          <form onSubmit={submitPassword} className="space-y-4">
             <Field label={t('portalDemo.login.passwordLabel')}>
               <PasswordInput value={password} onChange={setPasswordValue} autoComplete="current-password" />
             </Field>
+
             <button className={primaryBtn} disabled={busy}>
               {busy ? t('portalDemo.login.verifying') : t('portalDemo.login.signInBtn')}
             </button>
-            <div className="text-xs pt-1">
-              <button type="button" onClick={restart} className="text-gray-500 hover:text-gray-800">
-                {t('portalDemo.login.changeEmail')}
-              </button>
-            </div>
-          </form>
-        )}
 
-        {stage === 'code' && (
-          <form onSubmit={submitCode} className="space-y-4">
-            <Field label={t('portalDemo.login.codeLabel')}>
-              <input
-                type="text" inputMode="text" autoComplete="one-time-code" maxLength={6}
-                className={`${inputCls} text-center text-lg [@media(pointer:coarse)]:text-lg font-bold tracking-[0.3em] uppercase`}
-                value={code} placeholder="000000" onChange={(e) => setCode(e.target.value)}
-              />
-            </Field>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              {t('portalDemo.login.codeAfterPassword')}
-            </p>
-            <button className={primaryBtn} disabled={busy}>
-              {busy ? t('portalDemo.login.verifying') : t('portalDemo.login.continueBtn')}
-            </button>
-            <div className="flex items-center justify-between text-xs pt-1">
-              <button type="button" onClick={restart} className="text-gray-500 hover:text-gray-800">
-                {t('portalDemo.login.changeEmail')}
-              </button>
-              <button
-                type="button"
-                onClick={() => requestCode(email.trim())}
-                className="text-primary hover:text-secondary"
-              >
-                {t('portalDemo.login.resend')}
+            {/* Prominent, not a footnote: until people have set a password this
+                is the path almost everyone takes. */}
+            <div className="pt-2 border-t border-gray-100">
+              <p className="text-xs text-gray-500 leading-relaxed mt-3 mb-2">
+                {t('portalDemo.login.firstTime')}
+              </p>
+              <button type="button" onClick={sendCode} disabled={busy} className={secondaryBtn}>
+                {busy ? t('portalDemo.login.sending') : t('portalDemo.login.useCodeBtn')}
               </button>
             </div>
           </form>
