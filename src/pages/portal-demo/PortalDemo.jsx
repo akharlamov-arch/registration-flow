@@ -20,6 +20,7 @@ import Stepper from './Stepper'
 import Step1Contract from './Step1Contract'
 import Step2Bank from './Step2Bank'
 import BankReminder from './BankReminder'
+import ContractSigned from './ContractSigned'
 
 const TOKEN_KEY = 'itrucking-portal-demo-token'
 
@@ -59,22 +60,6 @@ function AccountBar({ company, onSignOut }) {
           Sign out
         </button>
       </div>
-    </div>
-  )
-}
-
-function AllDone() {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-8 text-center">
-      <div className="w-14 h-14 rounded-full bg-green-50 border border-green-200 mx-auto flex items-center justify-center mb-4">
-        <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <h2 className="text-lg font-bold text-gray-900">You are all set</h2>
-      <p className="text-sm text-gray-500 mt-1 max-w-md mx-auto">
-        Your updated contract is signed and your bank account is verified. Nothing else is needed from you right now.
-      </p>
     </div>
   )
 }
@@ -291,20 +276,22 @@ export default function PortalDemo() {
           <div className="min-w-0">
             {remind && <BankReminder onGo={() => setStep(2)} />}
 
-            {allDone ? (
-              <AllDone />
-            ) : step === 1 ? (
-              <Step1Contract
-                values={values}
-                errors={errors}
-                choices={choices}
-                showErrors={showErrors}
-                complete={complete}
-                signing={signing}
-                onChange={setValue}
-                onSelectChoice={selectChoice}
-                onSign={handleSign}
-              />
+            {step === 1 ? (
+              signed ? (
+                <ContractSigned signedAt={customer?.contract?.signed_at} />
+              ) : (
+                <Step1Contract
+                  values={values}
+                  errors={errors}
+                  choices={choices}
+                  showErrors={showErrors}
+                  complete={complete}
+                  signing={signing}
+                  onChange={setValue}
+                  onSelectChoice={selectChoice}
+                  onSign={handleSign}
+                />
+              )
             ) : (
               <Step2Bank
                 bank={customer?.bank}
