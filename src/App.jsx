@@ -10,6 +10,7 @@ const OtpVerification  = lazy(() => import('./pages/OtpVerification'))
 const PostSigning      = lazy(() => import('./pages/PostSigning'))
 const RelinkPage       = lazy(() => import('./pages/RelinkPage'))
 const PortalPage       = lazy(() => import('./pages/PortalPage'))
+const PortalDemo       = lazy(() => import('./pages/portal-demo/PortalDemo'))
 
 function TitleUpdater() {
   const { t } = useI18n()
@@ -53,6 +54,7 @@ function AppShell() {
           <Route path="/post-signing" element={<PostSigning />} />
           <Route path="/relink" element={<RelinkPage />} />
           <Route path="/portal" element={<PortalPage />} />
+          <Route path="/portal-demo" element={<PortalDemo />} />
         </Routes>
       </Suspense>
     </div>
