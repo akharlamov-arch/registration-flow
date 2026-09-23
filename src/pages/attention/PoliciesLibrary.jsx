@@ -41,7 +41,7 @@ function PolicyCard({ policy }) {
             </span>
           </div>
           <p className="text-xs text-gray-400 mt-0.5">
-            {t('portalDemo.policies.inEffect')} {formatDate(policy.effective_date)}
+            {t('attention.policies.inEffect')} {formatDate(policy.effective_date)}
           </p>
 
           {policy.history[0]?.summary && (
@@ -55,7 +55,7 @@ function PolicyCard({ policy }) {
               rel="noreferrer"
               className="text-xs font-semibold text-primary hover:text-secondary transition-colors duration-ds-normal"
             >
-              {t('portalDemo.policies.readCurrent')}
+              {t('attention.policies.readCurrent')}
             </a>
 
             {older.length > 0 && (
@@ -64,7 +64,7 @@ function PolicyCard({ policy }) {
                 onClick={() => setOpen((o) => !o)}
                 className="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors duration-ds-normal"
               >
-                {open ? t('portalDemo.policies.hide') : `${t('portalDemo.policies.earlier')} (${older.length})`}
+                {open ? t('attention.policies.hide') : `${t('attention.policies.earlier')} (${older.length})`}
               </button>
             )}
           </div>
@@ -84,7 +84,7 @@ function PolicyCard({ policy }) {
                     rel="noreferrer"
                     className="inline-block text-xs font-medium text-gray-500 hover:text-gray-900 underline underline-offset-2 mt-1"
                   >
-                    {t('portalDemo.policies.readThis')}
+                    {t('attention.policies.readThis')}
                   </a>
                 </li>
               ))}
@@ -101,8 +101,8 @@ export default function PoliciesLibrary({ policies, loading }) {
   return (
     <div className="space-y-4">
       <header className="mb-2">
-        <h2 className="text-xl font-bold text-gray-900">{t('portalDemo.policies.heading')}</h2>
-        <p className="text-sm text-gray-500 mt-1 max-w-2xl">{t('portalDemo.policies.blurb')}</p>
+        <h2 className="text-xl font-bold text-gray-900">{t('attention.policies.heading')}</h2>
+        <p className="text-sm text-gray-500 mt-1 max-w-2xl">{t('attention.policies.blurb')}</p>
       </header>
 
       {loading ? (
@@ -112,7 +112,7 @@ export default function PoliciesLibrary({ policies, loading }) {
         </div>
       ) : policies.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
-          <p className="text-sm text-gray-500">{t('portalDemo.policies.empty')}</p>
+          <p className="text-sm text-gray-500">{t('attention.policies.empty')}</p>
         </div>
       ) : (
         policies.map((p) => <PolicyCard key={p.id} policy={p} />)

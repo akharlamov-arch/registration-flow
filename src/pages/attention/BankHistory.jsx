@@ -20,9 +20,9 @@ const BADGE = {
 }
 
 const STATUS_KEY = {
-  active:         'portalDemo.bank.historyActive',
-  pending_review: 'portalDemo.bank.historyPending',
-  replaced:       'portalDemo.bank.historyReplaced',
+  active:         'attention.bank.historyActive',
+  pending_review: 'attention.bank.historyPending',
+  replaced:       'attention.bank.historyReplaced',
 }
 
 function formatDate(iso) {
@@ -38,11 +38,11 @@ export default function BankHistory({ entries = [] }) {
   return (
     <section className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-5 sm:p-6 mt-4">
       <h3 className="text-base font-semibold text-gray-900 mb-4">
-        {t('portalDemo.bank.historyHeading')}
+        {t('attention.bank.historyHeading')}
       </h3>
 
       {entries.length === 0 ? (
-        <p className="text-sm text-gray-500">{t('portalDemo.bank.historyEmpty')}</p>
+        <p className="text-sm text-gray-500">{t('attention.bank.historyEmpty')}</p>
       ) : (
         <ol className="space-y-3">
           {entries.map((e) => {
@@ -74,8 +74,8 @@ export default function BankHistory({ entries = [] }) {
                 </span>
 
                 <span className="w-full text-xs text-gray-400">
-                  {connected && `${t('portalDemo.bank.historyConnected')} ${connected}`}
-                  {verified && ` · ${t('portalDemo.bank.historyVerified')} ${verified}`}
+                  {connected && `${t('attention.bank.historyConnected')} ${connected}`}
+                  {verified && ` · ${t('attention.bank.historyVerified')} ${verified}`}
                 </span>
 
                 {noteKey && <span className="w-full text-xs text-gray-500">{t(noteKey)}</span>}

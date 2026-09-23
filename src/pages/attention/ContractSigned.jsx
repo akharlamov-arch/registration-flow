@@ -29,20 +29,20 @@ export default function ContractSigned({ signedAt, onRequestChange }) {
   return (
     <div className="space-y-4">
       <header className="mb-2">
-        <h2 className="text-xl font-bold text-gray-900">{t('portalDemo.signed.heading')}</h2>
-        <p className="text-sm text-gray-500 mt-1 max-w-2xl">{t('portalDemo.signed.sub')}</p>
+        <h2 className="text-xl font-bold text-gray-900">{t('attention.signed.heading')}</h2>
+        <p className="text-sm text-gray-500 mt-1 max-w-2xl">{t('attention.signed.sub')}</p>
       </header>
 
       <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
         <div className="flex items-start gap-4">
           <CheckBadge />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900">{t('portalDemo.signed.title')}</p>
+            <p className="text-sm font-semibold text-gray-900">{t('attention.signed.title')}</p>
             <p className="text-sm text-gray-500 mt-0.5">
-              {when ? `${t('portalDemo.signed.on')} ${when}.` : t('portalDemo.signed.justNow')}{' '}
-              {t('portalDemo.signed.body')}
+              {when ? `${t('attention.signed.on')} ${when}.` : t('attention.signed.justNow')}{' '}
+              {t('attention.signed.body')}
             </p>
-            <p className="text-xs text-gray-400 mt-2">{t('portalDemo.signed.note')}</p>
+            <p className="text-xs text-gray-400 mt-2">{t('attention.signed.note')}</p>
 
             <button
               type="button"
@@ -51,7 +51,7 @@ export default function ContractSigned({ signedAt, onRequestChange }) {
                          rounded-lg shadow-ds-sm transition-colors duration-ds-normal cursor-pointer
                          focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
-              {t('portalDemo.signed.changeBtn')}
+              {t('attention.signed.changeBtn')}
             </button>
           </div>
         </div>

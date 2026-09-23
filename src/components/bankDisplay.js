@@ -1,7 +1,7 @@
 // How the portal names a bank and explains a `bank_history` entry
-// (PORTAL-BANK-02). Both portal pages (src/pages/attantion,
-// src/pages/portal-demo) render through these, so neither can drift from the
-// backend contract — docs/conventions/portal-api-contract.md in pijb.
+// (PORTAL-BANK-02). The attention page (src/pages/attention/) renders through
+// these, and so should anything else that shows a bank, so no surface can drift
+// from the backend contract — docs/conventions/portal-api-contract.md in pijb.
 //
 // `method` is three-valued: `plaid`, `moov`, and `manual` (typed in, imported,
 // or pre-Plaid). Collapsing it to two is how a bank Plaid never saw came to
@@ -9,15 +9,15 @@
 // manual: the portal never claims a verification the backend did not report.
 
 const METHOD_KEYS = {
-  plaid: 'portalDemo.bank.historyMethod.plaid',
-  moov: 'portalDemo.bank.historyMethod.moov',
-  manual: 'portalDemo.bank.historyMethod.manual',
+  plaid: 'attention.bank.historyMethod.plaid',
+  moov: 'attention.bank.historyMethod.moov',
+  manual: 'attention.bank.historyMethod.manual',
 }
 
 const NOTE_KEYS = {
-  plaid: 'portalDemo.bank.historyViaPlaid',
-  moov: 'portalDemo.bank.historyViaMoov',
-  manual: 'portalDemo.bank.historyViaManual',
+  plaid: 'attention.bank.historyViaPlaid',
+  moov: 'attention.bank.historyViaMoov',
+  manual: 'attention.bank.historyViaManual',
 }
 
 // "Chase ···· 4471", "···· 0000" (no institution on file), "Chase" (no last
@@ -42,7 +42,7 @@ const ACCEPTED_STATUSES = ['active', 'replaced']
 // `pending_verification | rejected | failed`) gets no sentence rather than one
 // claiming a verification that did not happen.
 export function historyNoteKey({ status, method } = {}) {
-  if (status === 'pending_review') return 'portalDemo.bank.historyAwaitingReview'
+  if (status === 'pending_review') return 'attention.bank.historyAwaitingReview'
   if (!ACCEPTED_STATUSES.includes(status)) return null
   return NOTE_KEYS[method] || NOTE_KEYS.manual
 }

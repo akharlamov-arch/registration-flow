@@ -1,5 +1,7 @@
 # ATTANTION-PAGE-01 — рабочая копия portal-demo на `/attantion`
 
+> **Продолжение — PORTAL-UI-01** (`pijb/docs/tickets/PORTAL_ATTENTION_PAGE_TICKET.md`): страница переехала на `#/attention` (`src/pages/attention/AttentionPage.jsx`), `portal-demo` удалён, `#/attantion` и `#/portal-demo` перенаправляют на `#/attention`. Ниже — запись о том, что было сделано под старым именем.
+
 **Статус:** готово к ревью
 **Дата:** 2026-09-23 (обновлено: визуал контрактной вкладки восстановлен + реальные гейты на `/portal` теперь ведут на `/attantion`)
 

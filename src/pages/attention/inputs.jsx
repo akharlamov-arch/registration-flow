@@ -1,4 +1,4 @@
-// Form controls for the portal demo. Same design tokens as the registration
+// Form controls for the attention page. Same design tokens as the registration
 // flow, tuned denser: 14px text, tighter rows, left-aligned.
 //
 // The driver-licence attachment uses Attachment, which replicates the control
@@ -83,7 +83,7 @@ function SecretInput({ value, onChange, invalid, format, digits, placeholder }) 
 
 /** Renders one field from the `fields.js` table. Labels, placeholders and the
  *  error message arrive as translation keys and are resolved here. */
-export default function DemoField({ field, value, error, onChange }) {
+export default function PortalField({ field, value, error, onChange, token }) {
   const { t } = useI18n()
   const invalid = !!error
   const label = field.labelKey ? t(field.labelKey) : field.label
@@ -137,7 +137,7 @@ export default function DemoField({ field, value, error, onChange }) {
       )
       break
     case 'file':
-      control = <Attachment value={value} onChange={onChange} invalid={invalid} />
+      control = <Attachment value={value} onChange={onChange} invalid={invalid} token={token} />
       break
     case 'zip':
       control = (

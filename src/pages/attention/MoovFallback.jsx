@@ -76,7 +76,7 @@ export default function MoovFallback({ open, token, onClose, onSubmitted }) {
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={t('portalDemo.moov.title')}
+      aria-label={t('attention.moov.title')}
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -85,13 +85,13 @@ export default function MoovFallback({ open, token, onClose, onSubmitted }) {
       >
         <div className="sticky top-0 bg-white border-b border-gray-200 px-5 sm:px-6 py-4 flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h3 className="text-base font-semibold text-gray-900">{t('portalDemo.moov.title')}</h3>
-            <p className="text-sm text-gray-500 mt-0.5">{t('portalDemo.moov.sub')}</p>
+            <h3 className="text-base font-semibold text-gray-900">{t('attention.moov.title')}</h3>
+            <p className="text-sm text-gray-500 mt-0.5">{t('attention.moov.sub')}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label={t('portalDemo.moov.close')}
+            aria-label={t('attention.moov.close')}
             className="shrink-0 -mr-1 p-1.5 text-gray-400 hover:text-gray-700 rounded-lg transition-colors duration-ds-normal"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -152,7 +152,7 @@ export default function MoovFallback({ open, token, onClose, onSubmitted }) {
               className="px-4 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200
                          hover:bg-gray-50 rounded-lg transition-colors duration-ds-normal"
             >
-              {t('portalDemo.cancel')}
+              {t('attention.cancel')}
             </button>
             <button
               type="submit"
@@ -161,7 +161,7 @@ export default function MoovFallback({ open, token, onClose, onSubmitted }) {
                          shadow-ds-sm transition-colors duration-ds-normal
                          focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
             >
-              {busy ? t('portalDemo.moov.submitting') : t('portalDemo.moov.submit')}
+              {busy ? t('attention.moov.submitting') : t('attention.moov.submit')}
             </button>
           </div>
         </form>

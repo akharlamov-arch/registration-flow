@@ -12,12 +12,11 @@ import PortalNotice from './PortalNotice'
  * from `/api/portal/me`, resolved by `Pijb.Contracts.Freshness`.
  *
  * `Update` no longer opens `PortalContractForm` in place (ATTANTION-PAGE-01):
- * it hands the session token to the redesigned portal (`/attantion`) via
+ * it hands the session token to the redesigned portal (`/attention`) via
  * router state — never the URL, the token is a bearer credential — and opens
- * it on the "Updated contract details" tab, with "Bank account" locked there
- * until this gate's own condition (`contract.stale`) clears. That keeps a
- * customer sent here to fix one thing from wandering off to the other
- * mid-flow. The real editing form lives on that page now, reusing the same
+ * it on the "Updated contract details" tab. The bank tab stays reachable
+ * there: that page never locks it (only the bank gate locks the contract tab).
+ * The real editing form lives on that page now, reusing the same
  * fetchContractSubject/submitContractSubject pair this gate used to call
  * directly.
  *
@@ -46,7 +45,9 @@ export default function PortalContractUpdateGate({
     : t('portal.contractGate.bodyUndated')
 
   const handleUpdate = () => {
-    navigate('/attantion', { state: { token: sessionToken, entry: 'contract' } })
+    // Directly, never via a retired URL: those redirect, and a redirect drops
+    // router state — the token would not arrive.
+    navigate('/attention', { state: { token: sessionToken, entry: 'contract' } })
   }
 
   return (

@@ -3,9 +3,7 @@
 // and 2551-2612): a dashed drop panel that turns into a green-ticked filename
 // with "Click to change file" once something is attached.
 //
-// Unlike the portal-demo original this was copied from — which just reported
-// the picked file's name and never actually uploaded anything — this one
-// really uploads: the same two-step presignUpload + uploadToS3 flow
+// The picked file is really uploaded: the same two-step presignUpload + uploadToS3 flow
 // src/pages/PortalPage.jsx's own change-request file picker already uses
 // (src/api/portal.js). The value the field carries once uploaded is the S3
 // key (`driver_license_file_name` in the real contract payload), while the

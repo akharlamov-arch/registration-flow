@@ -9,7 +9,7 @@
 
 import { useI18n } from '../../context/I18nContext'
 import { GROUPS } from './fields'
-import DemoField from './inputs'
+import PortalField from './inputs'
 import { groupHidden } from './formState'
 
 function ChoiceRadios({ group, selected, onSelect }) {
@@ -50,7 +50,7 @@ function ChoiceRadios({ group, selected, onSelect }) {
   )
 }
 
-function GroupCard({ group, values, errors, choices, onChange, onSelectChoice }) {
+function GroupCard({ group, values, errors, choices, onChange, onSelectChoice, token }) {
   const { t } = useI18n()
   const hidden = groupHidden(group, choices)
 
@@ -74,11 +74,12 @@ function GroupCard({ group, values, errors, choices, onChange, onSelectChoice })
                 id={`field-${field.key}`}
                 className={field.span === 2 ? 'sm:col-span-2' : ''}
               >
-                <DemoField
+                <PortalField
                   field={field}
                   value={values[field.key] ?? ''}
                   error={errors[field.key]}
                   onChange={(v) => onChange(field.key, v)}
+                  token={token}
                 />
               </div>
             ))}
@@ -99,11 +100,11 @@ function GroupCard({ group, values, errors, choices, onChange, onSelectChoice })
 
 export default function Step1Contract({
   values, errors, choices, showErrors, complete, signing, mode = 'sign',
-  onChange, onSelectChoice, onSign, onCancel,
+  onChange, onSelectChoice, onSign, onCancel, token, formError,
 }) {
   const { t } = useI18n()
   const errorCount = Object.keys(errors).length
-  const copy = (k) => t(`portalDemo.${mode}.${k}`)
+  const copy = (k) => t(`attention.${mode}.${k}`)
 
   return (
     <div className="space-y-4">
@@ -111,6 +112,12 @@ export default function Step1Contract({
         <h2 className="text-xl font-bold text-gray-900">{copy('heading')}</h2>
         <p className="text-sm text-gray-500 mt-1 max-w-2xl">{copy('blurb')}</p>
       </header>
+
+      {formError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3.5" role="alert">
+          <p className="text-sm font-semibold text-red-800">{formError}</p>
+        </div>
+      )}
 
       {GROUPS.map((group) => (
         <GroupCard
@@ -121,6 +128,7 @@ export default function Step1Contract({
           choices={choices}
           onChange={onChange}
           onSelectChoice={onSelectChoice}
+          token={token}
         />
       ))}
 
@@ -130,7 +138,7 @@ export default function Step1Contract({
             {complete
               ? copy('ready')
               : showErrors && errorCount > 0
-                ? `${errorCount} ${t(errorCount === 1 ? 'portalDemo.needAttentionOne' : 'portalDemo.needAttentionMany')}`
+                ? `${errorCount} ${t(errorCount === 1 ? 'attention.needAttentionOne' : 'attention.needAttentionMany')}`
                 : copy('idle')}
           </p>
           <div className="flex flex-col-reverse sm:flex-row gap-2 sm:items-center">
@@ -141,7 +149,7 @@ export default function Step1Contract({
               className="px-4 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200
                          hover:bg-gray-50 rounded-lg transition-colors duration-ds-normal"
             >
-              {t('portalDemo.cancel')}
+              {t('attention.cancel')}
             </button>
           )}
           <button

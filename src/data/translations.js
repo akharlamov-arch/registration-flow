@@ -163,11 +163,12 @@ const portalStrings = {
   },
 }
 
-// Customer-portal redesign demo (#/portal-demo). Only the copy that has no
-// counterpart in the registration flow lives here — everything the demo reuses
-// (field labels, placeholders, validation messages, section headings) is read
-// from the existing keys, which are already translated.
-const portalDemoStrings = {
+// The customer portal's attention page (#/attention, src/pages/attention/).
+// Only the copy that has no counterpart in the registration flow lives here —
+// everything the page reuses (field labels, placeholders, validation messages,
+// section headings) is read from the existing keys, which are already
+// translated.
+const attentionStrings = {
   en: {
     fields: { companyEmail: 'Company Billing Email', discountTier: 'Discount tier' },
     heroAttention: 'A few things need your attention',
@@ -232,11 +233,6 @@ const portalDemoStrings = {
       body: 'Your details are on file with our team.',
       note: 'Your details can change at any time — the contract itself does not need signing again.',
       changeBtn: 'Change request',
-    },
-    submitted: {
-      heading: 'Change request sent', title: 'We have your updated details',
-      body: 'Our team reviews the request and applies it to your account. Nothing on your account changes until it is approved, and your contract stays signed.',
-      back: 'Back to my details',
     },
     bank: {
       heading: 'Connect your bank account',
@@ -355,11 +351,6 @@ const portalDemoStrings = {
       note: 'Данные можно изменить в любой момент — сам контракт переподписывать не нужно.',
       changeBtn: 'Запросить изменение',
     },
-    submitted: {
-      heading: 'Запрос отправлен', title: 'Мы получили ваши обновлённые данные',
-      body: 'Наша команда рассмотрит запрос и применит его к аккаунту. До одобрения ничего не меняется, а контракт остаётся подписанным.',
-      back: 'Вернуться к моим данным',
-    },
     bank: {
       heading: 'Подключите банковский счёт',
       blurb: 'Мы используем Plaid, чтобы убедиться, что счёт настоящий и принадлежит вашей компании. Так до вас доходят выплаты.',
@@ -476,11 +467,6 @@ const portalDemoStrings = {
       body: 'Ваші дані передані нашій команді.',
       note: 'Дані можна змінити будь-коли — сам контракт перепідписувати не потрібно.',
       changeBtn: 'Запросити зміну',
-    },
-    submitted: {
-      heading: 'Запит надіслано', title: 'Ми отримали ваші оновлені дані',
-      body: 'Наша команда розгляне запит і застосує його до акаунта. До схвалення нічого не змінюється, а контракт лишається підписаним.',
-      back: 'Повернутися до моїх даних',
     },
     bank: {
       heading: 'Підключіть банківський рахунок',
@@ -599,11 +585,6 @@ const portalDemoStrings = {
       note: 'Sus datos pueden cambiar en cualquier momento — no hace falta volver a firmar el contrato.',
       changeBtn: 'Solicitar cambio',
     },
-    submitted: {
-      heading: 'Solicitud enviada', title: 'Hemos recibido sus datos actualizados',
-      body: 'Nuestro equipo revisa la solicitud y la aplica a su cuenta. Nada cambia hasta que se apruebe, y su contrato sigue firmado.',
-      back: 'Volver a mis datos',
-    },
     bank: {
       heading: 'Conecte su cuenta bancaria',
       blurb: 'Usamos Plaid para confirmar que su cuenta es real y pertenece a su empresa. Así le llegan los pagos.',
@@ -660,7 +641,7 @@ const portalDemoStrings = {
 const translations = {
   en: {
     portal: portalStrings,
-    portalDemo: portalDemoStrings.en,
+    attention: attentionStrings.en,
     common: {
       next: 'Next',
       back: 'Back',
@@ -1121,7 +1102,7 @@ const translations = {
 
   ru: {
     portal: portalStrings,
-    portalDemo: portalDemoStrings.ru,
+    attention: attentionStrings.ru,
     common: {
       next: 'Далее',
       back: 'Назад',
@@ -1582,7 +1563,7 @@ const translations = {
 
   uk: {
     portal: portalStrings,
-    portalDemo: portalDemoStrings.uk,
+    attention: attentionStrings.uk,
     common: {
       next: 'Далі',
       back: 'Назад',
@@ -2043,7 +2024,7 @@ const translations = {
 
   es: {
     portal: portalStrings,
-    portalDemo: portalDemoStrings.es,
+    attention: attentionStrings.es,
     common: {
       next: 'Siguiente',
       back: 'Atrás',

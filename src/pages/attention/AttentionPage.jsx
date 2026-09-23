@@ -1,38 +1,34 @@
-// Customer portal — /attantion.
+// Customer portal — the attention page (#/attention).
 //
-// A copy of the portal-demo redesign (src/pages/portal-demo/PortalDemo.jsx).
-// The "Updated contract details" tab keeps the exact visual of the original
-// (Step1Contract.jsx + fields.js — the card-per-section layout with the
-// "same as company" address shortcuts), but the data under it is real: values
-// are loaded from and saved to the same /api/portal/contract endpoints
-// src/components/PortalContractForm.jsx uses — the modal
-// PortalContractUpdateGate opens when it detects a stale contract
-// (`customer.contract.stale`). See formState.js for the field mapping between
-// this step's flat GROUPS and the real, more nested contract subject.
+// What the customer still owes us — an updated contract and a verified bank —
+// as steps that can be completed in any order, plus the documents library.
+// This is the portal's only copy of these screens (PORTAL-UI-01).
+//
+// The "Updated contract details" tab is a card-per-section form
+// (Step1Contract.jsx + fields.js, with the "same as company" address
+// shortcuts) over the real contract subject: values are loaded from and saved
+// to the /api/portal/contract endpoints src/components/PortalContractForm.jsx
+// also uses. See formState.js for the field mapping between this step's flat
+// GROUPS and the real, more nested contract subject.
 //
 // The "Bank account" tab's "Connect with Plaid" button drives the real Plaid
-// Link flow — the same usePlaidLink + createPlaidVerificationSession +
-// fetchRelinkLinkToken + exchangeRelink sequence
-// PortalBankVerificationGate's "Verify" button runs (see Step2Bank.jsx).
+// Link flow (usePlaidLink + createPlaidVerificationSession +
+// fetchRelinkLinkToken + exchangeRelink — see Step2Bank.jsx).
 //
-// Because both tabs now read and write the real backend, `signed`/`linked`
-// are derived straight from `customer` on every render (not tracked as
-// separate state, the way the portal-demo original fakes an instant flip) —
-// a `refresh()` after either flow is what actually moves a tab from "Action
-// required" to "Completed".
+// Both tabs read and write the real backend, so `signed`/`linked` are derived
+// straight from `customer` on every render rather than tracked as separate
+// state — a `refresh()` after either flow is what actually moves a tab from
+// "Action required" to "Completed". Against devtools/portal-mock-server.mjs,
+// the mock's personas decide which state you land in.
 //
-// Data comes from the same /api/portal endpoints as the real page, so the
-// three mock personas drive which state you land in.
-//
-// Arriving from a real gate (ATTANTION-PAGE-01): `PortalContractUpdateGate`'s
+// Arriving from a gate (ATTANTION-PAGE-01): `PortalContractUpdateGate`'s
 // "Update" and `PortalBankVerificationGate`'s "Verify" now navigate here
 // instead of acting in place, handing the already-authenticated session token
 // through router state (`location.state.token` — never the URL, it is a
 // bearer credential) plus which gate sent the customer (`entry`). That opens
-// the matching tab directly and locks the other one for as long as the gate
-// that sent them here is still open — signing the contract or linking the
-// bank is what lifts it — so a customer sent to fix one thing cannot wander
-// off to the other mid-flow.
+// the matching tab directly. A customer sent by the bank gate finds the
+// contract tab locked until the bank is linked, so they cannot wander off
+// mid-flow; the bank tab itself is never locked (see `lockedStep` below).
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -51,7 +47,7 @@ import ContractSigned from './ContractSigned'
 import PoliciesLibrary from './PoliciesLibrary'
 import Login from './Login'
 
-const TOKEN_KEY = 'itrucking-attantion-token'
+const TOKEN_KEY = 'itrucking-attention-token'
 
 // ── Chrome ──────────────────────────────────────────────────────────────────
 
@@ -70,7 +66,7 @@ function AccountBar({ company, onSignOut }) {
           onClick={onSignOut}
           className="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors duration-ds-normal"
         >
-          {t('portalDemo.signOut')}
+          {t('attention.signOut')}
         </button>
       </div>
     </div>
@@ -116,14 +112,14 @@ function ContractSent({ sentTo, onBack }) {
 
 // ── Page ────────────────────────────────────────────────────────────────────
 
-export default function PortalDemo() {
+export default function AttentionPage() {
   const { t } = useI18n()
   const location = useLocation()
   const navigate = useNavigate()
   // Captured once, at mount, rather than read from `location.state` on every
   // render: the browser keeps `history.state` attached to this entry across
   // an ordinary reload (not just React re-renders), so a plain read would
-  // keep re-arming the lock every time this tab reopens `/attantion`, and
+  // keep re-arming the lock every time this tab reopens `/attention`, and
   // would also survive an explicit Sign out + fresh sign-in — a customer who
   // reloads or starts over should land like any ordinary visit, not stay
   // routed from the gate that brought them here once. The effect right below
@@ -144,7 +140,7 @@ export default function PortalDemo() {
 
   // Manual MOOV details submitted — a person reviews them, so this is neither
   // unconnected nor verified. There is no real backend field for this yet, so
-  // it stays local to the session, same as the portal-demo original.
+  // it stays local to the session.
   const [bankPending, setBankPending] = useState(false)
   // 1 | 2 | 'policies'
   const [step, setStep] = useState(1)
@@ -362,7 +358,16 @@ export default function PortalDemo() {
   if (view === 'login') {
     return (
       <div className="min-h-screen bg-surface">
-        <Login onSignedIn={(t, c) => { setToken(t); applyCustomer(c); setView('portal') }} />
+        <Login
+          onSignedIn={(t, c) => {
+            // Stored like a routed token, so a reload keeps the session (the
+            // mount effect above reads this key).
+            sessionStorage.setItem(TOKEN_KEY, t)
+            setToken(t)
+            applyCustomer(c)
+            setView('portal')
+          }}
+        />
       </div>
     )
   }
@@ -374,8 +379,8 @@ export default function PortalDemo() {
   const lockedStep = entry === 'bank' && !linked ? 1 : null
 
   const steps = [
-    { id: 1, title: t('portalDemo.steps.contract'), state: lockedStep === 1 ? 'locked' : signed ? 'done' : 'active' },
-    { id: 2, title: t('portalDemo.steps.bank'), state: linked ? 'done' : bankPending ? 'pending' : 'active' },
+    { id: 1, title: t('attention.steps.contract'), state: lockedStep === 1 ? 'locked' : signed ? 'done' : 'active' },
+    { id: 2, title: t('attention.steps.bank'), state: linked ? 'done' : bankPending ? 'pending' : 'active' },
   ]
 
   const allDone = signed && linked
@@ -441,10 +446,10 @@ export default function PortalDemo() {
 
         <div className="mb-6">
           <h1 className="text-lg sm:text-xl font-bold text-gray-900">
-            {allDone ? t('portalDemo.heroUpToDate') : t('portalDemo.heroAttention')}
+            {allDone ? t('attention.heroUpToDate') : t('attention.heroAttention')}
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {allDone ? t('portalDemo.subNothing') : t('portalDemo.subAnyOrder')}
+            {allDone ? t('attention.subNothing') : t('attention.subAnyOrder')}
           </p>
         </div>
 
@@ -473,9 +478,9 @@ export default function PortalDemo() {
                 </span>
                 <span className="min-w-0">
                   <span className={`block text-sm font-semibold ${step === 'policies' ? 'text-gray-900' : 'text-gray-500'}`}>
-                    {t('portalDemo.docsNav.title')}
+                    {t('attention.docsNav.title')}
                   </span>
-                  <span className="block text-xs text-gray-400 mt-0.5">{t('portalDemo.docsNav.sub')}</span>
+                  <span className="block text-xs text-gray-400 mt-0.5">{t('attention.docsNav.sub')}</span>
                 </span>
               </button>
             </div>

@@ -3,7 +3,7 @@
 // Labels, placeholders and section headings are translation KEYS, not literals.
 // Almost every one points at a key the registration flow already owns, so the
 // portal asks for the same thing in the same words — and inherits EN/RU/UK/ES
-// for free. Only copy with no counterpart there lives under `portalDemo.*`.
+// for free. Only copy with no counterpart there lives under `attention.*`.
 //
 // Sources:
 //   select options   src/pages/LeadForm.jsx:894-897 (businessType)
@@ -67,8 +67,8 @@ export const GROUPS = [
       { key: 'company_trucks', crm: 'Truck Count',                  labelKey: 'lead.stepBusiness.trucks',       type: 'number', required: true, placeholder: '5' },
       { key: 'company_dot',    crm: 'DOT Number',                   labelKey: 'lead.stepBusiness.dot',          type: 'text',   required: false, placeholder: '1234567' },
       { key: 'company_mc',     crm: 'MC Number',                    labelKey: 'lead.stepBusiness.mc',           type: 'text',   required: false, placeholder: '123456' },
-      { key: 'company_email',  crm: 'Company Billing Email',        labelKey: 'portalDemo.fields.companyEmail', type: 'email',  required: true, isNew: true, placeholderKey: 'billingContact.placeholderEmail' },
-      { key: 'discount_tier',  crm: 'Fuel Discount Tier Level',     labelKey: 'portalDemo.fields.discountTier', type: 'readonly' },
+      { key: 'company_email',  crm: 'Company Billing Email',        labelKey: 'attention.fields.companyEmail', type: 'email',  required: true, isNew: true, placeholderKey: 'billingContact.placeholderEmail' },
+      { key: 'discount_tier',  crm: 'Fuel Discount Tier Level',     labelKey: 'attention.fields.discountTier', type: 'readonly' },
     ],
     noticeKey: 'lead.stepBusiness.dotMcHint',
   },

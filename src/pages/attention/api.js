@@ -1,5 +1,7 @@
-// Demo-only API calls. Kept out of src/api/portal.js so the shared module that
-// the live portal uses is not changed for a demo.
+// API calls only the attention page makes: the documents library, the
+// two-factor sign-in, and the manual (MOOV) bank submission. They live beside
+// the page rather than in src/api/portal.js, which the older /portal page
+// (src/pages/PortalPage.jsx) also uses.
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -58,7 +60,7 @@ export function setPassword(token, password) {
 /**
  * Exchanges the emailed code for a session — but only when both factors are in.
  *
- * Demo-local rather than reusing src/api/portal.js, because it carries
+ * Separate from src/api/portal.js's verifyCode, because it carries
  * `password_token`: proof that the password was accepted earlier in this same
  * attempt. Without it, an account that has a password gets no session and the
  * response says `password_required` with a `pending_token` instead.

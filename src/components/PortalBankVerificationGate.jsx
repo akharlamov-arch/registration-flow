@@ -9,7 +9,7 @@ import PortalNotice from './PortalNotice'
  * shared with the stale-contract notice.
  *
  * `Verify` no longer runs the Plaid flow in place (ATTANTION-PAGE-01): it
- * hands the session token to the redesigned portal (`/attantion`) via router
+ * hands the session token to the redesigned portal (`/attention`) via router
  * state — never the URL, the token is a bearer credential — and opens it on
  * the "Bank account" tab, with "Updated contract details" locked there until
  * this gate's own condition (`bank_verification.plaid_linked`) clears. That
@@ -45,7 +45,9 @@ export default function PortalBankVerificationGate({
   const navigate = useNavigate()
 
   const handleVerify = () => {
-    navigate('/attantion', { state: { token: sessionToken, entry: 'bank' } })
+    // Directly, never via a retired URL: those redirect, and a redirect drops
+    // router state — the token would not arrive.
+    navigate('/attention', { state: { token: sessionToken, entry: 'bank' } })
   }
 
   return (

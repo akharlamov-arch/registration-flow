@@ -128,7 +128,7 @@ function doc(origin, name, type) {
 }
 
 // What the customer submitted when they signed. Keys match
-// src/pages/portal-demo/fields.js so a change request opens pre-filled.
+// src/pages/attention/fields.js so a change request opens pre-filled.
 function signedDetails(over = {}) {
   return {
     values: {

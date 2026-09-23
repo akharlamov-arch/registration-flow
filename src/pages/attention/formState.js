@@ -1,10 +1,8 @@
 // Form state, validation and the submit payload for step 1.
 // Pure functions only — no React, no HTTP.
 //
-// The visual layout (Step1Contract.jsx, GROUPS in fields.js) is copied
-// unchanged from portal-demo. What changed is what backs it: instead of a
-// customer-derived guess and a payload nobody reads, the values below are
-// mapped from the real contract subject (src/api/portal.js's
+// The visual layout lives in Step1Contract.jsx and GROUPS in fields.js. The
+// values behind it are mapped from the real contract subject (src/api/portal.js's
 // fetchContractSubject/submitContractSubject — the same pair
 // src/components/PortalContractForm.jsx uses), and mapped back the same way
 // on submit. GROUPS asks for a few things the real subject doesn't have a
@@ -294,7 +292,7 @@ export function buildContractPayload(values, choices, subject = {}) {
 // `errors: {field: [message]}` back onto the visible red-highlighted field.
 // Nested keys (company_address, billing_contact, …) have no single field to
 // land on, so those surface as a general banner instead.
-const SERVER_TO_DEMO_FIELD = {
+const SERVER_TO_FORM_FIELD = {
   first_name: 'first_name',
   last_name: 'last_name',
   phone: 'mobile_phone',
@@ -314,9 +312,9 @@ export function mapServerErrors(errors = {}) {
   const unmapped = []
 
   for (const [key, messages] of Object.entries(errors)) {
-    const demoKey = SERVER_TO_DEMO_FIELD[key]
+    const formKey = SERVER_TO_FORM_FIELD[key]
     const message = Array.isArray(messages) ? messages[0] : messages
-    if (demoKey) fieldErrors[demoKey] = message
+    if (formKey) fieldErrors[formKey] = message
     else unmapped.push(key)
   }
 
