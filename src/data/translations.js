@@ -212,7 +212,7 @@ const portalDemoStrings = {
       resetSaveBtn: 'Save new password and sign in',
       firstTime: 'First time signing in, or no password set yet? Use a one-time code.',
     },
-    steps: { contract: 'Updated contract details', bank: 'Bank account', done: 'Completed', active: 'Action required', pending: 'Awaiting review' },
+    steps: { contract: 'Updated contract details', bank: 'Bank account', done: 'Completed', active: 'Action required', pending: 'Awaiting review', locked: 'Locked' },
     docsNav: { title: 'Documents & policies', sub: 'Always available' },
     sign: {
       heading: 'Review your updated contract details',
@@ -329,7 +329,7 @@ const portalDemoStrings = {
       resetSaveBtn: 'Сохранить пароль и войти',
       firstTime: 'Входите впервые или пароль ещё не задан? Воспользуйтесь одноразовым кодом.',
     },
-    steps: { contract: 'Данные обновлённого контракта', bank: 'Банковский счёт', done: 'Выполнено', active: 'Требуется действие', pending: 'На проверке' },
+    steps: { contract: 'Данные обновлённого контракта', bank: 'Банковский счёт', done: 'Выполнено', active: 'Требуется действие', pending: 'На проверке', locked: 'Заблокировано' },
     docsNav: { title: 'Документы и политики', sub: 'Доступно всегда' },
     sign: {
       heading: 'Проверьте данные обновлённого контракта',
@@ -446,7 +446,7 @@ const portalDemoStrings = {
       resetSaveBtn: 'Зберегти пароль і увійти',
       firstTime: 'Входите вперше або пароль ще не задано? Скористайтеся одноразовим кодом.',
     },
-    steps: { contract: 'Дані оновленого контракту', bank: 'Банківський рахунок', done: 'Виконано', active: 'Потрібна дія', pending: 'На перевірці' },
+    steps: { contract: 'Дані оновленого контракту', bank: 'Банківський рахунок', done: 'Виконано', active: 'Потрібна дія', pending: 'На перевірці', locked: 'Заблоковано' },
     docsNav: { title: 'Документи та політики', sub: 'Доступно завжди' },
     sign: {
       heading: 'Перевірте дані оновленого контракту',
@@ -563,7 +563,7 @@ const portalDemoStrings = {
       resetSaveBtn: 'Guardar contraseña e iniciar sesión',
       firstTime: '¿Primera vez o aún no tiene contraseña? Use un código de un solo uso.',
     },
-    steps: { contract: 'Datos del contrato actualizado', bank: 'Cuenta bancaria', done: 'Completado', active: 'Acción requerida', pending: 'En revisión' },
+    steps: { contract: 'Datos del contrato actualizado', bank: 'Cuenta bancaria', done: 'Completado', active: 'Acción requerida', pending: 'En revisión', locked: 'Bloqueado' },
     docsNav: { title: 'Documentos y políticas', sub: 'Siempre disponible' },
     sign: {
       heading: 'Revise los datos de su contrato actualizado',

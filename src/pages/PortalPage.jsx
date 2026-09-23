@@ -426,14 +426,6 @@ export default function PortalPage() {
     }
   }
 
-  // Re-read the summary after a gate completes its work — `plaid_linked` flips
-  // to true, or a freshly signed contract clears `contract.stale` once the
-  // customer signs. The gate unmounts itself; no page reload.
-  const handleBankVerified = useCallback(async () => {
-    const { ok, data } = await getMe(token)
-    if (ok && data?.success) applySummary(data.customer)
-  }, [token, applySummary])
-
   const backToDashboard = async () => {
     // Refresh the summary so the dashboard reflects any applied change later.
     const { ok, data } = await getMe(token)
@@ -588,11 +580,9 @@ export default function PortalPage() {
       {bankGateRequired && (
         <PortalBankVerificationGate
           sessionToken={token}
-          onVerified={handleBankVerified}
           onSignOut={handleLogout}
           collapsed={gateCollapsed}
           onCollapse={() => setGateCollapsed(true)}
-          onExpand={() => setGateCollapsed(false)}
           modalSlot={modalSlot}
           bannerSlot={bannerSlot}
         />
@@ -602,7 +592,6 @@ export default function PortalPage() {
         <PortalContractUpdateGate
           sessionToken={token}
           contract={summary?.contract}
-          onSent={handleBankVerified}
           collapsed={contractGateCollapsed}
           onCollapse={() => setContractGateCollapsed(true)}
           modalSlot={modalSlot}

@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useI18n } from '../context/I18nContext'
 import PortalNotice from './PortalNotice'
-import PortalContractForm from './PortalContractForm'
 
 /**
  * "Update the contract data" — the notice for a contract signed before the
@@ -12,27 +11,30 @@ import PortalContractForm from './PortalContractForm'
  * Whether it appears at all is the server's call — `customer.contract.stale`
  * from `/api/portal/me`, resolved by `Pijb.Contracts.Freshness`.
  *
- * `Update` opens `PortalContractForm`, which is the CRM's Prepare-Contract
- * form: the same values, and the same required fields, because the server
- * validates both.
+ * `Update` no longer opens `PortalContractForm` in place (ATTANTION-PAGE-01):
+ * it hands the session token to the redesigned portal (`/attantion`) via
+ * router state — never the URL, the token is a bearer credential — and opens
+ * it on the "Updated contract details" tab, with "Bank account" locked there
+ * until this gate's own condition (`contract.stale`) clears. That keeps a
+ * customer sent here to fix one thing from wandering off to the other
+ * mid-flow. The real editing form lives on that page now, reusing the same
+ * fetchContractSubject/submitContractSubject pair this gate used to call
+ * directly.
  *
  * @param {string}   props.sessionToken — the portal session token.
  * @param {Object}   [props.contract] — `{ signed_on, stale }` from the summary.
- * @param {Function} props.onSent — after the contract is mailed for signature;
- *   the host refreshes the summary.
  * @param {boolean}  [props.collapsed] / @param {Function} [props.onCollapse]
  */
 export default function PortalContractUpdateGate({
   sessionToken,
   contract,
-  onSent,
   collapsed = false,
   onCollapse,
   modalSlot,
   bannerSlot,
 }) {
   const { t } = useI18n()
-  const [formOpen, setFormOpen] = useState(false)
+  const navigate = useNavigate()
 
   const signedOn = contract?.signed_on ? new Date(contract.signed_on) : null
 
@@ -43,41 +45,32 @@ export default function PortalContractUpdateGate({
       )
     : t('portal.contractGate.bodyUndated')
 
-  return (
-    <>
-      <PortalNotice
-        heading={t('portal.contractGate.heading')}
-        body={body}
-        onAction={() => setFormOpen(true)}
-        actionLabel={
-          <>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"
-              />
-            </svg>
-            {t('portal.contractGate.updateBtn')}
-          </>
-        }
-        collapsed={collapsed}
-        onCollapse={onCollapse}
-        collapseLabel={t('portal.contractGate.collapse')}
-        modalSlot={modalSlot}
-        bannerSlot={bannerSlot}
-      />
+  const handleUpdate = () => {
+    navigate('/attantion', { state: { token: sessionToken, entry: 'contract' } })
+  }
 
-      {formOpen && (
-        <PortalContractForm
-          sessionToken={sessionToken}
-          onClose={() => setFormOpen(false)}
-          onSent={() => {
-            setFormOpen(false)
-            onSent?.()
-          }}
-        />
-      )}
-    </>
+  return (
+    <PortalNotice
+      heading={t('portal.contractGate.heading')}
+      body={body}
+      onAction={handleUpdate}
+      actionLabel={
+        <>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"
+            />
+          </svg>
+          {t('portal.contractGate.updateBtn')}
+        </>
+      }
+      collapsed={collapsed}
+      onCollapse={onCollapse}
+      collapseLabel={t('portal.contractGate.collapse')}
+      modalSlot={modalSlot}
+      bannerSlot={bannerSlot}
+    />
   )
 }

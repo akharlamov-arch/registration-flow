@@ -11,13 +11,14 @@ const PostSigning      = lazy(() => import('./pages/PostSigning'))
 const RelinkPage       = lazy(() => import('./pages/RelinkPage'))
 const PortalPage       = lazy(() => import('./pages/PortalPage'))
 const PortalDemo       = lazy(() => import('./pages/portal-demo/PortalDemo'))
+const Attantion        = lazy(() => import('./pages/attantion/PortalDemo'))
 
 function TitleUpdater() {
   const { t } = useI18n()
   const location = useLocation()
 
   useEffect(() => {
-    if (location.pathname.startsWith('/portal')) {
+    if (location.pathname.startsWith('/portal') || location.pathname.startsWith('/attantion')) {
       document.title = t('portal.title')
       return
     }
@@ -55,6 +56,7 @@ function AppShell() {
           <Route path="/relink" element={<RelinkPage />} />
           <Route path="/portal" element={<PortalPage />} />
           <Route path="/portal-demo" element={<PortalDemo />} />
+          <Route path="/attantion" element={<Attantion />} />
         </Routes>
       </Suspense>
     </div>
