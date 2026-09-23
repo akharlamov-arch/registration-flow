@@ -5,8 +5,13 @@
 // "Awaiting review" and takes over only once a manager has checked it. Until
 // then the previous account is still the one in use — which is how the
 // customer is never left without a bank.
+//
+// What an entry says about itself — its tag, its sentence, its account — comes
+// from src/components/bankDisplay.js (PORTAL-BANK-02): `method` has three
+// values, and a bank typed in by hand must never read as a Plaid verification.
 
 import { useI18n } from '../../context/I18nContext'
+import { bankLabel, historyMethodKey, historyNoteKey } from '../../components/bankDisplay'
 
 const BADGE = {
   active:         'bg-green-50 text-green-700 border-green-200',
@@ -43,6 +48,10 @@ export default function BankHistory({ entries = [] }) {
           {entries.map((e) => {
             const connected = formatDate(e.connected_at)
             const verified = formatDate(e.verified_at)
+            // A status this page has no copy for yet (PORTAL-MOOV-03 reserves
+            // three) renders without a badge rather than crashing `t()`.
+            const statusKey = STATUS_KEY[e.status]
+            const noteKey = historyNoteKey(e)
 
             return (
               <li
@@ -51,15 +60,17 @@ export default function BankHistory({ entries = [] }) {
                             ${e.status === 'active' ? 'border-gray-200' : 'border-gray-100 bg-gray-50/60'}`}
               >
                 <span className={`text-sm font-medium ${e.status === 'replaced' ? 'text-gray-500' : 'text-gray-900'}`}>
-                  {e.institution} ···· {e.last4}
+                  {bankLabel(e)}
                 </span>
 
-                <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded border ${BADGE[e.status]}`}>
-                  {t(STATUS_KEY[e.status])}
-                </span>
+                {statusKey && (
+                  <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded border ${BADGE[e.status]}`}>
+                    {t(statusKey)}
+                  </span>
+                )}
 
                 <span className="text-[11px] text-gray-400 uppercase tracking-wide">
-                  {e.method === 'moov' ? 'MOOV' : 'Plaid'}
+                  {t(historyMethodKey(e.method))}
                 </span>
 
                 <span className="w-full text-xs text-gray-400">
@@ -67,11 +78,7 @@ export default function BankHistory({ entries = [] }) {
                   {verified && ` · ${t('portalDemo.bank.historyVerified')} ${verified}`}
                 </span>
 
-                <span className="w-full text-xs text-gray-500">
-                  {e.method === 'moov'
-                    ? t('portalDemo.bank.historyViaMoov')
-                    : t('portalDemo.bank.historyViaPlaid')}
-                </span>
+                {noteKey && <span className="w-full text-xs text-gray-500">{t(noteKey)}</span>}
               </li>
             )
           })}

@@ -16,6 +16,7 @@ import { useI18n } from '../../context/I18nContext'
 import { useCallback, useRef, useState } from 'react'
 import MoovFallback from './MoovFallback'
 import BankHistory from './BankHistory'
+import { bankLabel } from '../../components/bankDisplay'
 import PlaidExchangeErrorPanel from '../../components/PlaidExchangeErrorPanel'
 import usePlaidLink from '../../hooks/usePlaidLink'
 import { createPlaidVerificationSession } from '../../api/portal'
@@ -39,6 +40,7 @@ function ShieldIcon() {
 
 function Connected({ bank, onRelink }) {
   const { t } = useI18n()
+  const label = bankLabel(bank)
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
       <div className="flex items-start gap-4">
@@ -47,9 +49,7 @@ function Connected({ bank, onRelink }) {
         </span>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-900">{t('portalDemo.bank.verifiedTitle')}</p>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {bank?.institution || 'Chase'} ···· {bank?.last4 || '4471'} · Checking
-          </p>
+          {label && <p className="text-sm text-gray-500 mt-0.5">{label}</p>}
           <p className="text-xs text-gray-400 mt-2">{t('portalDemo.bank.verifiedNote')}</p>
 
           <p className="text-xs text-gray-500 mt-4 mb-2">{t('portalDemo.bank.changeQ')}</p>
@@ -90,6 +90,11 @@ function PendingReview() {
 
 export default function Step2Bank({ token, bank, history = [], connected, pending, onConnected, onManualSubmitted }) {
   const { t } = useI18n()
+  // A bank on file that is not linked through Plaid (typed in, imported, or a
+  // Plaid link from before live items were kept) is named, so the card never
+  // says "No account connected" above a history listing that same account as
+  // in use. Only the copy changes — the gate is still `plaid_linked`.
+  const onFileLabel = connected ? null : bankLabel(bank)
   const [moovOpen, setMoovOpen] = useState(false)
   // Swapping banks: the connected account stays in place until a new one is
   // linked, so backing out leaves the customer exactly where they were.
@@ -197,7 +202,7 @@ export default function Step2Bank({ token, bank, history = [], connected, pendin
           <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" aria-hidden="true" />
           <p className="text-xs text-gray-600 min-w-0">
             <span className="font-semibold text-gray-800">{t('portalDemo.bank.stillConnected')}</span>{' '}
-            {bank?.institution || 'Chase'} ···· {bank?.last4 || '4471'}
+            {bankLabel(bank)}
           </p>
         </div>
       )}
@@ -213,8 +218,13 @@ export default function Step2Bank({ token, bank, history = [], connected, pendin
               <BankIcon />
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-900">{t('portalDemo.bank.noneTitle')}</p>
-              <p className="text-sm text-gray-500 mt-1 leading-relaxed">{t('portalDemo.bank.noneBody')}</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {t(onFileLabel ? 'portalDemo.bank.onFileTitle' : 'portalDemo.bank.noneTitle')}
+              </p>
+              {onFileLabel && <p className="text-sm text-gray-700 mt-0.5">{onFileLabel}</p>}
+              <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                {t(onFileLabel ? 'portalDemo.bank.onFileBody' : 'portalDemo.bank.noneBody')}
+              </p>
 
               <ul className="mt-4 space-y-2">
                 {['b1', 'b2', 'b3'].map((k) => (
