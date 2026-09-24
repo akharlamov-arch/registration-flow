@@ -7,6 +7,11 @@
 // Single page, internal view state machine (same shape as RelinkPage):
 //   LOADING → LOGIN → DASHBOARD → CHANGE → SUBMITTED
 //
+// The dashboard is blocked by `PortalBankVerificationGate` while the customer
+// holds no Plaid item (PORTAL-PLAID-GATE-01) — see `bankGateRequired` below.
+// Collapsing that gate swaps its modal for a sticky banner; it never lifts the
+// block, so `bankGateRequired` (not `gateCollapsed`) is what refuses an edit.
+//
 // Contract: docs/conventions/portal-api-contract.md.
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
@@ -14,6 +19,8 @@ import { useI18n } from '../context/I18nContext'
 import FormField from '../components/FormField'
 import FileUpload from '../components/FileUpload'
 import { ReviewSection, ReviewRow, US_STATES, formatAddress } from '../components/ReviewCard'
+import PortalBankVerificationGate from '../components/PortalBankVerificationGate'
+import PortalContractUpdateGate from '../components/PortalContractUpdateGate'
 import {
   requestCode, verifyCode, validateSession, getMe,
   submitChangeRequest, presignUpload, uploadToS3, downloadDocument,
@@ -153,7 +160,7 @@ const smallSecondaryBtn =
 // current value; expanded, it reveals `children` (the editor) plus Cancel/Save
 // so the customer can focus on — and immediately submit — a single field change.
 // `onSave` submits the whole pending request (a shortcut for the global Submit).
-function EditableField({ t, label, currentValue, editing, onToggle, onSave, saving, canSave, children }) {
+function EditableField({ t, label, currentValue, editing, onToggle, onSave, saving, canSave, disabled, children }) {
   return (
     <div className="py-3">
       <div className="flex items-start justify-between gap-4">
@@ -167,7 +174,12 @@ function EditableField({ t, label, currentValue, editing, onToggle, onSave, savi
           <button
             type="button"
             onClick={onToggle}
-            className="flex items-center gap-1.5 text-xs font-medium shrink-0 text-primary hover:text-secondary transition-colors duration-200 focus:outline-none"
+            disabled={disabled}
+            className={`flex items-center gap-1.5 text-xs font-medium shrink-0 transition-colors duration-200 focus:outline-none ${
+              disabled
+                ? 'text-gray-300 cursor-not-allowed'
+                : 'text-primary hover:text-secondary'
+            }`}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
@@ -229,6 +241,51 @@ export default function PortalPage() {
   }, [summary, form, files])
 
   const hasChanges = !!pendingPayload && !isEmptyChangeRequest(pendingPayload)
+
+  // Blocking bank-verification gate (PORTAL-PLAID-GATE-01). Only an explicit
+  // `false` from the backend blocks: a missing key means an older API that does
+  // not report Plaid presence, and locking every customer out of the portal is
+  // a worse failure than showing the dashboard to an unverified one.
+  const bankGateRequired = summary?.bank_verification?.plaid_linked === false
+
+  // Collapsing closes the modal, not the requirement: the gate keeps refusing
+  // edits and its banner stays pinned above the dashboard, so the customer can
+  // read their data while the bank is still unverified.
+  const [gateCollapsed, setGateCollapsed] = useState(false)
+  const gateBlocking = bankGateRequired && !gateCollapsed
+
+  // A contract that predates the current terms (CONTRACT-REFRESH-01). Unlike the
+  // bank gate this one informs rather than blocks — the customer can still read
+  // and propose changes.
+  const contractGateRequired = summary?.contract?.stale === true
+  const [contractGateCollapsed, setContractGateCollapsed] = useState(false)
+
+  // Both notices can be due at once, so the page owns where they go: one dimmed
+  // overlay for the expanded cards and one sticky stack for the collapsed
+  // banners, each filled in a fixed order (bank first). Letting each notice
+  // position itself would stack two overlays with one card hidden behind the
+  // other, and give two banners the same `top` to fight over on scroll.
+  const [modalSlot, setModalSlot] = useState(null)
+  const [bannerSlot, setBannerSlot] = useState(null)
+  const [stickyTop, setStickyTop] = useState(0)
+
+  const openModals =
+    (bankGateRequired && !gateCollapsed ? 1 : 0) +
+    (contractGateRequired && !contractGateCollapsed ? 1 : 0)
+
+  // The site header is itself `sticky top-0` and its height is content-driven
+  // (logo size, language chip), so the offset is measured rather than fixed.
+  useEffect(() => {
+    const header = document.querySelector('header')
+    if (!header) return undefined
+
+    const measure = () => setStickyTop(header.offsetHeight)
+    measure()
+
+    const observer = new ResizeObserver(measure)
+    observer.observe(header)
+    return () => observer.disconnect()
+  }, [])
 
   // Loads a fresh summary and resets the editable state around it.
   const applySummary = useCallback((customer) => {
@@ -317,6 +374,9 @@ export default function PortalPage() {
   // Opens/closes a field's editor. Closing reverts that field to its current
   // value, so a collapsed field never contributes a stray edit.
   const toggleField = (field) => {
+    // The overlay already covers these controls; refusing here too means a
+    // stray keyboard focus or a stale click cannot slip an edit past the gate.
+    if (bankGateRequired) return
     const willOpen = !editing[field]
     if (!willOpen && baseline) setForm((f) => ({ ...f, [field]: baseline[field] }))
     setEditing((prev) => ({ ...prev, [field]: willOpen }))
@@ -348,6 +408,7 @@ export default function PortalPage() {
 
   const handleSubmitChange = async () => {
     setChangeError('')
+    if (bankGateRequired) return
 
     if (!pendingPayload || isEmptyChangeRequest(pendingPayload)) {
       setChangeError(t('portal.change.errorEmpty'))
@@ -488,9 +549,57 @@ export default function PortalPage() {
   // and the request note + submit are always available at the bottom.
   return (
     <main className={heroMain}>
-      <HeroHeading heading={t('portal.dashboard.heading')} subheading={t('portal.dashboard.readOnlyNote')} />
+      <div aria-hidden={gateBlocking}>
+        <HeroHeading heading={t('portal.dashboard.heading')} subheading={t('portal.dashboard.readOnlyNote')} />
+      </div>
 
-      <div className="max-w-3xl mx-auto space-y-3">
+      {/* One mount point for both renderings — the modal is `fixed`, so its
+          place in the flow does not matter, while the collapsed banner needs to
+          sit right here (above PROFILE) to stick to the top of the viewport.
+          Re-mounting it on collapse would drop an in-flight Plaid session. */}
+      {/* The banner stack sits here — above PROFILE — and sticks below the
+          header on scroll. It is always mounted so the slot exists before the
+          notices look for it; empty, it takes no space. */}
+      <div
+        ref={setBannerSlot}
+        className="sticky z-40 max-w-3xl mx-auto empty:hidden space-y-2 mb-3 pt-2"
+        style={{ top: stickyTop }}
+      />
+
+      {/* The overlay stack. Same reason for being always mounted; with nothing
+          open it is inert and invisible. */}
+      <div
+        ref={setModalSlot}
+        className={
+          openModals > 0
+            ? 'fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 p-4 bg-black/70 overflow-y-auto'
+            : 'hidden'
+        }
+      />
+
+      {bankGateRequired && (
+        <PortalBankVerificationGate
+          sessionToken={token}
+          onSignOut={handleLogout}
+          collapsed={gateCollapsed}
+          onCollapse={() => setGateCollapsed(true)}
+          modalSlot={modalSlot}
+          bannerSlot={bannerSlot}
+        />
+      )}
+
+      {contractGateRequired && (
+        <PortalContractUpdateGate
+          sessionToken={token}
+          contract={summary?.contract}
+          collapsed={contractGateCollapsed}
+          onCollapse={() => setContractGateCollapsed(true)}
+          modalSlot={modalSlot}
+          bannerSlot={bannerSlot}
+        />
+      )}
+
+      <div className="max-w-3xl mx-auto space-y-3" aria-hidden={gateBlocking}>
         <div className="flex justify-end">
           <button type="button" onClick={handleLogout} className="text-xs font-medium text-gray-500 hover:text-gray-700">
             {t('portal.dashboard.logoutBtn')}
@@ -507,6 +616,7 @@ export default function PortalPage() {
             onSave={handleSubmitChange}
             saving={changeBusy}
             canSave={hasChanges && !uploadBusy}
+            disabled={bankGateRequired}
           >
             <input className={inputCls} value={form?.cust_name ?? ''} onChange={(e) => setScalar('cust_name', e.target.value)} />
           </EditableField>
@@ -520,6 +630,7 @@ export default function PortalPage() {
             onSave={handleSubmitChange}
             saving={changeBusy}
             canSave={hasChanges && !uploadBusy}
+            disabled={bankGateRequired}
           >
             <input type="email" className={inputCls} value={form?.email ?? ''} onChange={(e) => setScalar('email', e.target.value)} />
           </EditableField>
@@ -539,6 +650,7 @@ export default function PortalPage() {
               onSave={handleSubmitChange}
               saving={changeBusy}
               canSave={hasChanges && !uploadBusy}
+              disabled={bankGateRequired}
             >
               {form && <AddressFields t={t} value={form[field]} onChange={(v) => setAddress(field, v)} />}
             </EditableField>
@@ -621,13 +733,13 @@ export default function PortalPage() {
         )}
       </div>
 
-      <div className="max-w-3xl mx-auto mt-8">
+      <div className="max-w-3xl mx-auto mt-8" aria-hidden={gateBlocking}>
         <PrimaryButton
           withArrow={false}
           onClick={handleSubmitChange}
           loading={changeBusy}
           loadingLabel={t('portal.change.submitting')}
-          disabled={uploadBusy || !hasChanges}
+          disabled={uploadBusy || !hasChanges || bankGateRequired}
         >
           {t('portal.change.submitBtn')}
         </PrimaryButton>

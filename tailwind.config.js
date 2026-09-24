@@ -18,6 +18,10 @@ export default {
       fontFamily: {
         sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
+      maxWidth: {
+        // Portal working area — wider than the registration wizard's 4xl
+        'portal': '1200px',
+      },
       spacing: {
         // DS spacing scale (MASTER.md)
         '2xl': '3rem',   // 48px — section margins

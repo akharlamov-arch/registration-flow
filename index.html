@@ -9,6 +9,10 @@
       This script detects that condition and immediately navigates the top-level
       window to this URL so the React app renders full-screen with proper layout.
       Must run synchronously before React hydrates.
+
+      The customer portal's return page must stay INSIDE the frame, so it is
+      not served by this file: it is the static portal-signing-return.html
+      (public/), which Zoho accepts because its URL has no `#`.
     -->
     <script>
       (function () {
