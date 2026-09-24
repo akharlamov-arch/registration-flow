@@ -170,7 +170,12 @@ const portalStrings = {
 // translated.
 const attentionStrings = {
   en: {
-    fields: { companyEmail: 'Company Billing Email', discountTier: 'Discount tier' },
+    fields: {
+      companyEmail: 'Company Billing Email',
+      companyNameLocked: 'To change your company name or register a new company, please contact support or apply through our regular onboarding:',
+      moreInfo: 'More information',
+    },
+    lockedMissing: 'Some details only our team can set are missing from your account. Please contact support.',
     heroAttention: 'A few things need your attention',
     heroUpToDate: 'Your account is up to date',
     subAnyOrder: 'You can complete these in any order.',
@@ -300,7 +305,12 @@ const attentionStrings = {
   },
 
   ru: {
-    fields: { companyEmail: 'Email компании для счетов', discountTier: 'Уровень скидки' },
+    fields: {
+      companyEmail: 'Email компании для счетов',
+      companyNameLocked: 'Чтобы изменить название компании или зарегистрировать новую, обратитесь в поддержку или подайте заявку через стандартную регистрацию:',
+      moreInfo: 'Подробнее',
+    },
+    lockedMissing: 'В вашем аккаунте не хватает данных, которые может указать только наша команда. Пожалуйста, обратитесь в поддержку.',
     heroAttention: 'Несколько вопросов требуют вашего внимания',
     heroUpToDate: 'Ваш аккаунт в порядке',
     subAnyOrder: 'Их можно выполнить в любом порядке.',
@@ -430,7 +440,12 @@ const attentionStrings = {
   },
 
   uk: {
-    fields: { companyEmail: 'Email компанії для рахунків', discountTier: 'Рівень знижки' },
+    fields: {
+      companyEmail: 'Email компанії для рахунків',
+      companyNameLocked: 'Щоб змінити назву компанії або зареєструвати нову, зверніться до підтримки або подайте заявку через стандартну реєстрацію:',
+      moreInfo: 'Докладніше',
+    },
+    lockedMissing: 'У вашому акаунті бракує даних, які може вказати лише наша команда. Будь ласка, зверніться до підтримки.',
     heroAttention: 'Кілька питань потребують вашої уваги',
     heroUpToDate: 'Ваш акаунт у порядку',
     subAnyOrder: 'Їх можна виконати в будь-якому порядку.',
@@ -560,7 +575,12 @@ const attentionStrings = {
   },
 
   es: {
-    fields: { companyEmail: 'Correo de facturación', discountTier: 'Nivel de descuento' },
+    fields: {
+      companyEmail: 'Correo de facturación',
+      companyNameLocked: 'Para cambiar el nombre de su empresa o registrar una nueva, comuníquese con soporte o presente su solicitud en nuestro registro habitual:',
+      moreInfo: 'Más información',
+    },
+    lockedMissing: 'A su cuenta le faltan datos que solo nuestro equipo puede completar. Por favor, comuníquese con soporte.',
     heroAttention: 'Algunos asuntos requieren su atención',
     heroUpToDate: 'Su cuenta está al día',
     subAnyOrder: 'Puede completarlos en cualquier orden.',

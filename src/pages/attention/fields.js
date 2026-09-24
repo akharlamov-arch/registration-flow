@@ -61,14 +61,18 @@ export const GROUPS = [
     titleKey: 'lead.stepBusiness.title',
     blurbKey: 'lead.stepBusiness.desc',
     fields: [
-      { key: 'company_name',   crm: 'Company name',                 labelKey: 'lead.stepBusiness.companyName',  type: 'text',   required: true, placeholderKey: 'lead.stepBusiness.companyNamePlaceholder' },
+      // Read-only: the company is the account itself. Renaming it, or signing
+      // up another one, goes through support or the regular onboarding flow,
+      // and the server ignores a posted value either way.
+      { key: 'company_name',   crm: 'Company name',                 labelKey: 'lead.stepBusiness.companyName',  type: 'readonly', tooltip: { key: 'attention.fields.companyNameLocked', href: 'https://registration.itrucking.pro/' } },
       { key: 'business_type',  crm: 'Business Formation Type',      labelKey: 'lead.stepBusiness.businessType', type: 'select', required: true, options: BUSINESS_TYPES },
       { key: 'company_title',  crm: 'Title of the Primary Contact', labelKey: 'lead.stepBusiness.companyTitle', type: 'select', required: true, options: COMPANY_TITLES },
       { key: 'company_trucks', crm: 'Truck Count',                  labelKey: 'lead.stepBusiness.trucks',       type: 'number', required: true, placeholder: '5' },
       { key: 'company_dot',    crm: 'DOT Number',                   labelKey: 'lead.stepBusiness.dot',          type: 'text',   required: false, placeholder: '1234567' },
       { key: 'company_mc',     crm: 'MC Number',                    labelKey: 'lead.stepBusiness.mc',           type: 'text',   required: false, placeholder: '123456' },
       { key: 'company_email',  crm: 'Company Billing Email',        labelKey: 'attention.fields.companyEmail', type: 'email',  required: true, isNew: true, placeholderKey: 'billingContact.placeholderEmail' },
-      { key: 'discount_tier',  crm: 'Fuel Discount Tier Level',     labelKey: 'attention.fields.discountTier', type: 'readonly' },
+      // No discount tier: the contract already states it and only our team
+      // sets it, so it is neither shown nor sent (the server keeps its own).
     ],
     noticeKey: 'lead.stepBusiness.dotMcHint',
   },

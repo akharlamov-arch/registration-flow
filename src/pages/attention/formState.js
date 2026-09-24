@@ -6,9 +6,12 @@
 // fetchContractSubject) and mapped back the same way for signContract. GROUPS asks for a few things the real subject doesn't have a
 // field for (`company_title`'s CEO/CFO options, split first/last billing
 // names, the mailing/personal "same as" shortcuts) and the real subject holds
-// a few things GROUPS never shows (`account`, `billing_schedule`,
-// `is_business?`, the signer's own `email`/`title`) — those pass through
-// unedited so a save here never blanks out what this step doesn't ask about.
+// a few things GROUPS never shows (`account`, `is_business?`, `discount_tier`,
+// the signer's own `email`/`title`) — those pass through unedited so a save
+// here never blanks out what this step doesn't ask about. There is no billing
+// schedule: the server derives it from the customer's payment channel.
+// `company_name` and `discount_tier` are only our team's to change; the server
+// ignores what this form posts for them and keeps its own.
 
 import { GROUPS, CHOICE_GROUPS, COMPANY_TITLES } from './fields'
 
@@ -80,7 +83,6 @@ export function initialFormFromSubject(subject = {}) {
   values.company_dot = scalar(subject.company_dot)
   values.company_mc = scalar(subject.company_mc)
   values.company_email = scalar(subject.billing_contact?.email) || scalar(subject.email)
-  values.discount_tier = scalar(subject.discount_tier)
 
   const company = subject.company_address || {}
   values.company_street1 = scalar(company.line1)
@@ -260,7 +262,7 @@ export function buildContractPayload(values, choices, subject = {}) {
     email: subject.email ?? '',
     'is_business?': subject['is_business?'] !== false,
     account: subject.account ?? '',
-    billing_schedule: subject.billing_schedule ?? '',
+    discount_tier: subject.discount_tier ?? '',
 
     first_name: values.first_name,
     last_name: values.last_name,
@@ -271,7 +273,6 @@ export function buildContractPayload(values, choices, subject = {}) {
     company_mc: values.company_mc || null,
     company_dot: values.company_dot || null,
     fleet_size: values.company_trucks,
-    discount_tier: values.discount_tier,
 
     company_address: company,
     mailing_address: mailing,
@@ -294,29 +295,34 @@ const SERVER_TO_FORM_FIELD = {
   first_name: 'first_name',
   last_name: 'last_name',
   phone: 'mobile_phone',
-  company_name: 'company_name',
   business_type: 'business_type',
   company_mc: 'company_mc',
   company_dot: 'company_dot',
   fleet_size: 'company_trucks',
-  discount_tier: 'discount_tier',
   ssn: 'ssn',
   driver_license_number: 'dl_number',
   driver_license_file_name: 'dl_file',
 }
 
+// Values only our team sets. A refusal naming one is not something the
+// customer can fix on this form, so it gets a "contact support" message
+// rather than a highlight on a field they cannot edit.
+const LOCKED_SERVER_FIELDS = ['company_name', 'discount_tier']
+
 export function mapServerErrors(errors = {}) {
   const fieldErrors = {}
   const unmapped = []
+  const locked = []
 
   for (const [key, messages] of Object.entries(errors)) {
     const formKey = SERVER_TO_FORM_FIELD[key]
     const message = Array.isArray(messages) ? messages[0] : messages
     if (formKey) fieldErrors[formKey] = message
+    else if (LOCKED_SERVER_FIELDS.includes(key)) locked.push(key)
     else unmapped.push(key)
   }
 
-  return { fieldErrors, unmapped }
+  return { fieldErrors, unmapped, locked }
 }
 
 // ── Manual bank verification (MOOV fallback) ────────────────────────────────

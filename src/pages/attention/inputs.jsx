@@ -12,6 +12,7 @@ import { useI18n } from '../../context/I18nContext'
 import FormField from '../../components/FormField'
 import PhoneInput from '../../components/PhoneInput'
 import Attachment from './Attachment'
+import InfoTooltip from './InfoTooltip'
 import { uploadDriverLicense } from '../../api/portal'
 import { US_STATES } from '../../components/ReviewCard'
 
@@ -83,6 +84,28 @@ function SecretInput({ value, onChange, invalid, format, digits, placeholder }) 
   )
 }
 
+// `tooltip: { key, href }` from `fields.js`: the explanation, then the link it
+// points at, shown by host so the customer can see where it leads.
+function FieldTooltip({ tooltip }) {
+  const { t } = useI18n()
+
+  return (
+    <InfoTooltip label={t('attention.fields.moreInfo')}>
+      {t(tooltip.key)}{' '}
+      {tooltip.href && (
+        <a
+          href={tooltip.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-primary underline underline-offset-2"
+        >
+          {new URL(tooltip.href).host}
+        </a>
+      )}
+    </InfoTooltip>
+  )
+}
+
 /** Renders one field from the `fields.js` table. Labels, placeholders and the
  *  error message arrive as translation keys and are resolved here. */
 export default function PortalField({ field, value, error, onChange, token }) {
@@ -96,7 +119,10 @@ export default function PortalField({ field, value, error, onChange, token }) {
   if (field.type === 'readonly') {
     return (
       <div>
-        <span className="block text-sm font-medium text-slate-900 mb-1.5">{label}</span>
+        <span className="flex items-center text-sm font-medium text-slate-900 mb-1.5">
+          {label}
+          {field.tooltip && <FieldTooltip tooltip={field.tooltip} />}
+        </span>
         <div className="px-3 py-2 text-sm rounded-lg bg-gray-50 border border-gray-200 text-gray-600">
           {value || '—'}
         </div>

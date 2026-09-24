@@ -391,12 +391,14 @@ export default function AttentionPage() {
     }
 
     if (data?.errors) {
-      const { fieldErrors, unmapped } = mapServerErrors(data.errors)
+      const { fieldErrors, unmapped, locked } = mapServerErrors(data.errors)
       setServerFieldErrors(fieldErrors)
       setSendError(
-        unmapped.length
-          ? `${t('portal.contractForm.errorFields')} (${unmapped.join(', ')})`
-          : t('portal.contractForm.errorFields'),
+        locked.length
+          ? t('attention.lockedMissing')
+          : unmapped.length
+            ? `${t('portal.contractForm.errorFields')} (${unmapped.join(', ')})`
+            : t('portal.contractForm.errorFields'),
       )
       return
     }
