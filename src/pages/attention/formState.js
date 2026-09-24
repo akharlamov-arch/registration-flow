@@ -3,9 +3,7 @@
 //
 // The visual layout lives in Step1Contract.jsx and GROUPS in fields.js. The
 // values behind it are mapped from the real contract subject (src/api/portal.js's
-// fetchContractSubject/submitContractSubject — the same pair
-// src/components/PortalContractForm.jsx uses), and mapped back the same way
-// on submit. GROUPS asks for a few things the real subject doesn't have a
+// fetchContractSubject) and mapped back the same way for signContract. GROUPS asks for a few things the real subject doesn't have a
 // field for (`company_title`'s CEO/CFO options, split first/last billing
 // names, the mailing/personal "same as" shortcuts) and the real subject holds
 // a few things GROUPS never shows (`account`, `billing_schedule`,
@@ -58,7 +56,7 @@ function addrEqual(a = {}, b = {}) {
  * (`fetchContractSubject`'s `subject.subject`).
  *
  * ssn/driver_license_number are never sent by the server — they always start
- * blank here, same as PortalContractForm; `meta.stored` says whether one is
+ * blank here; `meta.stored` says whether one is
  * already on file, submitting blank leaves it untouched.
  */
 export function initialFormFromSubject(subject = {}) {

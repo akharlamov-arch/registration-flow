@@ -2,7 +2,8 @@
 // flow, tuned denser: 14px text, tighter rows, left-aligned.
 //
 // The driver-licence attachment uses Attachment, which replicates the control
-// the registration flow itself uses. components/FileUpload.jsx is deliberately
+// the registration flow itself uses, uploading through the recording endpoint
+// (PORTAL-UPLOAD-02). components/FileUpload.jsx is deliberately
 // not used here: it belongs to the old PortalPage and appears nowhere in the
 // registration flow.
 
@@ -11,6 +12,7 @@ import { useI18n } from '../../context/I18nContext'
 import FormField from '../../components/FormField'
 import PhoneInput from '../../components/PhoneInput'
 import Attachment from './Attachment'
+import { uploadDriverLicense } from '../../api/portal'
 import { US_STATES } from '../../components/ReviewCard'
 
 export const inputCls =
@@ -137,7 +139,19 @@ export default function PortalField({ field, value, error, onChange, token }) {
       )
       break
     case 'file':
-      control = <Attachment value={value} onChange={onChange} invalid={invalid} token={token} />
+      // The contract form's only file is the driver-licence scan; it goes
+      // through the recording endpoint so a reload before signing keeps it.
+      control = (
+        <Attachment
+          value={value}
+          onChange={onChange}
+          invalid={invalid}
+          upload={async (file) => {
+            const { ok, data } = await uploadDriverLicense(token, file)
+            return ok && data?.success ? { ok: true, key: data.file?.name } : { ok: false, code: data?.code }
+          }}
+        />
+      )
       break
     case 'zip':
       control = (

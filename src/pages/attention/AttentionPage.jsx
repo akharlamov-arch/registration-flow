@@ -6,10 +6,18 @@
 //
 // The "Updated contract details" tab is a card-per-section form
 // (Step1Contract.jsx + fields.js, with the "same as company" address
-// shortcuts) over the real contract subject: values are loaded from and saved
-// to the /api/portal/contract endpoints src/components/PortalContractForm.jsx
-// also uses. See formState.js for the field mapping between this step's flat
-// GROUPS and the real, more nested contract subject.
+// shortcuts) over the real contract subject, loaded from and saved to
+// /api/portal/contract. See formState.js for the field mapping between this
+// step's flat GROUPS and the real, more nested contract subject.
+//
+// The customer signs **in place**, the way a lead does (PORTAL-SIGN-02):
+// `Sign updated contract` saves, renders and creates an embedded Zoho request
+// (`POST /contract/sign`), and its `sign_url` opens in the same full-viewport
+// frame the lead's signing step uses (src/components/ContractSigningFrame.jsx).
+// When Zoho returns, the portal asks the server to confirm with Zoho
+// (`POST /contract/complete`) — the frame's result is a hint, never proof. A
+// request left half-signed reads as pending and is resumed, not re-created. The
+// portal never has a contract emailed; that is the CRM operator's Send.
 //
 // The "Bank account" tab's "Connect with Plaid" button drives the real Plaid
 // Link flow (usePlaidLink + createPlaidVerificationSession +
@@ -33,7 +41,11 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useI18n } from '../../context/I18nContext'
-import { validateSession, getMe, fetchContractSubject, submitContractSubject } from '../../api/portal'
+import {
+  validateSession, getMe, fetchContractSubject,
+  signContract, resumeContractSigning, completeContractSigning,
+} from '../../api/portal'
+import ContractSigningFrame from '../../components/ContractSigningFrame'
 import { getPolicies } from './api'
 import {
   initialFormFromSubject, initialChoicesFromSubject, validate, isComplete,
@@ -44,10 +56,24 @@ import Step1Contract from './Step1Contract'
 import Step2Bank from './Step2Bank'
 import BankReminder from './BankReminder'
 import ContractSigned from './ContractSigned'
+import { ContractPending, ContractConfirming } from './ContractSigningStatus'
 import PoliciesLibrary from './PoliciesLibrary'
 import Login from './Login'
 
 const TOKEN_KEY = 'itrucking-attention-token'
+
+// Fail-closed: only an explicit `stale: false` with nothing awaiting a signature
+// is a signed contract. A missing `contract`, a `null` `stale` or an error
+// payload is never read as signed — the "Signed just now" panel once showed on
+// prod for a customer who had never touched Zoho (PORTAL-SIGN-02).
+function contractSigned(contract) {
+  return contract?.stale === false && !contract?.pending
+}
+
+// The summary answered with a usable contract state at all.
+function contractKnown(contract) {
+  return typeof contract?.stale === 'boolean'
+}
 
 // ── Chrome ──────────────────────────────────────────────────────────────────
 
@@ -68,43 +94,6 @@ function AccountBar({ company, onSignOut }) {
         >
           {t('attention.signOut')}
         </button>
-      </div>
-    </div>
-  )
-}
-
-// After a real send: the contract was mailed for signature, it is not signed
-// yet — same "check your email" acknowledgment PortalContractForm's own modal
-// shows before you close it.
-function ContractSent({ sentTo, onBack }) {
-  const { t } = useI18n()
-  return (
-    <div className="space-y-4">
-      <header className="mb-2">
-        <h2 className="text-xl font-bold text-gray-900">{t('portal.contractForm.sentHeading')}</h2>
-      </header>
-
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
-        <div className="flex items-start gap-4">
-          <span className="w-10 h-10 rounded-full bg-green-50 border border-green-200 text-green-600 flex items-center justify-center shrink-0">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-            </svg>
-          </span>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900">
-              {t('portal.contractForm.sentBody').replace('{email}', sentTo || '')}
-            </p>
-            <button
-              type="button"
-              onClick={onBack}
-              className="mt-4 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200
-                         hover:bg-gray-50 rounded-lg transition-colors duration-ds-normal"
-            >
-              {t('portal.contractForm.closeBtn')}
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   )
@@ -158,25 +147,110 @@ export default function AttentionPage() {
   const [signing, setSigning] = useState(false)
   const [serverFieldErrors, setServerFieldErrors] = useState({})
   const [sendError, setSendError] = useState('')
-  const [sentTo, setSentTo] = useState(null)
-  // Re-opens the sign form on an already-signed contract ("Change request" in
-  // ContractSigned) — the same form, the same real endpoint either way.
+  // Re-opens the sign form on an already-signed contract (ContractSigned's
+  // "Update my details") or over a pending one ("Change my details first").
   const [editingContract, setEditingContract] = useState(false)
+
+  // Signing in place. `signingUrl` is a bearer link to sign this customer's
+  // contract: memory only, never a URL, storage or a log. While it is set the
+  // frame is open.
+  const [signingUrl, setSigningUrl] = useState(null)
+  const [confirming, setConfirming] = useState(false)
+  const [resuming, setResuming] = useState(false)
+  const [signNote, setSignNote] = useState('')
+  // Set when a session opens on a pending embedded request: the customer may
+  // have signed and closed the frame before Zoho redirected, so the server is
+  // asked once, on load, before the tab offers "resume".
+  const [needsReconcile, setNeedsReconcile] = useState(false)
 
   // Derived from the real summary on every render — the same fields
   // PortalPage.jsx's gates key off (`contract.stale`, `bank_verification.
-  // plaid_linked`) — so a `refresh()` after either modal is what actually
+  // plaid_linked`) — so a `refresh()` after either flow is what actually
   // flips a tab to "Completed", never a locally faked boolean.
-  const signed = customer?.contract?.stale !== true
+  const contract = customer?.contract
+  const signed = contractSigned(contract)
+  const resumable = contract?.pending?.delivery === 'embedded'
   const linked = customer?.bank_verification?.plaid_linked === true
 
   const applyCustomer = useCallback((c) => {
     setCustomer(c)
     setBankPending(false)
     setEditingContract(false)
-    setSentTo(null)
-    setStep(entry === 'bank' ? 2 : entry === 'contract' ? 1 : c?.contract?.stale === true ? 1 : 2)
+    setSignNote('')
+    setNeedsReconcile(c?.contract?.pending?.delivery === 'embedded')
+    setStep(entry === 'bank' ? 2 : entry === 'contract' ? 1 : contractSigned(c?.contract) ? 2 : 1)
   }, [entry])
+
+  const refresh = useCallback(async () => {
+    const { ok, data } = await getMe(token)
+    if (ok && data?.success) setCustomer(data.customer)
+  }, [token])
+
+  // Asks the server whether Zoho has the signature. `quiet` is the load-time
+  // reconcile: a customer who has simply not signed yet is shown "resume", not
+  // told off.
+  const confirmSignature = useCallback(async ({ quiet = false } = {}) => {
+    setConfirming(true)
+    setSignNote('')
+    try {
+      const { ok, status, data } = await completeContractSigning(token)
+      if (ok && data?.success) {
+        setEditingContract(false)
+      } else if (status === 409) {
+        if (!quiet) setSignNote(t('attention.signing.notCompleted'))
+      } else if (!quiet) {
+        setSignNote(data?.message || t('portal.contractForm.errorGeneric'))
+      }
+      await refresh()
+    } catch {
+      if (!quiet) setSignNote(t('portal.contractForm.errorGeneric'))
+    } finally {
+      setConfirming(false)
+    }
+  }, [token, refresh, t])
+
+  useEffect(() => {
+    if (!needsReconcile || !token) return
+    setNeedsReconcile(false)
+    confirmSignature({ quiet: true })
+  }, [needsReconcile, token, confirmSignature])
+
+  // The frame reported how signing ended. Either way it closes; only the
+  // server's answer to "completed" can make the step read signed.
+  const handleFrameResult = (result) => {
+    setSigningUrl(null)
+    if (result === 'completed') {
+      confirmSignature()
+    } else {
+      // Declined or "sign later": back to the form with a note. Its Cancel
+      // returns to the pending panel, where the same request can be resumed.
+      setSignNote(t('attention.signing.declined'))
+      setEditingContract(true)
+      refresh()
+    }
+  }
+
+  const handleResume = async () => {
+    setResuming(true)
+    setSignNote('')
+    try {
+      const { ok, status, data } = await resumeContractSigning(token)
+      if (ok && data?.sign_url) {
+        setSigningUrl(data.sign_url)
+        return
+      }
+      setSignNote(
+        status === 409
+          ? t('attention.signing.notResumable')
+          : data?.message || t('portal.contractForm.errorGeneric'),
+      )
+      if (status === 409) await refresh()
+    } catch {
+      setSignNote(t('portal.contractForm.errorGeneric'))
+    } finally {
+      setResuming(false)
+    }
+  }
 
   useEffect(() => {
     // Arriving from a real gate: the session is already authenticated there,
@@ -302,14 +376,16 @@ export default function AttentionPage() {
     const payload = buildContractPayload(values, choices, serverSubject || {})
     setSigning(true)
     setSendError('')
+    setSignNote('')
     setServerFieldErrors({})
 
-    const { ok, data } = await submitContractSubject(token, payload)
+    const { ok, data } = await signContract(token, payload).catch(() => ({ ok: false, data: null }))
     setSigning(false)
 
-    if (ok && data?.success) {
-      setSentTo(data.sent_to || '')
-      setEditingContract(false)
+    if (ok && data?.success && data?.sign_url) {
+      setSigningUrl(data.sign_url)
+      // So the tab reads "pending" behind the frame, and after it if the
+      // customer leaves without finishing.
       refresh()
       return
     }
@@ -336,15 +412,11 @@ export default function AttentionPage() {
   const handleSignOut = () => {
     sessionStorage.removeItem(TOKEN_KEY)
     setToken(''); setCustomer(null); setView('login')
+    setSigningUrl(null)
     // A fresh sign-in afterward is an ordinary visit, not a continuation of
     // whichever gate originally sent this browser tab here.
     setEntry(undefined)
   }
-
-  const refresh = useCallback(async () => {
-    const { ok, data } = await getMe(token)
-    if (ok && data?.success) setCustomer(data.customer)
-  }, [token])
 
   if (view === 'loading') {
     return (
@@ -389,9 +461,7 @@ export default function AttentionPage() {
   const remind = signed && !linked && !bankPending
 
   const renderContractTab = () => {
-    if (sentTo !== null) {
-      return <ContractSent sentTo={sentTo} onBack={() => setSentTo(null)} />
-    }
+    if (confirming) return <ContractConfirming />
 
     if (subjectLoading) {
       return (
@@ -411,11 +481,34 @@ export default function AttentionPage() {
       )
     }
 
+    // Fail-closed: an unusable summary is an error, never the signed panel.
+    if (!contractKnown(contract)) {
+      return (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3.5" role="alert">
+          <p className="text-sm font-semibold text-red-800">{t('attention.signing.stateUnknown')}</p>
+        </div>
+      )
+    }
+
     if (signed && !editingContract) {
       return (
         <ContractSigned
-          signedAt={customer?.contract?.signed_on}
+          signedAt={contract.signed_on}
           onRequestChange={() => setEditingContract(true)}
+        />
+      )
+    }
+
+    // An embedded request is out and unsigned: reopen it rather than create a
+    // new one. An emailed one (sent by an operator) is not resumable here — the
+    // form below signs in place and supersedes it.
+    if (resumable && !editingContract) {
+      return (
+        <ContractPending
+          note={signNote}
+          resuming={resuming}
+          onResume={handleResume}
+          onEdit={() => { setSignNote(''); setEditingContract(true) }}
         />
       )
     }
@@ -432,9 +525,9 @@ export default function AttentionPage() {
         onSelectChoice={selectChoice}
         onSign={handleSign}
         mode={signed ? 'change' : 'sign'}
-        onCancel={signed ? () => setEditingContract(false) : undefined}
+        onCancel={signed || resumable ? () => setEditingContract(false) : undefined}
         token={token}
-        formError={sendError}
+        formError={sendError || signNote}
       />
     )
   }
@@ -507,6 +600,8 @@ export default function AttentionPage() {
           </div>
         </div>
       </main>
+
+      {signingUrl && <ContractSigningFrame url={signingUrl} onResult={handleFrameResult} />}
     </div>
   )
 }

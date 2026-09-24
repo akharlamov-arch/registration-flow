@@ -150,7 +150,7 @@ export function createPlaidVerificationSession(token) {
  * only whether each is on file (`stored`), and a save that omits them leaves
  * the stored ones untouched.
  *
- * Response: { success, contract: { signed_on, stale },
+ * Response: { success, contract: { signed_on, stale, pending },
  *             subject: { subject, required_fields, stored, options } }
  */
 export function fetchContractSubject(token) {
@@ -173,22 +173,72 @@ export function saveContractSubject(token, subject) {
   })
 }
 
+// The portal signs in place, in an embedded Zoho frame — never by email, which
+// is the CRM operator's Send (PORTAL-SIGN-01). `sign_url` is a bearer link to
+// sign this customer's contract: keep it in memory only — never in a URL,
+// storage or a log.
+
 /**
- * Save, render and mail the contract for signature — the form's Done.
- * Response: { success, sent_to } | 422 errors | 422 CONTRACT_INCOMPLETE | 502.
+ * Save, render and open the contract for signing — `Sign updated contract`.
+ * Response: { success, sign_url } | 422 errors | 422 CONTRACT_INCOMPLETE |
+ * 502 CONTRACT_SIGN_FAILED.
  */
-export function submitContractSubject(token, subject) {
-  return apiFetch(`${BASE}/api/portal/contract/send`, {
+export function signContract(token, subject) {
+  return apiFetch(`${BASE}/api/portal/contract/sign`, {
     method: 'POST',
     headers: authHeaders(token),
     body: JSON.stringify({ subject }),
   })
 }
 
+/**
+ * A fresh signing URL for the pending embedded request — the same request,
+ * nothing new is created.
+ * Response: { success, sign_url } | 409 SIGNING_NOT_RESUMABLE (sign again) | 502.
+ */
+export function resumeContractSigning(token) {
+  return apiFetch(`${BASE}/api/portal/contract/sign-url`, {
+    method: 'POST',
+    headers: authHeaders(token),
+  })
+}
+
+/**
+ * Records the signature once Zoho confirms it. Idempotent — call it when the
+ * frame returns and on load while `contract.pending.delivery === "embedded"`.
+ * Response: { success, signed: true, contract } | 409 SIGNING_NOT_COMPLETED | 502.
+ */
+export function completeContractSigning(token) {
+  return apiFetch(`${BASE}/api/portal/contract/complete`, {
+    method: 'POST',
+    headers: authHeaders(token),
+  })
+}
+
+/**
+ * Uploads the contract form's driver-licence scan THROUGH the backend
+ * (PORTAL-UPLOAD-01), which stores it and records it on the customer before
+ * answering — so it survives a reload before signing, like a lead's upload.
+ * Multipart: only the Authorization header; the browser sets the boundary.
+ * Response: 201 { success, file: { name, type } }
+ *         | 422 { code: FILE_REQUIRED | FILE_TYPE_INVALID | FILE_TOO_LARGE } | 502 UPLOAD_FAILED.
+ */
+export function uploadDriverLicense(token, file) {
+  const body = new FormData()
+  body.append('file', file, file.name)
+  return apiFetch(`${BASE}/api/portal/contract/driver-license`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body,
+  })
+}
+
 // ── File upload (browser → S3) ───────────────────────────────────────────────
 
 /**
- * Mints a presigned S3 PUT URL for a supporting file.
+ * Mints a presigned S3 PUT URL for a change-request supporting file. Nothing
+ * is recorded server-side until an operator applies the request — never use
+ * this for a file that must survive the page (see uploadDriverLicense).
  * Response: { success, url, key }
  */
 export function presignUpload(token, filename, contentType) {

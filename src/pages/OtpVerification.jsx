@@ -18,6 +18,7 @@ import {
 } from '../api/leadMappers'
 import { ReviewSection, ReviewRow, Row, US_STATES } from '../components/ReviewCard'
 import PlaidExchangeErrorPanel from '../components/PlaidExchangeErrorPanel'
+import ContractSigningFrame from '../components/ContractSigningFrame'
 import usePlaidLink from '../hooks/usePlaidLink'
 
 // ── Review-info modal (same card design as the old review step) ─────────────
@@ -2508,16 +2509,9 @@ export default function OtpVerification() {
           </main>
         )}
 
-        {/* Full-viewport iframe — covers everything including Header once signing URL is ready */}
-        {contractEmbedUrl && (
-          <div className="fixed inset-0 z-50 bg-white">
-            <iframe
-              src={contractEmbedUrl}
-              title="Contract signing"
-              style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-            />
-          </div>
-        )}
+        {/* Full-viewport iframe — covers everything including Header once signing URL is ready.
+            The same frame the customer portal signs in (PORTAL-SIGN-02). */}
+        {contractEmbedUrl && <ContractSigningFrame url={contractEmbedUrl} />}
       </>
     )
   }

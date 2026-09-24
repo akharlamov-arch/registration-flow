@@ -11,17 +11,17 @@ import PortalNotice from './PortalNotice'
  * Whether it appears at all is the server's call — `customer.contract.stale`
  * from `/api/portal/me`, resolved by `Pijb.Contracts.Freshness`.
  *
- * `Update` no longer opens `PortalContractForm` in place (ATTANTION-PAGE-01):
+ * `Update` no longer opens a contract form in place (ATTANTION-PAGE-01):
  * it hands the session token to the redesigned portal (`/attention`) via
  * router state — never the URL, the token is a bearer credential — and opens
  * it on the "Updated contract details" tab. The bank tab stays reachable
  * there: that page never locks it (only the bank gate locks the contract tab).
- * The real editing form lives on that page now, reusing the same
- * fetchContractSubject/submitContractSubject pair this gate used to call
- * directly.
+ * The real editing form lives on that page now, and the customer signs there
+ * in an embedded Zoho frame (PORTAL-SIGN-02) — the portal never emails a
+ * contract.
  *
  * @param {string}   props.sessionToken — the portal session token.
- * @param {Object}   [props.contract] — `{ signed_on, stale }` from the summary.
+ * @param {Object}   [props.contract] — `{ signed_on, stale, pending }` from the summary.
  * @param {boolean}  [props.collapsed] / @param {Function} [props.onCollapse]
  */
 export default function PortalContractUpdateGate({

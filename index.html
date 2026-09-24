@@ -9,10 +9,16 @@
       This script detects that condition and immediately navigates the top-level
       window to this URL so the React app renders full-screen with proper layout.
       Must run synchronously before React hydrates.
+
+      Except the customer portal's return page (#/portal-signing-return,
+      PORTAL-SIGN-02): it must stay INSIDE the frame and tell the portal that
+      framed it how signing ended. Escaping would replace the portal with a
+      bare "Finishing…" page and the signature would never be confirmed.
     -->
     <script>
       (function () {
-        if (window.self !== window.top) {
+        var stayInFrame = /^#\/portal-signing-return(\?|$)/.test(window.location.hash);
+        if (window.self !== window.top && !stayInFrame) {
           try {
             window.top.location.replace(window.self.location.href);
           } catch (e) {
