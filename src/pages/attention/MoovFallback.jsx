@@ -8,6 +8,10 @@
 //
 // Unlike the old PortalBankVerificationGate this dialog is opened by the
 // customer, not thrown at them, and Escape or the backdrop closes it.
+//
+// The void check is kept in memory and sent with the details in one multipart
+// request (PORTAL-MOOV-03): the server stores it, so a dialog closed without
+// submitting leaves nothing behind in S3.
 
 import { useI18n } from '../../context/I18nContext'
 import { useEffect, useState } from 'react'
@@ -17,12 +21,30 @@ import { inputCls, errorCls } from './inputs'
 import { emptyBankDetails, validateBankDetails } from './formState'
 import { submitManualBank } from './api'
 
+// Server field → the dialog field that shows it.
+const SERVER_FIELDS = {
+  account_number: 'accountNumber',
+  routing_number: 'routingNumber',
+  void_check: 'voidCheck',
+}
+
+// Refusals that name no field → a message for the whole dialog.
+const REFUSAL_KEYS = {
+  SAME_AS_CURRENT: 'attention.moov.errSameAsCurrent',
+  SUBMISSION_OPEN: 'attention.moov.errSubmissionOpen',
+  UPLOAD_FAILED: 'attention.moov.errUpload',
+}
+
 export default function MoovFallback({ open, token, onClose, onSubmitted }) {
   const { t } = useI18n()
   const [values, setValues] = useState(emptyBankDetails)
+  // The picked void check itself; `values.voidCheck` holds its name, which is
+  // what validation and the attachment control read.
+  const [voidFile, setVoidFile] = useState(null)
   const [errors, setErrors] = useState({})
   const [showErrors, setShowErrors] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [formError, setFormError] = useState('')
 
   useEffect(() => {
     if (!open) return
@@ -45,25 +67,48 @@ export default function MoovFallback({ open, token, onClose, onSubmitted }) {
     if (showErrors) setErrors(validateBankDetails(next))
   }
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     const found = validateBankDetails(values)
     setErrors(found)
     setShowErrors(true)
-    if (Object.keys(found).length) return
+    setFormError('')
+    if (Object.keys(found).length || !voidFile) return
 
     setBusy(true)
-    // Recorded as pending_review — a manager checks it before it takes over,
-    // so the account currently in force stays in force.
-    submitManualBank(token, {
-      bank_name: values.bankName || undefined,
-      account_number: values.accountNumber,
-      routing_number: values.routingNumber,
-      void_check: values.voidCheck,
-    }).then(() => {
-      setBusy(false)
+    let result
+    try {
+      // The bank in use stays in use until this one is verified and approved.
+      result = await submitManualBank(token, {
+        accountNumber: values.accountNumber,
+        routingNumber: values.routingNumber,
+        bankName: values.bankName,
+        voidCheck: voidFile,
+      })
+    } catch {
+      result = { ok: false, data: {} }
+    }
+    setBusy(false)
+
+    if (result.ok && result.data?.success) {
       onSubmitted()
-    })
+      return
+    }
+
+    const { data = {} } = result
+    if (data.errors) {
+      // Server messages are shown as sent (`t` returns an unknown key as-is).
+      const fieldErrors = {}
+      for (const [key, messages] of Object.entries(data.errors)) {
+        const field = SERVER_FIELDS[key]
+        if (field) fieldErrors[field] = Array.isArray(messages) ? messages[0] : messages
+      }
+      setErrors(fieldErrors)
+      if (!Object.keys(fieldErrors).length) setFormError(t('attention.moov.errGeneric'))
+      return
+    }
+
+    setFormError(t(REFUSAL_KEYS[data.code] || 'attention.moov.errGeneric'))
   }
 
   // errors hold translation keys; resolve at the point of display
@@ -107,7 +152,15 @@ export default function MoovFallback({ open, token, onClose, onSubmitted }) {
             error={err('voidCheck')}
             hint={t('bankInfo.voidCheckDesc')}
           >
-            <Attachment value={values.voidCheck} onChange={(v) => set('voidCheck', v)} invalid={!!err('voidCheck')} />
+            <Attachment
+              value={values.voidCheck}
+              onChange={(v) => set('voidCheck', v)}
+              invalid={!!err('voidCheck')}
+              upload={async (file) => {
+                setVoidFile(file)
+                return { ok: true, key: file.name }
+              }}
+            />
           </FormField>
 
           <FormField label={t('bankInfo.labelRouting')} required error={err('routingNumber')}>
@@ -144,6 +197,10 @@ export default function MoovFallback({ open, token, onClose, onSubmitted }) {
           </FormField>
 
           <p className="text-xs text-gray-500 leading-relaxed">{t('bankInfo.infoNotice')}</p>
+
+          {formError && (
+            <p className="text-sm text-red-600" role="alert">{formError}</p>
+          )}
 
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-1">
             <button

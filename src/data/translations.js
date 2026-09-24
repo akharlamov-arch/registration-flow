@@ -287,6 +287,10 @@ const attentionStrings = {
       title: 'Verify your bank with MOOV',
       sub: 'Enter the account you plan to use for payments and attach a void check.',
       submit: 'Submit for verification', submitting: 'Submitting…', close: 'Close',
+      errSameAsCurrent: 'This is the bank account already in use.',
+      errSubmissionOpen: 'A new bank account is already under review. We will be in touch once it is checked.',
+      errUpload: 'We could not store your void check. Please try again shortly.',
+      errGeneric: 'We could not submit your bank details. Please try again shortly.',
     },
     reminder: {
       title: 'Bank account not connected yet',
@@ -420,6 +424,10 @@ const attentionStrings = {
       title: 'Подтверждение счёта через MOOV',
       sub: 'Укажите счёт, который планируете использовать для выплат, и приложите void-чек.',
       submit: 'Отправить на проверку', submitting: 'Отправляем…', close: 'Закрыть',
+      errSameAsCurrent: 'Этот банковский счёт уже используется.',
+      errSubmissionOpen: 'Новый банковский счёт уже на проверке. Мы свяжемся с вами после проверки.',
+      errUpload: 'Не удалось сохранить void-чек. Попробуйте ещё раз чуть позже.',
+      errGeneric: 'Не удалось отправить банковские данные. Попробуйте ещё раз чуть позже.',
     },
     reminder: {
       title: 'Банковский счёт ещё не подключён',
@@ -553,6 +561,10 @@ const attentionStrings = {
       title: 'Підтвердження рахунку через MOOV',
       sub: 'Вкажіть рахунок, який плануєте використовувати для виплат, і додайте void-чек.',
       submit: 'Надіслати на перевірку', submitting: 'Надсилаємо…', close: 'Закрити',
+      errSameAsCurrent: 'Цей банківський рахунок уже використовується.',
+      errSubmissionOpen: 'Новий банківський рахунок уже на перевірці. Ми зв’яжемося з вами після перевірки.',
+      errUpload: 'Не вдалося зберегти void-чек. Спробуйте ще раз трохи пізніше.',
+      errGeneric: 'Не вдалося надіслати банківські дані. Спробуйте ще раз трохи пізніше.',
     },
     reminder: {
       title: 'Банківський рахунок ще не підключено',
@@ -686,6 +698,10 @@ const attentionStrings = {
       title: 'Verifique su banco con MOOV',
       sub: 'Ingrese la cuenta que usará para los pagos y adjunte un cheque anulado.',
       submit: 'Enviar para verificación', submitting: 'Enviando…', close: 'Cerrar',
+      errSameAsCurrent: 'Esta es la cuenta bancaria que ya está en uso.',
+      errSubmissionOpen: 'Ya hay una nueva cuenta bancaria en revisión. Nos comunicaremos cuando se haya verificado.',
+      errUpload: 'No pudimos guardar su cheque anulado. Inténtelo de nuevo en unos minutos.',
+      errGeneric: 'No pudimos enviar sus datos bancarios. Inténtelo de nuevo en unos minutos.',
     },
     reminder: {
       title: 'La cuenta bancaria aún no está conectada',

@@ -3,13 +3,15 @@
 // and 2551-2612): a dashed drop panel that turns into a green-ticked filename
 // with "Click to change file" once something is attached.
 //
-// How the picked file is uploaded is the caller's `upload(file)`, which
+// What happens to the picked file is the caller's `upload(file)`, which
 // resolves to { ok, key, code }. The contract form passes the recording
 // endpoint (api/portal.js uploadDriverLicense, PORTAL-UPLOAD-01): the server
 // stores the file AND records it on the customer before answering, so the
-// attachment survives a reload before signing. Without `upload` the control
-// keeps its old presign + PUT (defaultUpload below) — the bank tab's
-// MoovFallback still relies on that until PORTAL-MOOV-03 wires it.
+// attachment survives a reload before signing. MoovFallback keeps the file in
+// memory instead and sends it with the bank details in one request
+// (PORTAL-MOOV-03), so nothing is stored for a submission that is never sent.
+// There is no default: the old presign + PUT carried no session token and
+// failed with a 401.
 //
 // The value the field carries once uploaded is the S3 key
 // (`driver_license_file_name` in the real contract payload). The picked file's
@@ -21,7 +23,6 @@
 
 import { useState } from 'react'
 import { useI18n } from '../../context/I18nContext'
-import { presignUpload, uploadToS3 } from '../../api/portal'
 import { validateUploadFile } from '../../api/leadMappers'
 
 // What the server accepts (Pijb.Storage.DocumentUpload: PDF, JPEG, PNG, WebP,
@@ -33,14 +34,6 @@ const ACCEPT = '.pdf,.jpg,.jpeg,.png,.webp,.gif'
 const ERROR_KEYS = {
   FILE_TOO_LARGE: 'common.fileTooLarge',
   FILE_TYPE_INVALID: 'common.fileTypeInvalid',
-}
-
-async function defaultUpload(token, file) {
-  const presigned = await presignUpload(token, file.name, file.type)
-  if (!presigned.ok || !presigned.data?.success) return { ok: false }
-
-  const stored = await uploadToS3(presigned.data.url, file)
-  return stored ? { ok: true, key: presigned.data.key } : { ok: false }
 }
 
 // Stored keys end in the original filename made path-safe, after a
@@ -68,7 +61,7 @@ function UploadIcon() {
   )
 }
 
-export default function Attachment({ value, onChange, invalid, token, upload }) {
+export default function Attachment({ value, onChange, invalid, upload }) {
   const { t } = useI18n()
   const [pickedName, setPickedName] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -91,7 +84,7 @@ export default function Attachment({ value, onChange, invalid, token, upload }) 
 
     let result
     try {
-      result = upload ? await upload(file) : await defaultUpload(token, file)
+      result = await upload(file)
     } catch {
       result = { ok: false }
     }

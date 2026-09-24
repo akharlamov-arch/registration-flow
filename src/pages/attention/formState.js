@@ -7,8 +7,10 @@
 // field for (`company_title`'s CEO/CFO options, split first/last billing
 // names, the mailing/personal "same as" shortcuts) and the real subject holds
 // a few things GROUPS never shows (`account`, `is_business?`, `discount_tier`,
-// the signer's own `email`/`title`) — those pass through unedited so a save
-// here never blanks out what this step doesn't ask about. There is no billing
+// the signer's own `email`) — those pass through unedited so a save here never
+// blanks out what this step doesn't ask about. `title` is shown, as "Your
+// title" (`company_title`): it is the contract's primary-contact title and the
+// signer's role on the contact the server creates after signing. There is no billing
 // schedule: the server derives it from the customer's payment channel.
 // `company_name` and `discount_tier` are only our team's to change; the server
 // ignores what this form posts for them and keeps its own.
@@ -258,7 +260,8 @@ export function buildContractPayload(values, choices, subject = {}) {
   return {
     // Pass-through: this step has no editor for these, so whatever the server
     // last told us rides along unchanged.
-    title: subject.title ?? '',
+    // "Your title" — kept as the subject's own text when no option spells it.
+    title: companyTitleLabel || (subject.title ?? ''),
     email: subject.email ?? '',
     'is_business?': subject['is_business?'] !== false,
     account: subject.account ?? '',

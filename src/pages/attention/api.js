@@ -133,15 +133,28 @@ export function resetPassword(resetToken, password) {
 }
 
 /**
- * Records a bank submitted through MOOV. It is stored as `pending_review` and
- * is NOT put in force — a manager checks it first, so the account currently
- * receiving payments keeps receiving them meanwhile.
- * Response (201): { success, entry }
+ * Submits a new bank through MOOV (docs/conventions/portal-api-contract.md §9b
+ * in pijb). The bank in use stays in use: the new one is verified at Moov and
+ * approved by our team before it takes over.
+ *
+ * Multipart, with the void check as the file itself: the server stores it and
+ * picks the key, so nothing is uploaded for a submission that is never sent.
+ * Only the Authorization header is set — the browser writes the boundary.
+ *
+ * Response (201): { success, entry, customer }. Refusals: 422 { errors: {
+ * account_number, routing_number, void_check } }, 422 SAME_AS_CURRENT,
+ * 409 SUBMISSION_OPEN, 502 UPLOAD_FAILED.
  */
-export function submitManualBank(token, details) {
+export function submitManualBank(token, { accountNumber, routingNumber, bankName, voidCheck }) {
+  const body = new FormData()
+  body.append('account_number', accountNumber)
+  body.append('routing_number', routingNumber)
+  if (bankName) body.append('bank_name', bankName)
+  body.append('void_check', voidCheck)
+
   return apiFetch(`${BASE}/api/portal/bank/manual`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify(details),
+    headers: { Authorization: `Bearer ${token}` },
+    body,
   })
 }
