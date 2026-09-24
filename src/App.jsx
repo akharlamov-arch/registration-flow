@@ -11,7 +11,6 @@ const PostSigning      = lazy(() => import('./pages/PostSigning'))
 const RelinkPage       = lazy(() => import('./pages/RelinkPage'))
 const PortalPage       = lazy(() => import('./pages/PortalPage'))
 const AttentionPage    = lazy(() => import('./pages/attention/AttentionPage'))
-const PortalSigningReturn = lazy(() => import('./pages/PortalSigningReturn'))
 
 function TitleUpdater() {
   const { t } = useI18n()
@@ -42,20 +41,14 @@ function PageFallback() {
   )
 }
 
-// Pages that render inside the Zoho signing frame get no site chrome: the frame
-// already sits over the portal, and a second header (or the language prompt)
-// inside it would flash before the portal closes the frame.
-const FRAMED_ROUTES = ['/portal-signing-return']
-
+// The portal's signing return is not a route here: Zoho refuses a `#` in a
+// redirect URL, so it is the static public/portal-signing-return.html.
 function AppShell() {
-  const { pathname } = useLocation()
-  const framed = FRAMED_ROUTES.includes(pathname)
-
   return (
     <div className="min-h-screen bg-white font-sans">
       <TitleUpdater />
-      {!framed && <Header />}
-      {!framed && <LanguagePromptModal />}
+      <Header />
+      <LanguagePromptModal />
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/" element={<LeadForm />} />
@@ -64,7 +57,6 @@ function AppShell() {
           <Route path="/relink" element={<RelinkPage />} />
           <Route path="/portal" element={<PortalPage />} />
           <Route path="/attention" element={<AttentionPage />} />
-          <Route path="/portal-signing-return" element={<PortalSigningReturn />} />
           {/* Retired URLs, kept so links already shared with testers still land
               somewhere (PORTAL-UI-01). `replace` keeps them out of history. A
               redirect drops router state, so the /portal gates navigate to

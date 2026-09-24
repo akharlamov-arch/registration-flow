@@ -10,15 +10,13 @@
       window to this URL so the React app renders full-screen with proper layout.
       Must run synchronously before React hydrates.
 
-      Except the customer portal's return page (#/portal-signing-return,
-      PORTAL-SIGN-02): it must stay INSIDE the frame and tell the portal that
-      framed it how signing ended. Escaping would replace the portal with a
-      bare "Finishing…" page and the signature would never be confirmed.
+      The customer portal's return page must stay INSIDE the frame, so it is
+      not served by this file: it is the static portal-signing-return.html
+      (public/), which Zoho accepts because its URL has no `#`.
     -->
     <script>
       (function () {
-        var stayInFrame = /^#\/portal-signing-return(\?|$)/.test(window.location.hash);
-        if (window.self !== window.top && !stayInFrame) {
+        if (window.self !== window.top) {
           try {
             window.top.location.replace(window.self.location.href);
           } catch (e) {

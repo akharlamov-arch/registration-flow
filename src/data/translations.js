@@ -249,8 +249,6 @@ const attentionStrings = {
       notCompleted: 'We have not received your signature yet. Resume signing to finish.',
       notResumable: 'That signing session has ended. Please sign the updated contract again.',
       stateUnknown: 'We could not load the status of your contract. Please reload the page.',
-      finishing: 'Finishing…',
-      backToPortal: 'Back to your account',
     },
     bank: {
       heading: 'Connect your bank account',
@@ -384,8 +382,6 @@ const attentionStrings = {
       notCompleted: 'Мы ещё не получили вашу подпись. Продолжите подписание, чтобы завершить.',
       notResumable: 'Сеанс подписания завершён. Подпишите обновлённый контракт ещё раз.',
       stateUnknown: 'Не удалось загрузить статус контракта. Обновите страницу.',
-      finishing: 'Завершаем…',
-      backToPortal: 'Вернуться в аккаунт',
     },
     bank: {
       heading: 'Подключите банковский счёт',
@@ -519,8 +515,6 @@ const attentionStrings = {
       notCompleted: 'Ми ще не отримали ваш підпис. Продовжте підписання, щоб завершити.',
       notResumable: 'Сеанс підписання завершено. Підпишіть оновлений контракт ще раз.',
       stateUnknown: 'Не вдалося завантажити статус контракту. Оновіть сторінку.',
-      finishing: 'Завершуємо…',
-      backToPortal: 'Повернутися до акаунта',
     },
     bank: {
       heading: 'Підключіть банківський рахунок',
@@ -654,8 +648,6 @@ const attentionStrings = {
       notCompleted: 'Aún no hemos recibido su firma. Continúe firmando para terminar.',
       notResumable: 'Esa sesión de firma terminó. Vuelva a firmar el contrato actualizado.',
       stateUnknown: 'No pudimos cargar el estado de su contrato. Recargue la página.',
-      finishing: 'Finalizando…',
-      backToPortal: 'Volver a su cuenta',
     },
     bank: {
       heading: 'Conecte su cuenta bancaria',

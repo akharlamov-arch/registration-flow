@@ -4,7 +4,8 @@
 // so "signs the way a lead does" is the same markup, not a copy of it.
 //
 // `onResult` is the portal's. When Zoho finishes, it loads the portal's return
-// page (src/pages/PortalSigningReturn.jsx) inside this frame; that page posts
+// page (public/portal-signing-return.html, a static file because Zoho refuses a
+// `#` in a redirect URL) inside this frame; that page posts
 // `{ type: 'itrucking:portal-signing', result }` to us. The message is only
 // accepted from this frame's own window on this page's own origin — Zoho's
 // pages are cross-origin and another window cannot pose as the frame. The
