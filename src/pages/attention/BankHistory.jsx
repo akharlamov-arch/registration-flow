@@ -2,9 +2,10 @@
 //
 // The list makes the rule visible: a Plaid connection is verified on the spot
 // and takes over immediately, while one submitted through MOOV sits at
-// "Awaiting review" and takes over only once a manager has checked it. Until
-// then the previous account is still the one in use — which is how the
-// customer is never left without a bank.
+// "Awaiting review" until a manager has checked it, then "Awaiting
+// verification" until its deposit code is entered. Until then the previous
+// account is still the one in use — which is how the customer is never left
+// without a bank.
 //
 // What an entry says about itself — its tag, its sentence, its account — comes
 // from src/components/bankDisplay.js (PORTAL-BANK-02): `method` has three
@@ -14,15 +15,21 @@ import { useI18n } from '../../context/I18nContext'
 import { bankLabel, historyMethodKey, historyNoteKey } from '../../components/bankDisplay'
 
 const BADGE = {
-  active:         'bg-green-50 text-green-700 border-green-200',
-  pending_review: 'bg-amber-50 text-amber-700 border-amber-200',
-  replaced:       'bg-gray-100 text-gray-500 border-gray-200',
+  active:               'bg-green-50 text-green-700 border-green-200',
+  pending_review:       'bg-amber-50 text-amber-700 border-amber-200',
+  pending_verification: 'bg-amber-50 text-amber-700 border-amber-200',
+  replaced:             'bg-gray-100 text-gray-500 border-gray-200',
+  rejected:             'bg-red-50 text-red-700 border-red-200',
+  failed:               'bg-red-50 text-red-700 border-red-200',
 }
 
 const STATUS_KEY = {
-  active:         'attention.bank.historyActive',
-  pending_review: 'attention.bank.historyPending',
-  replaced:       'attention.bank.historyReplaced',
+  active:               'attention.bank.historyActive',
+  pending_review:       'attention.bank.historyPending',
+  pending_verification: 'attention.bank.historyPendingVerification',
+  replaced:             'attention.bank.historyReplaced',
+  rejected:             'attention.bank.historyRejected',
+  failed:               'attention.bank.historyFailed',
 }
 
 function formatDate(iso) {
@@ -48,8 +55,8 @@ export default function BankHistory({ entries = [] }) {
           {entries.map((e) => {
             const connected = formatDate(e.connected_at)
             const verified = formatDate(e.verified_at)
-            // A status this page has no copy for yet (PORTAL-MOOV-03 reserves
-            // three) renders without a badge rather than crashing `t()`.
+            // A status this page has no copy for renders without a badge
+            // rather than crashing `t()`.
             const statusKey = STATUS_KEY[e.status]
             const noteKey = historyNoteKey(e)
 
@@ -59,7 +66,7 @@ export default function BankHistory({ entries = [] }) {
                 className={`flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-xl border px-3.5 py-3
                             ${e.status === 'active' ? 'border-gray-200' : 'border-gray-100 bg-gray-50/60'}`}
               >
-                <span className={`text-sm font-medium ${e.status === 'replaced' ? 'text-gray-500' : 'text-gray-900'}`}>
+                <span className={`text-sm font-medium ${['replaced', 'rejected', 'failed'].includes(e.status) ? 'text-gray-500' : 'text-gray-900'}`}>
                   {bankLabel(e)}
                 </span>
 

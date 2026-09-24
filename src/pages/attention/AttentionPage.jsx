@@ -55,6 +55,7 @@ import Stepper from './Stepper'
 import Step1Contract from './Step1Contract'
 import Step2Bank from './Step2Bank'
 import BankReminder from './BankReminder'
+import { bankVerified, openSubmission } from '../../components/bankDisplay'
 import ContractSigned from './ContractSigned'
 import { ContractPending, ContractConfirming } from './ContractSigningStatus'
 import PoliciesLibrary from './PoliciesLibrary'
@@ -130,7 +131,6 @@ export default function AttentionPage() {
   // Manual MOOV details submitted — a person reviews them, so this is neither
   // unconnected nor verified. There is no real backend field for this yet, so
   // it stays local to the session.
-  const [bankPending, setBankPending] = useState(false)
   // 1 | 2 | 'policies'
   const [step, setStep] = useState(1)
   const [policies, setPolicies] = useState([])
@@ -164,17 +164,28 @@ export default function AttentionPage() {
   const [needsReconcile, setNeedsReconcile] = useState(false)
 
   // Derived from the real summary on every render — the same fields
-  // PortalPage.jsx's gates key off (`contract.stale`, `bank_verification.
-  // plaid_linked`) — so a `refresh()` after either flow is what actually
+  // PortalPage.jsx's gates key off (`contract.stale`, `bank_verification`
+  // through `bankVerified`) — so a `refresh()` after either flow is what actually
   // flips a tab to "Completed", never a locally faked boolean.
   const contract = customer?.contract
   const signed = contractSigned(contract)
   const resumable = contract?.pending?.delivery === 'embedded'
-  const linked = customer?.bank_verification?.plaid_linked === true
+  // Channel-agnostic: a bank verified through a MOOV submission counts too.
+  const linked = bankVerified(customer?.bank_verification) === true
+  // A submitted (MOOV) bank still under way, read from the summary so a reload
+  // keeps the tab where it was (PORTAL-MOOV-04): awaiting our review, its
+  // deposit on its way, or — a code can be entered — the customer's move.
+  const submission = openSubmission(customer?.bank_history)
+  const bankPending = submission !== null
+  const codeAwaited = (customer?.bank_verification?.awaiting_codes || []).length > 0
+  const bankState = linked ? 'done'
+    : codeAwaited ? 'active'
+    : submission?.status === 'pending_verification' ? 'waiting'
+    : bankPending ? 'pending'
+    : 'active'
 
   const applyCustomer = useCallback((c) => {
     setCustomer(c)
-    setBankPending(false)
     setEditingContract(false)
     setSignNote('')
     setNeedsReconcile(c?.contract?.pending?.delivery === 'embedded')
@@ -454,7 +465,7 @@ export default function AttentionPage() {
 
   const steps = [
     { id: 1, title: t('attention.steps.contract'), state: lockedStep === 1 ? 'locked' : signed ? 'done' : 'active' },
-    { id: 2, title: t('attention.steps.bank'), state: linked ? 'done' : bankPending ? 'pending' : 'active' },
+    { id: 2, title: t('attention.steps.bank'), state: bankState },
   ]
 
   const allDone = signed && linked
@@ -593,10 +604,12 @@ export default function AttentionPage() {
                 token={token}
                 bank={customer?.bank}
                 history={customer?.bank_history || []}
+                awaitingCodes={customer?.bank_verification?.awaiting_codes || []}
                 connected={linked}
-                pending={bankPending}
                 onConnected={() => refresh()}
-                onManualSubmitted={() => { setBankPending(true); refresh() }}
+                onManualSubmitted={() => refresh()}
+                onVerified={(fresh) => (fresh ? setCustomer(fresh) : refresh())}
+                onRefresh={() => refresh()}
               />
             )}
           </div>

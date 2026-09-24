@@ -12,7 +12,7 @@ import PortalNotice from './PortalNotice'
  * hands the session token to the redesigned portal (`/attention`) via router
  * state — never the URL, the token is a bearer credential — and opens it on
  * the "Bank account" tab, with "Updated contract details" locked there until
- * this gate's own condition (`bank_verification.plaid_linked`) clears. That
+ * this gate's own condition (`bankVerified(bank_verification)`) clears. That
  * keeps a customer sent here to fix one thing from wandering off to the other
  * mid-flow. The real Plaid Link flow lives on that page now (its
  * Step2Bank.jsx), reusing the same usePlaidLink + createPlaidVerificationSession

@@ -8,14 +8,18 @@
 //
 // A customer Plaid will not connect can fall back to manual verification
 // through MOOV — the same void check + account/routing details the main flow's
-// bankInfo step collects. That submission is reviewed by a person, so it lands
-// in a pending state rather than a verified one.
+// bankInfo step collects. That submission is reviewed by a person first, and
+// only then sent a verification deposit whose code the customer enters here
+// (PORTAL-MOOV-04). Where it stands is read from the summary on every render
+// (`openSubmission` over `bank_history`, plus `awaiting_codes`), so a reload
+// shows the same stage instead of dropping back to "connect".
 
 import { useI18n } from '../../context/I18nContext'
 import { useCallback, useRef, useState } from 'react'
 import MoovFallback from './MoovFallback'
 import BankHistory from './BankHistory'
-import { bankLabel } from '../../components/bankDisplay'
+import BankCodeEntry from './BankCodeEntry'
+import { bankLabel, historyNoteKey, openSubmission } from '../../components/bankDisplay'
 import PlaidExchangeErrorPanel from '../../components/PlaidExchangeErrorPanel'
 import usePlaidLink from '../../hooks/usePlaidLink'
 import { createPlaidVerificationSession } from '../../api/portal'
@@ -37,9 +41,14 @@ function ShieldIcon() {
   )
 }
 
-function Connected({ bank, onRelink }) {
+// `method` is the active history entry's: a bank verified through a MOOV
+// submission must not say "Connected through Plaid".
+function Connected({ bank, method, onRelink }) {
   const { t } = useI18n()
   const label = bankLabel(bank)
+  const note = method && method !== 'plaid'
+    ? historyNoteKey({ status: 'active', method })
+    : 'attention.bank.verifiedNote'
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
       <div className="flex items-start gap-4">
@@ -49,7 +58,7 @@ function Connected({ bank, onRelink }) {
         <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-900">{t('attention.bank.verifiedTitle')}</p>
           {label && <p className="text-sm text-gray-500 mt-0.5">{label}</p>}
-          <p className="text-xs text-gray-400 mt-2">{t('attention.bank.verifiedNote')}</p>
+          <p className="text-xs text-gray-400 mt-2">{t(note)}</p>
 
           <p className="text-xs text-gray-500 mt-4 mb-2">{t('attention.bank.changeQ')}</p>
           <button
@@ -67,10 +76,18 @@ function Connected({ bank, onRelink }) {
   )
 }
 
-function PendingReview() {
+// A submitted bank waiting on us: `review` before our team approves it (nothing
+// has gone to Moov yet), `deposit` once approved while the verification deposit
+// is on its way.
+function SubmissionWaiting({ stage, submission }) {
   const { t } = useI18n()
+  const label = bankLabel(submission)
+  const [title, body, note] = stage === 'deposit'
+    ? ['attention.bank.depositTitle', 'attention.bank.depositBody', 'attention.bank.depositNote']
+    : ['attention.bank.pendingTitle', 'attention.bank.pendingBody', 'attention.bank.pendingNote']
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6" data-stage={stage}>
       <div className="flex items-start gap-4">
         <span className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -78,22 +95,29 @@ function PendingReview() {
           </svg>
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900">{t('attention.bank.pendingTitle')}</p>
-          <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">{t('attention.bank.pendingBody')}</p>
-          <p className="text-xs text-gray-400 mt-2">{t('attention.bank.pendingNote')}</p>
+          <p className="text-sm font-semibold text-gray-900">{t(title)}</p>
+          {label && <p className="text-sm text-gray-700 mt-0.5">{label}</p>}
+          <p className="text-sm text-gray-500 mt-1 leading-relaxed">{t(body)}</p>
+          <p className="text-xs text-gray-400 mt-2">{t(note)}</p>
         </div>
       </div>
     </div>
   )
 }
 
-export default function Step2Bank({ token, bank, history = [], connected, pending, onConnected, onManualSubmitted }) {
+export default function Step2Bank({
+  token, bank, history = [], awaitingCodes = [], connected, onConnected, onManualSubmitted, onVerified, onRefresh,
+}) {
   const { t } = useI18n()
   // A bank on file that is not linked through Plaid (typed in, imported, or a
   // Plaid link from before live items were kept) is named, so the card never
   // says "No account connected" above a history listing that same account as
-  // in use. Only the copy changes — the gate is still `plaid_linked`.
+  // in use. Only the copy changes — the gate is still `bankVerified`.
   const onFileLabel = connected ? null : bankLabel(bank)
+  const submission = openSubmission(history)
+  const submissionCode = awaitingCodes.find((c) => c.target === 'submission')
+  // A code for the bank in use itself (PORTAL-MOOV-02), independent of any submission.
+  const currentCodes = awaitingCodes.filter((c) => c.target !== 'submission')
   const [moovOpen, setMoovOpen] = useState(false)
   // Swapping banks: the connected account stays in place until a new one is
   // linked, so backing out leaves the customer exactly where they were.
@@ -206,11 +230,24 @@ export default function Step2Bank({ token, bank, history = [], connected, pendin
         </div>
       )}
 
+      {!relinking && currentCodes.map((entry) => (
+        <BankCodeEntry
+          key={entry.target}
+          token={token}
+          entry={entry}
+          bankName={bankLabel(bank)}
+          onVerified={onVerified}
+          onStale={onRefresh}
+        />
+      ))}
+
       {connected && !relinking ? (
-        <Connected bank={bank} onRelink={() => { setError(null); setRelinking(true) }} />
-      ) : pending && !relinking ? (
-        <PendingReview />
-      ) : (
+        <Connected
+          bank={bank}
+          method={history.find((e) => e.status === 'active')?.method}
+          onRelink={() => { setError(null); setRelinking(true) }}
+        />
+      ) : submission && !relinking ? null : (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6 sm:p-8">
           <div className="flex items-start gap-4 max-w-2xl">
             <span className="w-10 h-10 rounded-full bg-blue-50 border border-blue-200 text-primary flex items-center justify-center shrink-0">
@@ -277,6 +314,23 @@ export default function Step2Bank({ token, bank, history = [], connected, pendin
           </div>
         </div>
       )}
+
+      {/* A submitted bank follows the bank in use — beside the Plaid card when
+          one is connected, in place of the connect card when not. */}
+      {submission && !relinking && (submissionCode ? (
+        <BankCodeEntry
+          token={token}
+          entry={submissionCode}
+          bankName={bankLabel(submission)}
+          onVerified={onVerified}
+          onStale={onRefresh}
+        />
+      ) : (
+        <SubmissionWaiting
+          stage={submission.status === 'pending_verification' ? 'deposit' : 'review'}
+          submission={submission}
+        />
+      ))}
 
       {/* Shown in every state: what is in force, what was, and what is waiting. */}
       <BankHistory entries={history} />

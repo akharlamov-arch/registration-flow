@@ -26,6 +26,7 @@ const DOT = {
   done:    'bg-green-600 text-white border-green-600',
   active:  'bg-primary text-white border-primary',
   pending: 'bg-amber-500 text-white border-amber-500',
+  waiting: 'bg-amber-500 text-white border-amber-500',
   locked:  'bg-gray-100 text-gray-400 border-gray-200',
 }
 
@@ -33,6 +34,7 @@ const LABEL = {
   done:    'text-gray-500',
   active:  'text-gray-900',
   pending: 'text-gray-900',
+  waiting: 'text-gray-900',
   locked:  'text-gray-400',
 }
 
@@ -40,6 +42,7 @@ const STATUS_KEY = {
   done:    'attention.steps.done',
   active:  'attention.steps.active',
   pending: 'attention.steps.pending',
+  waiting: 'attention.steps.waiting',
   locked:  'attention.steps.locked',
 }
 
@@ -71,7 +74,7 @@ export default function Stepper({ steps, current, onSelect }) {
                 <span className={`block text-sm font-semibold ${LABEL[step.state]}`}>{step.title}</span>
                 <span className={`block text-xs mt-0.5 ${
                   step.state === 'active' ? 'text-primary font-medium'
-                  : step.state === 'pending' ? 'text-amber-600 font-medium'
+                  : ['pending', 'waiting'].includes(step.state) ? 'text-amber-600 font-medium'
                   : 'text-gray-400'
                 }`}>
                   {t(STATUS_KEY[step.state])}

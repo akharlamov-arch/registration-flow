@@ -20,6 +20,7 @@ import FormField from '../components/FormField'
 import FileUpload from '../components/FileUpload'
 import { ReviewSection, ReviewRow, US_STATES, formatAddress } from '../components/ReviewCard'
 import PortalBankVerificationGate from '../components/PortalBankVerificationGate'
+import { bankVerified } from '../components/bankDisplay'
 import PortalContractUpdateGate from '../components/PortalContractUpdateGate'
 import {
   requestCode, verifyCode, validateSession, getMe,
@@ -243,10 +244,11 @@ export default function PortalPage() {
   const hasChanges = !!pendingPayload && !isEmptyChangeRequest(pendingPayload)
 
   // Blocking bank-verification gate (PORTAL-PLAID-GATE-01). Only an explicit
-  // `false` from the backend blocks: a missing key means an older API that does
-  // not report Plaid presence, and locking every customer out of the portal is
-  // a worse failure than showing the dashboard to an unverified one.
-  const bankGateRequired = summary?.bank_verification?.plaid_linked === false
+  // "not verified" from the backend blocks (`bankVerified` reads the
+  // channel-agnostic `status`, so a MOOV-verified bank clears it too): an
+  // unknown answer means an older API, and locking every customer out of the
+  // portal is a worse failure than showing the dashboard to an unverified one.
+  const bankGateRequired = bankVerified(summary?.bank_verification) === false
 
   // Collapsing closes the modal, not the requirement: the gate keeps refusing
   // edits and its banner stays pinned above the dashboard, so the customer can

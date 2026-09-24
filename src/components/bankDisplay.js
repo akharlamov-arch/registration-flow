@@ -36,13 +36,48 @@ export function historyMethodKey(method) {
 // say how they were verified.
 const ACCEPTED_STATUSES = ['active', 'replaced']
 
+// Sentences for the statuses only a portal (MOOV) submission reaches.
+const SUBMISSION_NOTE_KEYS = {
+  pending_verification: 'attention.bank.historyAwaitingCode',
+  rejected: 'attention.bank.historyRejectedNote',
+  failed: 'attention.bank.historyFailedNote',
+}
+
 // i18n key for the sentence under a history entry, or null for none. A staged
 // entry is not verified yet, however it was submitted, so `pending_review` wins
-// over method; a status with no copy yet (PORTAL-MOOV-03 reserves
-// `pending_verification | rejected | failed`) gets no sentence rather than one
-// claiming a verification that did not happen.
+// over method, and a submission's own statuses say where it stands. A status
+// with no copy gets no sentence rather than one claiming a verification that
+// did not happen.
 export function historyNoteKey({ status, method } = {}) {
   if (status === 'pending_review') return 'attention.bank.historyAwaitingReview'
+  if (SUBMISSION_NOTE_KEYS[status]) return SUBMISSION_NOTE_KEYS[status]
   if (!ACCEPTED_STATUSES.includes(status)) return null
   return NOTE_KEYS[method] || NOTE_KEYS.manual
+}
+
+// Statuses in which a submitted bank is still under way.
+const OPEN_SUBMISSION_STATUSES = ['pending_review', 'pending_verification']
+
+// The customer's open portal (MOOV) submission from `bank_history`, or null.
+// Its status is the stage (PORTAL-MOOV-04): `pending_review` — our team has
+// not approved it and nothing went to Moov (or, verified, it waits on the
+// switch-over); `pending_verification` — approved, the deposit is on its way
+// or its code can be entered (`bank_verification.awaiting_codes`). Read from
+// the summary on every render, so a reload shows the same thing.
+export function openSubmission(history = []) {
+  return history.find((e) => String(e?.id).startsWith('sub-') && OPEN_SUBMISSION_STATUSES.includes(e.status)) || null
+}
+
+// Whether the customer's bank counts as verified — what every bank gate reads.
+// `bank_verification.status` covers Plaid and Moov alike (PORTAL-MOOV-02); a
+// bank verified through a MOOV submission has no Plaid item, so reading
+// `plaid_linked` alone told a customer who had just entered their code to go
+// connect with Plaid. An older API without `status` falls back to
+// `plaid_linked`; with neither, returns null (unknown), and a gate must not
+// block on unknown.
+export function bankVerified(bankVerification) {
+  if (!bankVerification) return null
+  if (bankVerification.status) return bankVerification.status === 'verified'
+  if (typeof bankVerification.plaid_linked === 'boolean') return bankVerification.plaid_linked
+  return null
 }

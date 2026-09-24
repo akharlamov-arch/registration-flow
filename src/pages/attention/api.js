@@ -1,5 +1,5 @@
 // API calls only the attention page makes: the documents library, the
-// two-factor sign-in, and the manual (MOOV) bank submission. They live beside
+// two-factor sign-in, the manual (MOOV) bank submission and its code. They live beside
 // the page rather than in src/api/portal.js, which the older /portal page
 // (src/pages/PortalPage.jsx) also uses.
 
@@ -134,8 +134,9 @@ export function resetPassword(resetToken, password) {
 
 /**
  * Submits a new bank through MOOV (docs/conventions/portal-api-contract.md §9b
- * in pijb). The bank in use stays in use: the new one is verified at Moov and
- * approved by our team before it takes over.
+ * in pijb). The bank in use stays in use: our team reviews the void check
+ * first, and only then is the new one sent to Moov for its verification
+ * deposit (PORTAL-MOOV-04). The entry comes back `pending_review`.
  *
  * Multipart, with the void check as the file itself: the server stores it and
  * picks the key, so nothing is uploaded for a submission that is never sent.
@@ -156,5 +157,24 @@ export function submitManualBank(token, { accountNumber, routingNumber, bankName
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body,
+  })
+}
+
+/**
+ * Completes a Moov verification with the code from the deposit (instant) or
+ * the two deposit amounts in cents (micro-deposits) — §9a in pijb's
+ * portal-api-contract.md. `target` names which verification: an entry of
+ * `bank_verification.awaiting_codes` ("submission" for a submitted bank,
+ * "current" for the bank in use).
+ *
+ * Response (200): { success, customer } — the fresh summary. Refusals:
+ * 422 VERIFICATION_CODE_INVALID { attempts_left }, 422 VERIFICATION_INPUT_INVALID,
+ * 423 VERIFICATION_LOCKED, 409 NOTHING_TO_VERIFY, 502 VERIFICATION_UNAVAILABLE.
+ */
+export function submitBankCode(token, { target, code, amounts }) {
+  return apiFetch(`${BASE}/api/portal/bank/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(amounts ? { target, amounts } : { target, code }),
   })
 }
