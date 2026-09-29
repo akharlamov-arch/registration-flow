@@ -56,15 +56,16 @@ export default function Header() {
             </div>
           </div>
 
-          {/* CENTER — Logo */}
+          {/* CENTER — Logo. Deliberately not a link: every page is reached by a
+              direct link (lead form, registration, portal), none links to
+              another, and "#/" is the new-applicant form — a customer who hit
+              the logo by accident landed there. */}
           <div className="flex-1 flex items-center justify-center">
-            <a href="#/" aria-label="iTrucking home" className="flex items-center focus:outline-none">
-              <img
-                src={logoUrl}
-                alt="iTrucking"
-                className="h-[22px] sm:h-[26px] w-auto"
-              />
-            </a>
+            <img
+              src={logoUrl}
+              alt="iTrucking"
+              className="h-[22px] sm:h-[26px] w-auto"
+            />
           </div>
 
           {/* RIGHT — Phone */}

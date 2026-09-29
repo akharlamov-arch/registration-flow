@@ -1,7 +1,9 @@
 // API calls only the attention page makes: the documents library, the
-// two-factor sign-in, the manual (MOOV) bank submission and its code. They live beside
-// the page rather than in src/api/portal.js, which the older /portal page
-// (src/pages/PortalPage.jsx) also uses.
+// password half of sign-in, the manual (MOOV) bank submission and its code.
+// They live beside the page rather than in src/api/portal.js, which the older
+// /portal page (src/pages/PortalPage.jsx) also uses. The code half of sign-in
+// (`requestCode`, `verifyCode`) is already there, and the sign-in calls below
+// join it once /portal shares the sign-in screen (PORTAL-AUTH-03 §12).
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -24,55 +26,26 @@ export function getPolicies(token) {
 }
 
 // ── Password sign-in ────────────────────────────────────────────────────────
-// The sign-in screen asks for email and password together and offers a
-// one-time code beside them, so nothing is ever revealed about whether an
-// account exists or has a password set. Whether to prompt for creating one is
-// decided after the OTP, from `customer.has_password` — which only travels
-// inside an authenticated response.
+// Sign-in is code first (Login.jsx): `requestCode` → `verifyCode`, both from
+// src/api/portal.js. Whether a password is then owed, or may be created, is
+// read from that authenticated response — `password_required` or
+// `customer.has_password` — so nothing before the code reveals who has an
+// account or a password.
 //
-// A password alone never mints a session: it is always followed by an OTP.
-
-/**
- * Checks the password. On success the client then requests an OTP — this call
- * does not return a session token by itself.
- * Response: { success } or 401 { success: false, code: "PASSWORD_INVALID" }
- */
-export function verifyPassword(email, password) {
-  return apiFetch(`${BASE}/api/portal/verify-password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  })
-}
+// The server also accepts the password first (`verify-password` with a
+// `password_token` on verify-code); this client does not use that order.
 
 /**
  * Sets the password for the signed-in session. First login only.
- * Response: { success } or 422 { success: false, code: "PASSWORD_TOO_SHORT" }
+ * Response: { success }. Refusals: 422 PASSWORD_TOO_SHORT | PASSWORD_TOO_LONG
+ * (with `min_length`), 409 PASSWORD_ALREADY_SET once one exists, 401
+ * INVALID_SESSION.
  */
 export function setPassword(token, password) {
   return apiFetch(`${BASE}/api/portal/set-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ password }),
-  })
-}
-
-/**
- * Exchanges the emailed code for a session — but only when both factors are in.
- *
- * Separate from src/api/portal.js's verifyCode, because it carries
- * `password_token`: proof that the password was accepted earlier in this same
- * attempt. Without it, an account that has a password gets no session and the
- * response says `password_required` with a `pending_token` instead.
- *
- * Response, both factors done: { success, session_token, customer }
- * Response, password still owed: { success, password_required, pending_token }
- */
-export function verifyCodeWithFactor(email, code, passwordToken) {
-  return apiFetch(`${BASE}/api/portal/verify-code`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, code, password_token: passwordToken || undefined }),
   })
 }
 
