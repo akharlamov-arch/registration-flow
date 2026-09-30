@@ -3,7 +3,8 @@
 // any order. A step can also arrive `locked` (ATTANTION-PAGE-01): a customer
 // routed in from one of the real portal's gates is kept on the tab that sent
 // them here until that gate's own condition clears, so a locked step ignores
-// clicks instead of switching to it.
+// clicks instead of switching to it. With `readOnly` (the overview) no step is
+// clickable at all: the rail only reports status.
 
 import { useI18n } from '../../context/I18nContext'
 function CheckIcon() {
@@ -46,24 +47,25 @@ const STATUS_KEY = {
   locked:  'attention.steps.locked',
 }
 
-export default function Stepper({ steps, current, onSelect }) {
+export default function Stepper({ steps, current, onSelect, readOnly = false }) {
   const { t } = useI18n()
   return (
     <ol className="space-y-1">
       {steps.map((step, i) => {
         const isCurrent = step.id === current
         const locked = step.state === 'locked'
+        const inert = locked || readOnly
 
         return (
           <li key={step.id}>
             <button
               type="button"
-              onClick={() => !locked && onSelect(step.id)}
-              disabled={locked}
-              aria-disabled={locked}
+              onClick={() => !inert && onSelect(step.id)}
+              disabled={inert}
+              aria-disabled={inert}
               className={`w-full text-left flex gap-3 rounded-xl px-3 py-3
                           transition-colors duration-ds-normal
-                          ${locked ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-white'}
+                          ${locked ? 'cursor-not-allowed' : readOnly ? 'cursor-default' : 'cursor-pointer hover:bg-white'}
                           ${isCurrent ? 'bg-white shadow-ds-sm border border-gray-200' : 'border border-transparent'}`}
             >
               <span className={`mt-0.5 w-6 h-6 shrink-0 rounded-full border flex items-center justify-center

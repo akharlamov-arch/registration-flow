@@ -179,7 +179,6 @@ const attentionStrings = {
     heroAttention: 'A few things need your attention',
     heroUpToDate: 'Your account is up to date',
     subAnyOrder: 'You can complete these in any order.',
-    subNothing: 'Nothing outstanding right now.',
     signOut: 'Sign out',
     cancel: 'Cancel',
     needAttentionOne: 'field still needs attention — highlighted in red above.',
@@ -227,6 +226,12 @@ const attentionStrings = {
     },
     steps: { contract: 'Updated contract details', bank: 'Bank account', done: 'Completed', active: 'Action required', pending: 'Awaiting review', waiting: 'Deposit on its way', locked: 'Locked' },
     docsNav: { title: 'Documents & policies', sub: 'Always available' },
+    hub: {
+      sub: 'Everything looks good. Have any details changed recently?',
+      contractTitle: 'Update details', contractBody: 'Update company or contract information.',
+      bankTitle: 'Update bank', bankBody: 'Link a new bank account or change payment details.',
+      cta: 'Update', back: 'Back to overview',
+    },
     sign: {
       heading: 'Review your updated contract details',
       blurb: 'Our updated agreement asks for a few details we did not collect before. Fill them in, then sign.',
@@ -349,7 +354,6 @@ const attentionStrings = {
     heroAttention: 'Несколько вопросов требуют вашего внимания',
     heroUpToDate: 'Ваш аккаунт в порядке',
     subAnyOrder: 'Их можно выполнить в любом порядке.',
-    subNothing: 'Сейчас ничего не требуется.',
     signOut: 'Выйти',
     cancel: 'Отмена',
     needAttentionOne: 'поле требует внимания — выделено красным выше.',
@@ -397,6 +401,12 @@ const attentionStrings = {
     },
     steps: { contract: 'Данные обновлённого контракта', bank: 'Банковский счёт', done: 'Выполнено', active: 'Требуется действие', pending: 'На проверке', waiting: 'Платёж в пути', locked: 'Заблокировано' },
     docsNav: { title: 'Документы и политики', sub: 'Доступно всегда' },
+    hub: {
+      sub: 'Всё в порядке. Изменились ли какие-то данные в последнее время?',
+      contractTitle: 'Обновить данные', contractBody: 'Обновите данные компании или контракта.',
+      bankTitle: 'Обновить банк', bankBody: 'Привяжите новый банковский счёт или измените платёжные данные.',
+      cta: 'Обновить', back: 'Назад к обзору',
+    },
     sign: {
       heading: 'Проверьте данные обновлённого контракта',
       blurb: 'В обновлённом соглашении мы просим несколько сведений, которых раньше не собирали. Заполните их и подпишите.',
@@ -519,7 +529,6 @@ const attentionStrings = {
     heroAttention: 'Кілька питань потребують вашої уваги',
     heroUpToDate: 'Ваш акаунт у порядку',
     subAnyOrder: 'Їх можна виконати в будь-якому порядку.',
-    subNothing: 'Зараз нічого не потрібно.',
     signOut: 'Вийти',
     cancel: 'Скасувати',
     needAttentionOne: 'поле потребує уваги — виділено червоним вище.',
@@ -567,6 +576,12 @@ const attentionStrings = {
     },
     steps: { contract: 'Дані оновленого контракту', bank: 'Банківський рахунок', done: 'Виконано', active: 'Потрібна дія', pending: 'На перевірці', waiting: 'Платіж у дорозі', locked: 'Заблоковано' },
     docsNav: { title: 'Документи та політики', sub: 'Доступно завжди' },
+    hub: {
+      sub: 'Усе гаразд. Чи змінились якісь дані нещодавно?',
+      contractTitle: 'Оновити дані', contractBody: 'Оновіть дані компанії або контракту.',
+      bankTitle: 'Оновити банк', bankBody: 'Прив’яжіть новий банківський рахунок або змініть платіжні дані.',
+      cta: 'Оновити', back: 'Назад до огляду',
+    },
     sign: {
       heading: 'Перевірте дані оновленого контракту',
       blurb: 'В оновленій угоді ми просимо кілька відомостей, яких раніше не збирали. Заповніть їх і підпишіть.',
@@ -689,7 +704,6 @@ const attentionStrings = {
     heroAttention: 'Algunos asuntos requieren su atención',
     heroUpToDate: 'Su cuenta está al día',
     subAnyOrder: 'Puede completarlos en cualquier orden.',
-    subNothing: 'No hay nada pendiente por ahora.',
     signOut: 'Cerrar sesión',
     cancel: 'Cancelar',
     needAttentionOne: 'campo requiere atención — resaltado en rojo arriba.',
@@ -737,6 +751,12 @@ const attentionStrings = {
     },
     steps: { contract: 'Datos del contrato actualizado', bank: 'Cuenta bancaria', done: 'Completado', active: 'Acción requerida', pending: 'En revisión', waiting: 'Depósito en camino', locked: 'Bloqueado' },
     docsNav: { title: 'Documentos y políticas', sub: 'Siempre disponible' },
+    hub: {
+      sub: 'Todo se ve bien. ¿Han cambiado algunos datos recientemente?',
+      contractTitle: 'Actualizar datos', contractBody: 'Actualice la información de la empresa o del contrato.',
+      bankTitle: 'Actualizar banco', bankBody: 'Vincule una nueva cuenta bancaria o cambie los datos de pago.',
+      cta: 'Actualizar', back: 'Volver al resumen',
+    },
     sign: {
       heading: 'Revise los datos de su contrato actualizado',
       blurb: 'Nuestro acuerdo actualizado solicita algunos datos que antes no recopilábamos. Complételos y firme.',

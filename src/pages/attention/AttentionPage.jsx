@@ -34,7 +34,8 @@
 // instead of acting in place, handing the already-authenticated session token
 // through router state (`location.state.token` — never the URL, it is a
 // bearer credential) plus which gate sent the customer (`entry`). That opens
-// the matching tab directly. A customer sent by the bank gate finds the
+// the matching tab directly; any other visit lands on the overview, whose two
+// cards open the tabs. A customer sent by the bank gate finds the
 // contract tab locked until the bank is linked, so they cannot wander off
 // mid-flow; the bank tab itself is never locked (see `lockedStep` below).
 
@@ -52,6 +53,7 @@ import {
   buildContractPayload, mapServerErrors,
 } from './formState'
 import Stepper from './Stepper'
+import Overview from './Overview'
 import Step1Contract from './Step1Contract'
 import Step2Bank from './Step2Bank'
 import BankReminder from './BankReminder'
@@ -131,8 +133,8 @@ export default function AttentionPage() {
   // Manual MOOV details submitted — a person reviews them, so this is neither
   // unconnected nor verified. There is no real backend field for this yet, so
   // it stays local to the session.
-  // 1 | 2 | 'policies'
-  const [step, setStep] = useState(1)
+  // 'overview' | 1 | 2 | 'policies'
+  const [step, setStep] = useState('overview')
   const [policies, setPolicies] = useState([])
   const [policiesLoading, setPoliciesLoading] = useState(true)
 
@@ -194,7 +196,7 @@ export default function AttentionPage() {
     setEditingContract(false)
     setSignNote('')
     setNeedsReconcile(c?.contract?.pending?.delivery === 'embedded')
-    setStep(entry === 'bank' ? 2 : entry === 'contract' ? 1 : contractSigned(c?.contract) ? 2 : 1)
+    setStep(entry === 'bank' ? 2 : entry === 'contract' ? 1 : 'overview')
   }, [entry])
 
   const refresh = useCallback(async () => {
@@ -492,6 +494,7 @@ export default function AttentionPage() {
   ]
 
   const allDone = signed && linked
+  const onOverview = step === 'overview'
   // Once manual details are in, the customer has done their part — keep the
   // red reminder for the case where nothing has been submitted at all.
   const remind = signed && !linked && !bankPending
@@ -586,7 +589,7 @@ export default function AttentionPage() {
             {allDone ? t('attention.heroUpToDate') : t('attention.heroAttention')}
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            {allDone ? t('attention.subNothing') : t('attention.subAnyOrder')}
+            {allDone ? t('attention.hub.sub') : t('attention.subAnyOrder')}
           </p>
         </div>
 
@@ -595,7 +598,7 @@ export default function AttentionPage() {
             <Stepper
               steps={steps}
               current={step}
-              onSelect={(id) => { if (id !== lockedStep) setStep(id) }}
+              readOnly
             />
 
             <div className="mt-3 pt-3 border-t border-gray-200">
@@ -624,9 +627,22 @@ export default function AttentionPage() {
           </aside>
 
           <div className="min-w-0">
-            {remind && <BankReminder onGo={() => setStep(2)} />}
+            {remind && !onOverview && <BankReminder onGo={() => setStep(2)} />}
 
-            {step === 'policies' ? (
+            {!onOverview && (
+              <button
+                type="button"
+                onClick={() => setStep('overview')}
+                className="mb-6 inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white bg-primary hover:opacity-90
+                           rounded-xl shadow-ds-sm transition-opacity duration-ds-normal focus:outline-none focus:ring-2 focus:ring-primary/40"
+              >
+                <span aria-hidden="true">←</span> {t('attention.hub.back')}
+              </button>
+            )}
+
+            {onOverview ? (
+              <Overview onOpenContract={() => setStep(1)} onOpenBank={() => setStep(2)} />
+            ) : step === 'policies' ? (
               <PoliciesLibrary policies={policies} loading={policiesLoading} />
             ) : step === 1 ? (
               renderContractTab()
