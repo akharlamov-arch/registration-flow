@@ -256,6 +256,9 @@ const attentionStrings = {
       notCompleted: 'We have not received your signature yet. Resume signing to finish.',
       notResumable: 'That signing session has ended. Please sign the updated contract again.',
       stateUnknown: 'We could not load the status of your contract. Please reload the page.',
+      underReviewTitle: 'Your updated details are under review',
+      underReviewBody: 'Our team is reviewing the changes you submitted. Once approved, we will email you a link to sign the updated contract.',
+      updatePendingReview: 'Your last submitted update is still awaiting review.',
     },
     bank: {
       heading: 'Connect your bank account',
@@ -423,6 +426,9 @@ const attentionStrings = {
       notCompleted: 'Мы ещё не получили вашу подпись. Продолжите подписание, чтобы завершить.',
       notResumable: 'Сеанс подписания завершён. Подпишите обновлённый контракт ещё раз.',
       stateUnknown: 'Не удалось загрузить статус контракта. Обновите страницу.',
+      underReviewTitle: 'Ваши обновлённые данные на проверке',
+      underReviewBody: 'Наша команда проверяет присланные вами изменения. После одобрения мы отправим вам на почту ссылку для подписания обновлённого контракта.',
+      updatePendingReview: 'Ваша последняя заявка всё ещё на проверке.',
     },
     bank: {
       heading: 'Подключите банковский счёт',
@@ -590,6 +596,9 @@ const attentionStrings = {
       notCompleted: 'Ми ще не отримали ваш підпис. Продовжте підписання, щоб завершити.',
       notResumable: 'Сеанс підписання завершено. Підпишіть оновлений контракт ще раз.',
       stateUnknown: 'Не вдалося завантажити статус контракту. Оновіть сторінку.',
+      underReviewTitle: 'Ваші оновлені дані на перевірці',
+      underReviewBody: 'Наша команда перевіряє надіслані вами зміни. Після схвалення ми надішлемо на пошту посилання для підписання оновленого контракту.',
+      updatePendingReview: 'Ваша остання заявка ще на перевірці.',
     },
     bank: {
       heading: 'Підключіть банківський рахунок',
@@ -757,6 +766,9 @@ const attentionStrings = {
       notCompleted: 'Aún no hemos recibido su firma. Continúe firmando para terminar.',
       notResumable: 'Esa sesión de firma terminó. Vuelva a firmar el contrato actualizado.',
       stateUnknown: 'No pudimos cargar el estado de su contrato. Recargue la página.',
+      underReviewTitle: 'Sus datos actualizados están en revisión',
+      underReviewBody: 'Nuestro equipo está revisando los cambios que envió. Una vez aprobados, le enviaremos un enlace por correo para firmar el contrato actualizado.',
+      updatePendingReview: 'Su última actualización enviada aún está en revisión.',
     },
     bank: {
       heading: 'Conecte su cuenta bancaria',

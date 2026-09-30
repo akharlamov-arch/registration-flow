@@ -57,7 +57,7 @@ import Step2Bank from './Step2Bank'
 import BankReminder from './BankReminder'
 import { bankVerified, openSubmission } from '../../components/bankDisplay'
 import ContractSigned from './ContractSigned'
-import { ContractPending, ContractConfirming } from './ContractSigningStatus'
+import { ContractPending, ContractConfirming, ContractUnderReview } from './ContractSigningStatus'
 import PoliciesLibrary from './PoliciesLibrary'
 import Login from './Login'
 
@@ -170,6 +170,11 @@ export default function AttentionPage() {
   const contract = customer?.contract
   const signed = contractSigned(contract)
   const resumable = contract?.pending?.delivery === 'embedded'
+  // CRM-CONTRACT-REVIEW-01: a customer past their first contract revision
+  // has their Sign attempt staged for operator review instead of opening an
+  // embedded request — `contract.update_review` carries that state across a
+  // reload, same as `contract.pending` does for a live Zoho request.
+  const pendingReview = contract?.update_review?.status === 'pending'
   // Channel-agnostic: a bank verified through a MOOV submission counts too.
   const linked = bankVerified(customer?.bank_verification) === true
   // A submitted (MOOV) bank still under way, read from the summary so a reload
@@ -401,6 +406,20 @@ export default function AttentionPage() {
       return
     }
 
+    // CRM-CONTRACT-REVIEW-01: staged for operator review instead of a Zoho
+    // request. `refresh()` picks up `contract.update_review`, which is what
+    // actually flips the tab to the under-review panel (mirrors how the
+    // embedded-frame branch above leans on `contract.pending`, not a local flag).
+    if (ok && data?.success && data?.status === 'pending_review') {
+      refresh()
+      return
+    }
+
+    if (data?.code === 'CONTRACT_UPDATE_PENDING_REVIEW') {
+      refresh()
+      return
+    }
+
     if (data?.errors) {
       const { fieldErrors, unmapped, locked } = mapServerErrors(data.errors)
       setServerFieldErrors(fieldErrors)
@@ -464,7 +483,11 @@ export default function AttentionPage() {
   const lockedStep = entry === 'bank' && !linked ? 1 : null
 
   const steps = [
-    { id: 1, title: t('attention.steps.contract'), state: lockedStep === 1 ? 'locked' : signed ? 'done' : 'active' },
+    {
+      id: 1,
+      title: t('attention.steps.contract'),
+      state: lockedStep === 1 ? 'locked' : pendingReview ? 'pending' : signed ? 'done' : 'active',
+    },
     { id: 2, title: t('attention.steps.bank'), state: bankState },
   ]
 
@@ -510,6 +533,14 @@ export default function AttentionPage() {
           onRequestChange={() => setEditingContract(true)}
         />
       )
+    }
+
+    // CRM-CONTRACT-REVIEW-01: a Sign attempt was staged for operator review
+    // instead of opening a Zoho request. Unconditional — unlike `resumable`,
+    // there is no "edit and resubmit" escape hatch while one is pending (the
+    // server refuses a second submission with CONTRACT_UPDATE_PENDING_REVIEW).
+    if (pendingReview) {
+      return <ContractUnderReview />
     }
 
     // An embedded request is out and unsigned: reopen it rather than create a

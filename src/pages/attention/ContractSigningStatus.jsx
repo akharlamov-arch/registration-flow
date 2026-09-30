@@ -7,6 +7,14 @@
 //
 // `ContractConfirming` — the frame returned and the server is asking Zoho
 // whether the signature really landed. Nothing reads as signed until it says so.
+//
+// `ContractUnderReview` — the customer's contract data is past its first
+// revision (CRM-CONTRACT-REVIEW-01, backend-side gate keyed off the
+// contract's version — never computed here), so `POST /contract/sign`
+// staged it for operator review instead of opening a Zoho request.
+// Informational only: no resume/edit action, since a second submission
+// while one is pending is refused by the server (`contract.update_review`
+// on load; `CONTRACT_UPDATE_PENDING_REVIEW` on a repeat Sign attempt).
 
 import { useI18n } from '../../context/I18nContext'
 
@@ -15,6 +23,16 @@ function PenBadge() {
     <span className="w-10 h-10 rounded-full bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0">
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z" />
+      </svg>
+    </span>
+  )
+}
+
+function ReviewBadge() {
+  return (
+    <span className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0">
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     </span>
   )
@@ -82,6 +100,28 @@ export function ContractConfirming() {
       <div className="flex items-center gap-3" role="status">
         <Spinner />
         <p className="text-sm text-gray-600">{t('attention.signing.confirming')}</p>
+      </div>
+    </div>
+  )
+}
+
+export function ContractUnderReview() {
+  const { t } = useI18n()
+
+  return (
+    <div className="space-y-4">
+      <header className="mb-2">
+        <h2 className="text-xl font-bold text-gray-900">{t('attention.steps.contract')}</h2>
+      </header>
+
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-6">
+        <div className="flex items-start gap-4">
+          <ReviewBadge />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-900">{t('attention.signing.underReviewTitle')}</p>
+            <p className="text-sm text-gray-500 mt-0.5 leading-relaxed">{t('attention.signing.underReviewBody')}</p>
+          </div>
+        </div>
       </div>
     </div>
   )
