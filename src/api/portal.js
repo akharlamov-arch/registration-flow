@@ -6,9 +6,17 @@
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
-async function apiFetch(url, options = {}) {
+// Fired on `window` when an authenticated call is refused because the session
+// is gone (6h absolute / 10 min idle). Pages that hold a session listen for it
+// and return the customer to sign-in instead of leaving a dead form behind.
+export const SESSION_EXPIRED_EVENT = 'portal:session-expired'
+
+export async function apiFetch(url, options = {}) {
   const res = await fetch(url, options)
   const data = await res.json().catch(() => ({}))
+  if (res.status === 401 && data?.code === 'INVALID_SESSION') {
+    window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
+  }
   return { ok: res.ok, status: res.status, data }
 }
 

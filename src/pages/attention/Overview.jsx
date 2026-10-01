@@ -42,10 +42,20 @@ function ActionCard({ icon, title, body, cta, onClick }) {
   )
 }
 
-export default function Overview({ onOpenContract, onOpenBank }) {
+export default function Overview({ onOpenContract, onOpenBank, requestReceived = false }) {
   const { t } = useI18n()
   return (
     <div className="space-y-4">
+      {requestReceived && (
+        <div role="status" className="rounded-2xl border border-green-200 bg-green-50 px-4 sm:px-6 py-4 flex items-start gap-3">
+          <span className="w-6 h-6 shrink-0 rounded-full bg-green-600 text-white flex items-center justify-center" aria-hidden="true">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </span>
+          <p className="text-sm font-medium text-green-900 leading-relaxed">{t('attention.review.requestReceived')}</p>
+        </div>
+      )}
       <ActionCard
         icon={<DocumentIcon />}
         title={t('attention.hub.contractTitle')}

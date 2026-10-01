@@ -146,7 +146,7 @@ function PasswordRule() {
   return <p className="text-xs text-gray-500">{t('attention.login.passwordRule')}</p>
 }
 
-export default function Login({ onSignedIn }) {
+export default function Login({ onSignedIn, notice = '' }) {
   const { t } = useI18n()
 
   // 'email' | 'code' | 'password' | 'create' | 'resetCode' | 'reset'
@@ -354,6 +354,11 @@ export default function Login({ onSignedIn }) {
 
   return (
     <main className="max-w-md mx-auto px-4 py-16">
+      {notice && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800" role="status">
+          {notice}
+        </div>
+      )}
       <h1 className="text-xl font-bold text-gray-900 mb-1">{t(`attention.login.${HEAD[0]}`)}</h1>
       <p className="text-sm text-gray-500 mb-6">{t(`attention.login.${HEAD[1]}`)}</p>
 
