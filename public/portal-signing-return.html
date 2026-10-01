@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<!--
+  Where Zoho sends the customer portal's signing frame when the signer finishes
+  (PORTAL-SIGN-02): portal-signing-return.html?result=completed|declined.
+
+  A static file rather than an SPA route because Zoho refuses a redirect URL
+  with a `#` in it ("Url has invalid character", code 3007), and every SPA
+  route is a hash route. Vite copies public/ to the build root untouched, so
+  this page is served next to index.html wherever the build is deployed.
+
+  It runs INSIDE the frame, on the portal's own origin, and does one thing:
+  tell the page that framed it how signing ended —
+  `{ type: 'itrucking:portal-signing', result }`, the message
+  src/components/ContractSigningFrame.jsx (PORTAL_SIGNING_MESSAGE) listens for.
+  That page holds the session and asks the server to confirm with Zoho. Nothing
+  here carries or reads a credential: the URL never holds one (PORTAL-SIGN-01).
+
+  Opened outside a frame (a bookmarked or forwarded link) there is no parent to
+  tell, so it offers the way back to the portal instead. It is not index.html,
+  so index.html's iframe escape never runs here.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>iTrucking</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 0 16px;
+        font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+        text-align: center;
+        background: #fff;
+      }
+      p { margin: 0; font-size: 14px; color: #6b7280; }
+      a { font-size: 14px; font-weight: 600; color: #2563eb; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <p id="finishing">Finishing…</p>
+    <a id="back" href="./#/attention" hidden>Back to your account</a>
+
+    <script>
+      (function () {
+        // attention.signing.* in src/data/translations.js; the portal's language
+        // is in localStorage on this same origin (src/context/I18nContext.jsx).
+        var TEXT = {
+          en: { finishing: 'Finishing…', back: 'Back to your account' },
+          ru: { finishing: 'Завершаем…', back: 'Вернуться в аккаунт' },
+          uk: { finishing: 'Завершуємо…', back: 'Повернутися до акаунта' },
+          es: { finishing: 'Finalizando…', back: 'Volver a su cuenta' },
+        };
+
+        var lang = 'en';
+        try {
+          lang = localStorage.getItem('itrucking-lang') || 'en';
+        } catch (e) {
+          // Blocked storage: English.
+        }
+        if (!TEXT[lang]) lang = 'en';
+        document.documentElement.lang = lang;
+        document.getElementById('finishing').textContent = TEXT[lang].finishing;
+
+        if (window.parent !== window) {
+          var result =
+            new URLSearchParams(window.location.search).get('result') === 'completed'
+              ? 'completed'
+              : 'declined';
+          window.parent.postMessage(
+            { type: 'itrucking:portal-signing', result: result },
+            window.location.origin
+          );
+        } else {
+          var back = document.getElementById('back');
+          back.textContent = TEXT[lang].back;
+          back.hidden = false;
+        }
+      })();
+    </script>
+  </body>
+</html>

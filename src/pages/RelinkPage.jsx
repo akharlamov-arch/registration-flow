@@ -4,18 +4,19 @@
 //   1. Mount: parse `?token=` from the location's search, call fetchRelinkSession
 //      to validate. On 410, render an invalid-state screen. On 200, store the
 //      display name + expiry and render the Plaid Link launcher.
-//   2. User clicks "Connect Bank": call fetchRelinkLinkToken, hand the returned
-//      `link_token` to window.Plaid.create + open. The Plaid script is loaded
-//      from index.html (see <script src="https://cdn.plaid.com/link/v2/...">).
+//   2. User clicks "Connect Bank": `usePlaidLink` fetches the link token and opens
+//      Plaid Link. That hook is the app's only window.Plaid.create call site;
+//      the SDK is loaded from index.html (see <script src="https://cdn.plaid.com/link/v2/...">).
 //   3. Plaid onSuccess → exchangeRelink with public_token + account_id; render
 //      a success or error message accordingly.
 //
 // The token is stripped from the URL on mount via replaceState so it does not
 // leak via referer headers or shared screenshots.
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import { fetchRelinkSession, fetchRelinkLinkToken, exchangeRelink } from '../api/relink'
+import usePlaidLink from '../hooks/usePlaidLink'
 
 const STATE = {
   LOADING: 'loading',
@@ -112,10 +113,6 @@ export default function RelinkPage() {
   const [expiresAt, setExpiresAt] = useState(null)
   const [token, setToken] = useState(null)
 
-  // The Plaid handler is created once per link-token; we keep it in a ref so
-  // unmount + reopens cleanly destroy the previous instance.
-  const plaidHandlerRef = useRef(null)
-
   // ── Mount: extract token from query string, validate, strip from URL ──────
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search)
@@ -150,41 +147,10 @@ export default function RelinkPage() {
       }
     })
 
-    return () => {
-      if (plaidHandlerRef.current) {
-        try { plaidHandlerRef.current.destroy() } catch { /* ignore */ }
-      }
-    }
   }, [])  // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Plaid Link open ───────────────────────────────────────────────────────
-  const openPlaidLink = async () => {
-    if (!token || state === STATE.IN_PROGRESS) return
-    setExchangeError(null)
-    setState(STATE.IN_PROGRESS)
-
-    const { ok, data } = await fetchRelinkLinkToken(token)
-    if (!ok || !data?.success || !data?.link_token) {
-      setExchangeError(data?.message || 'Plaid is unavailable right now. Please try again.')
-      setState(STATE.ERROR)
-      return
-    }
-
-    if (!window.Plaid?.create) {
-      setExchangeError('Plaid Link script failed to load. Please refresh and try again.')
-      setState(STATE.ERROR)
-      return
-    }
-
-    try { plaidHandlerRef.current?.destroy() } catch { /* ignore */ }
-
-    plaidHandlerRef.current = window.Plaid.create({
-      token: data.link_token,
-      onSuccess: handlePlaidSuccess,
-      onExit: handlePlaidExit,
-    })
-    plaidHandlerRef.current.open()
-  }
+  // ── Plaid Link ────────────────────────────────────────────────────────────
+  const fetchLinkToken = useCallback(() => fetchRelinkLinkToken(token), [token])
 
   const handlePlaidSuccess = async (publicToken, metadata) => {
     // In Plaid update mode the SDK may pass publicToken as null — the backend
@@ -216,6 +182,31 @@ export default function RelinkPage() {
     }
     setExchangeError('Plaid Link was interrupted. Please try again.')
     setState(STATE.ERROR)
+  }
+
+  // Failures before Plaid opens (no link token, SDK missing) — the exchange
+  // failures above come back through onSuccess instead.
+  const handleLinkError = ({ code, message }) => {
+    setExchangeError(
+      code === 'PLAID_SCRIPT_MISSING'
+        ? 'Plaid Link script failed to load. Please refresh and try again.'
+        : message || 'Plaid is unavailable right now. Please try again.',
+    )
+    setState(STATE.ERROR)
+  }
+
+  const { open: openPlaid } = usePlaidLink({
+    fetchLinkToken,
+    onSuccess: handlePlaidSuccess,
+    onExit: handlePlaidExit,
+    onError: handleLinkError,
+  })
+
+  const openPlaidLink = async () => {
+    if (!token || state === STATE.IN_PROGRESS) return
+    setExchangeError(null)
+    setState(STATE.IN_PROGRESS)
+    await openPlaid()
   }
 
   // ── Render ────────────────────────────────────────────────────────────────

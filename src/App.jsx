@@ -1,6 +1,6 @@
 // DS React stack guideline: lazy() for routes — code splitting
 import { lazy, Suspense, useEffect } from 'react'
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { I18nProvider, useI18n } from './context/I18nContext'
 import Header from './components/Header'
 import LanguagePromptModal from './components/LanguagePromptModal'
@@ -10,13 +10,14 @@ const OtpVerification  = lazy(() => import('./pages/OtpVerification'))
 const PostSigning      = lazy(() => import('./pages/PostSigning'))
 const RelinkPage       = lazy(() => import('./pages/RelinkPage'))
 const PortalPage       = lazy(() => import('./pages/PortalPage'))
+const AttentionPage    = lazy(() => import('./pages/attention/AttentionPage'))
 
 function TitleUpdater() {
   const { t } = useI18n()
   const location = useLocation()
 
   useEffect(() => {
-    if (location.pathname.startsWith('/portal')) {
+    if (location.pathname.startsWith('/portal') || location.pathname.startsWith('/attention')) {
       document.title = t('portal.title')
       return
     }
@@ -40,6 +41,8 @@ function PageFallback() {
   )
 }
 
+// The portal's signing return is not a route here: Zoho refuses a `#` in a
+// redirect URL, so it is the static public/portal-signing-return.html.
 function AppShell() {
   return (
     <div className="min-h-screen bg-white font-sans">
@@ -53,6 +56,13 @@ function AppShell() {
           <Route path="/post-signing" element={<PostSigning />} />
           <Route path="/relink" element={<RelinkPage />} />
           <Route path="/portal" element={<PortalPage />} />
+          <Route path="/attention" element={<AttentionPage />} />
+          {/* Retired URLs, kept so links already shared with testers still land
+              somewhere (PORTAL-UI-01). `replace` keeps them out of history. A
+              redirect drops router state, so the /portal gates navigate to
+              /attention directly rather than through these. */}
+          <Route path="/attantion" element={<Navigate to="/attention" replace />} />
+          <Route path="/portal-demo" element={<Navigate to="/attention" replace />} />
         </Routes>
       </Suspense>
     </div>

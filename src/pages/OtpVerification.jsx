@@ -18,6 +18,8 @@ import {
 } from '../api/leadMappers'
 import { ReviewSection, ReviewRow, Row, US_STATES } from '../components/ReviewCard'
 import PlaidExchangeErrorPanel from '../components/PlaidExchangeErrorPanel'
+import ContractSigningFrame from '../components/ContractSigningFrame'
+import usePlaidLink from '../hooks/usePlaidLink'
 
 // ── Review-info modal (same card design as the old review step) ─────────────
 function ReviewInfoModal({ lead, marketingConsent, onConsentChange, onClose }) {
@@ -217,7 +219,6 @@ export default function OtpVerification() {
     rejectionMessage: null,
     combinedProbe: { enabled: false, mode: 'standard', idvEvents: [], lastOutcome: null },
   })
-  const plaidHandlerRef = useRef(null)
   const [plaidBypassAvailable, setPlaidBypassAvailable] = useState(false)
   const [plaidManualFallback, setPlaidManualFallback]   = useState(false)
   const [plaidAttempted, setPlaidAttempted]             = useState(false)
@@ -451,6 +452,45 @@ export default function OtpVerification() {
     }
   }
 
+  // Mints the link token and records what the probe needs before Plaid opens.
+  // `usePlaidLink` (the app's single window.Plaid.create call site) takes it
+  // from here.
+  const fetchPlaidLinkToken = async () => {
+    const useCombined = plaidConfig.combinedLinkEnabled
+    const fetcher = useCombined ? getPlaidCombinedLinkToken : getPlaidLinkToken
+
+    const { ok, data } = await fetcher({
+      verificationCode: otpCode,
+      sessionToken,
+      mode: useCombined ? 'single_session_probe' : 'standard',
+    })
+
+    if (ok && data?.success && data?.link_token) {
+      setPlaid(prev => ({
+        ...prev,
+        linkToken: data.link_token,
+        requestId: data.request_id || null,
+        combinedProbe: { ...prev.combinedProbe, enabled: useCombined, mode: data.mode || prev.combinedProbe.mode },
+      }))
+    }
+
+    return { ok, data }
+  }
+
+  const { open: openPlaid } = usePlaidLink({
+    fetchLinkToken: fetchPlaidLinkToken,
+    onSuccess: handlePlaidSuccess,
+    onEvent: handlePlaidEvent,
+    onExit: (err) => {
+      if (plaid.status === 'verified') return
+      setPlaid(prev => ({ ...prev, status: err ? 'error' : 'not_started' }))
+    },
+    onError: (err) => {
+      setPlaid(prev => ({ ...prev, status: 'error' }))
+      console.error('startPlaidVerification failed', err)
+    },
+  })
+
   const startPlaidVerification = async () => {
     if (plaid.status === 'in_progress') return
     setPlaidAttempted(true)
@@ -461,39 +501,7 @@ export default function OtpVerification() {
       rejectionDetails: null,
       rejectionMessage: null,
     }))
-    try {
-      const useCombined = plaidConfig.combinedLinkEnabled
-      const fetcher = useCombined ? getPlaidCombinedLinkToken : getPlaidLinkToken
-      const { ok, data } = await fetcher({
-        verificationCode: otpCode,
-        sessionToken,
-        mode: useCombined ? 'single_session_probe' : 'standard',
-      })
-      if (!ok || !data?.success || !data?.link_token) {
-        throw new Error(data?.message || t('otp.errorPlaidUnavailable'))
-      }
-      setPlaid(prev => ({
-        ...prev,
-        linkToken: data.link_token,
-        requestId: data.request_id || null,
-        combinedProbe: { ...prev.combinedProbe, enabled: useCombined, mode: data.mode || prev.combinedProbe.mode },
-      }))
-      if (!window.Plaid?.create) throw new Error(t('otp.errorPlaidUnavailable'))
-      plaidHandlerRef.current?.destroy()
-      plaidHandlerRef.current = window.Plaid.create({
-        token: data.link_token,
-        onSuccess: handlePlaidSuccess,
-        onEvent:   handlePlaidEvent,
-        onExit: (err) => {
-          if (plaid.status === 'verified') return
-          setPlaid(prev => ({ ...prev, status: err ? 'error' : 'not_started' }))
-        },
-      })
-      plaidHandlerRef.current.open()
-    } catch (err) {
-      setPlaid(prev => ({ ...prev, status: 'error' }))
-      console.error('startPlaidVerification failed', err)
-    }
+    await openPlaid()
   }
 
   // ── Document uploads ─────────────────────────────────────────────────────
@@ -2501,16 +2509,9 @@ export default function OtpVerification() {
           </main>
         )}
 
-        {/* Full-viewport iframe — covers everything including Header once signing URL is ready */}
-        {contractEmbedUrl && (
-          <div className="fixed inset-0 z-50 bg-white">
-            <iframe
-              src={contractEmbedUrl}
-              title="Contract signing"
-              style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-            />
-          </div>
-        )}
+        {/* Full-viewport iframe — covers everything including Header once signing URL is ready.
+            The same frame the customer portal signs in (PORTAL-SIGN-02). */}
+        {contractEmbedUrl && <ContractSigningFrame url={contractEmbedUrl} />}
       </>
     )
   }
