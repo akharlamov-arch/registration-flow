@@ -5,13 +5,9 @@
 // (`requestCode`, `verifyCode`) is already there, and the sign-in calls below
 // join it once /portal shares the sign-in screen (PORTAL-AUTH-03 §12).
 
-const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+import { apiFetch } from '../../api/portal'
 
-async function apiFetch(url, options = {}) {
-  const res = await fetch(url, options)
-  const data = await res.json().catch(() => ({}))
-  return { ok: res.ok, status: res.status, data }
-}
+const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
 /**
  * The library of internal documents and their revisions.

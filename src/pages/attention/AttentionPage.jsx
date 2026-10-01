@@ -43,7 +43,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useI18n } from '../../context/I18nContext'
 import {
-  validateSession, getMe, fetchContractSubject,
+  validateSession, getMe, fetchContractSubject, SESSION_EXPIRED_EVENT,
   signContract, resumeContractSigning, completeContractSigning,
 } from '../../api/portal'
 import ContractSigningFrame from '../../components/ContractSigningFrame'
@@ -129,6 +129,24 @@ export default function AttentionPage() {
   const [view, setView] = useState('loading')
   const [token, setToken] = useState('')
   const [customer, setCustomer] = useState(null)
+  const [sessionExpired, setSessionExpired] = useState(false)
+
+  // Any call refused with INVALID_SESSION (10 min idle / 6h absolute) ends up
+  // here: drop the dead token and go back to sign-in with a note, rather than
+  // leaving the customer on a form whose every button answers 401. Ignored
+  // outside the portal view — sign-in's own calls can be refused the same way.
+  useEffect(() => {
+    if (view !== 'portal') return
+    const onExpired = () => {
+      sessionStorage.removeItem(TOKEN_KEY)
+      setToken(''); setCustomer(null); setSigningUrl(null)
+      setEntry(undefined)
+      setSessionExpired(true)
+      setView('login')
+    }
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired)
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired)
+  }, [view])
 
   // Manual MOOV details submitted — a person reviews them, so this is neither
   // unconnected nor verified. There is no real backend field for this yet, so
@@ -177,6 +195,10 @@ export default function AttentionPage() {
   // embedded request — `contract.update_review` carries that state across a
   // reload, same as `contract.pending` does for a live Zoho request.
   const pendingReview = contract?.update_review?.status === 'pending'
+  // The same server rule, read ahead of time (`contract.review_required`): this
+  // customer's Sign goes to review, so the button says "Request Changes".
+  // Fail-closed to the plain sign flow when the server does not say.
+  const reviewRequired = contract?.review_required === true
   // Channel-agnostic: a bank verified through a MOOV submission counts too.
   const linked = bankVerified(customer?.bank_verification) === true
   // A submitted (MOOV) bank still under way, read from the summary so a reload
@@ -412,13 +434,14 @@ export default function AttentionPage() {
     // request. `refresh()` picks up `contract.update_review`, which is what
     // actually flips the tab to the under-review panel (mirrors how the
     // embedded-frame branch above leans on `contract.pending`, not a local flag).
-    if (ok && data?.success && data?.status === 'pending_review') {
-      refresh()
-      return
-    }
-
-    if (data?.code === 'CONTRACT_UPDATE_PENDING_REVIEW') {
-      refresh()
+    // Both outcomes end the same way: back on the start page, whose banner
+    // confirms the request is with our team.
+    if ((ok && data?.success && data?.status === 'pending_review')
+        || data?.code === 'CONTRACT_UPDATE_PENDING_REVIEW') {
+      await refresh()
+      setEditingContract(false)
+      setStep('overview')
+      window.scrollTo({ top: 0 })
       return
     }
 
@@ -447,6 +470,7 @@ export default function AttentionPage() {
     sessionStorage.removeItem(TOKEN_KEY)
     setToken(''); setCustomer(null); setView('login')
     setSigningUrl(null)
+    setSessionExpired(false)
     // A fresh sign-in afterward is an ordinary visit, not a continuation of
     // whichever gate originally sent this browser tab here.
     setEntry(undefined)
@@ -465,7 +489,9 @@ export default function AttentionPage() {
     return (
       <div className="min-h-screen bg-surface">
         <Login
+          notice={sessionExpired ? t('attention.sessionExpired') : ''}
           onSignedIn={(t, c) => {
+            setSessionExpired(false)
             // Stored like a routed token, so a reload keeps the session (the
             // mount effect above reads this key).
             sessionStorage.setItem(TOKEN_KEY, t)
@@ -571,7 +597,7 @@ export default function AttentionPage() {
         onChange={setValue}
         onSelectChoice={selectChoice}
         onSign={handleSign}
-        mode={signed ? 'change' : 'sign'}
+        mode={reviewRequired ? 'review' : signed ? 'change' : 'sign'}
         onCancel={signed || resumable ? () => setEditingContract(false) : undefined}
         token={token}
         formError={sendError || signNote}
@@ -641,7 +667,11 @@ export default function AttentionPage() {
             )}
 
             {onOverview ? (
-              <Overview onOpenContract={() => setStep(1)} onOpenBank={() => setStep(2)} />
+              <Overview
+                onOpenContract={() => setStep(1)}
+                onOpenBank={() => setStep(2)}
+                requestReceived={pendingReview}
+              />
             ) : step === 'policies' ? (
               <PoliciesLibrary policies={policies} loading={policiesLoading} />
             ) : step === 1 ? (
