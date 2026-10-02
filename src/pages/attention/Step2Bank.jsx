@@ -19,7 +19,7 @@ import { useCallback, useRef, useState } from 'react'
 import MoovFallback from './MoovFallback'
 import BankHistory from './BankHistory'
 import BankCodeEntry from './BankCodeEntry'
-import { bankLabel, historyNoteKey, openSubmission } from '../../components/bankDisplay'
+import { bankLabel, bankChangeUnderWay, historyNoteKey, openSubmission } from '../../components/bankDisplay'
 import PlaidExchangeErrorPanel from '../../components/PlaidExchangeErrorPanel'
 import usePlaidLink from '../../hooks/usePlaidLink'
 import { createPlaidVerificationSession } from '../../api/portal'
@@ -114,6 +114,9 @@ export default function Step2Bank({
   // says "No account connected" above a history listing that same account as
   // in use. Only the copy changes — the gate is still `bankVerified`.
   const onFileLabel = connected ? null : bankLabel(bank)
+  // The connect card's copy. Connected here means relinking — the bank in use
+  // is named in the strip above, so the card must not say "No account connected".
+  const connectCopy = connected ? 'relink' : onFileLabel ? 'onFile' : 'none'
   const submission = openSubmission(history)
   const submissionCode = awaitingCodes.find((c) => c.target === 'submission')
   // A code for the bank in use itself (PORTAL-MOOV-02), independent of any submission.
@@ -121,7 +124,14 @@ export default function Step2Bank({
   const [moovOpen, setMoovOpen] = useState(false)
   // Swapping banks: the connected account stays in place until a new one is
   // linked, so backing out leaves the customer exactly where they were.
-  const [relinking, setRelinking] = useState(false)
+  // A connected customer only reaches this tab through the overview's "Update
+  // bank" (the gate and the reminder send unverified ones), so they start on the
+  // connect card (ATTENTION-DIRECT-OPEN-01) — unless a change is already under
+  // way or a code is awaited: those screens are what they came back for, and
+  // the connect card hides them.
+  const [relinking, setRelinking] = useState(
+    () => connected && !bankChangeUnderWay(history) && awaitingCodes.length === 0,
+  )
   // { code, details, message } — a rejected exchange, shown in full. The
   // connected account is never cleared on the way through.
   const [error, setError] = useState(null)
@@ -255,11 +265,11 @@ export default function Step2Bank({
             </span>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-gray-900">
-                {t(onFileLabel ? 'attention.bank.onFileTitle' : 'attention.bank.noneTitle')}
+                {t(`attention.bank.${connectCopy}Title`)}
               </p>
               {onFileLabel && <p className="text-sm text-gray-700 mt-0.5">{onFileLabel}</p>}
               <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-                {t(onFileLabel ? 'attention.bank.onFileBody' : 'attention.bank.noneBody')}
+                {t(`attention.bank.${connectCopy}Body`)}
               </p>
 
               <ul className="mt-4 space-y-2">

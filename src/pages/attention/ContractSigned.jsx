@@ -1,8 +1,8 @@
 // Step 1 in its completed state.
 //
-// Reopening a signed step must not show an editable, empty form with a "Sign"
-// button — the rail already calls it Completed, and pressing Sign again would
-// re-submit. This panel is what a done step 1 looks like.
+// The confirmation right after signing in place, and where the form's Cancel
+// returns a signed customer. It is no longer the tab's landing: the overview's
+// "Update" opens a signed customer's form directly (ATTENTION-DIRECT-OPEN-01).
 
 import { useI18n } from '../../context/I18nContext'
 function CheckBadge() {

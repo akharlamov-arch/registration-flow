@@ -167,8 +167,9 @@ export default function AttentionPage() {
   const [signing, setSigning] = useState(false)
   const [serverFieldErrors, setServerFieldErrors] = useState({})
   const [sendError, setSendError] = useState('')
-  // Re-opens the sign form on an already-signed contract (ContractSigned's
-  // "Update my details") or over a pending one ("Change my details first").
+  // Re-opens the sign form on an already-signed contract (the overview's
+  // "Update", ContractSigned's "Update my details") or over a pending one
+  // ("Change my details first").
   const [editingContract, setEditingContract] = useState(false)
 
   // Signing in place. `signingUrl` is a bearer link to sign this customer's
@@ -466,6 +467,17 @@ export default function AttentionPage() {
     setSendError(data?.message || t('portal.contractForm.errorGeneric'))
   }
 
+  // The overview's "Update" is a request to change something, so a signed
+  // customer lands on the form, as a stale one always has — not on the signed
+  // panel, which is then only the confirmation after signing in place and
+  // where the form's Cancel returns. `signed` already excludes a pending
+  // request, so this never skips "Resume signing": a fresh submit there would
+  // supersede the request the customer was part-way through.
+  const openContract = () => {
+    if (signed) setEditingContract(true)
+    setStep(1)
+  }
+
   const handleSignOut = () => {
     sessionStorage.removeItem(TOKEN_KEY)
     setToken(''); setCustomer(null); setView('login')
@@ -668,7 +680,7 @@ export default function AttentionPage() {
 
             {onOverview ? (
               <Overview
-                onOpenContract={() => setStep(1)}
+                onOpenContract={openContract}
                 onOpenBank={() => setStep(2)}
                 requestReceived={pendingReview}
               />
