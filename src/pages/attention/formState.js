@@ -61,8 +61,8 @@ function addrEqual(a = {}, b = {}) {
  * (`fetchContractSubject`'s `subject.subject`).
  *
  * ssn/driver_license_number are never sent by the server — they always start
- * blank here; `meta.stored` says whether one is
- * already on file, submitting blank leaves it untouched.
+ * blank here; `subject.stored` says whether one is already on file, and
+ * submitting blank leaves it untouched (see `keptOnFile`).
  */
 export function initialFormFromSubject(subject = {}) {
   const values = emptyForm()
@@ -196,13 +196,34 @@ function fieldError(field, values) {
   }
 }
 
+// The server's `stored` flags a field can depend on (`onFile` in fields.js).
+const ON_FILE_KEYS = ['ssn', 'driver_license_number']
+
+/**
+ * `{ ssn, driver_license_number }` → true for each value on file that the
+ * customer has not chosen to replace. A kept value is not asked for: its fields
+ * are neither shown as inputs nor validated, and post blank — which the server
+ * reads as "keep the stored one".
+ */
+export function keptOnFile(stored = {}, replacing = {}) {
+  return Object.fromEntries(ON_FILE_KEYS.map((key) => [key, !!stored[key] && !replacing[key]]))
+}
+
+/** The form keys that hold the value a `stored` flag names. */
+export function onFileFormKeys(storedKey) {
+  return GROUPS.flatMap((group) => group.fields)
+    .filter((field) => field.onFile === storedKey)
+    .map((field) => field.key)
+}
+
 /** Returns { [fieldKey]: message } for every field that fails. */
-export function validate(values, choices) {
+export function validate(values, choices, kept = {}) {
   const errors = {}
   for (const group of GROUPS) {
     if (groupHidden(group, choices)) continue
     for (const field of group.fields) {
       if (field.type === 'readonly') continue
+      if (field.onFile && kept[field.onFile]) continue
       const message = fieldError(field, values)
       if (message) errors[field.key] = message
     }
@@ -210,8 +231,8 @@ export function validate(values, choices) {
   return errors
 }
 
-export function isComplete(values, choices) {
-  return Object.keys(validate(values, choices)).length === 0
+export function isComplete(values, choices, kept = {}) {
+  return Object.keys(validate(values, choices, kept)).length === 0
 }
 
 function addressFrom(values, prefix) {

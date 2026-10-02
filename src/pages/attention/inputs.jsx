@@ -106,15 +106,47 @@ function FieldTooltip({ tooltip }) {
   )
 }
 
+// A secret already on file (`onFile` in fields.js). The server never sends the
+// value — not even part of it — so this says only that it is there, and the
+// customer types a new one only if they choose to.
+function OnFileValue({ onReplace }) {
+  const { t } = useI18n()
+
+  return (
+    <div className="flex items-center justify-between gap-3 px-3 py-2 text-sm rounded-lg bg-gray-50 border border-gray-200">
+      <span className="text-gray-600">{t('attention.fields.onFile')}</span>
+      <button
+        type="button"
+        onClick={onReplace}
+        className="text-xs font-medium text-primary hover:underline underline-offset-2"
+      >
+        {t('attention.fields.replace')}
+      </button>
+    </div>
+  )
+}
+
 /** Renders one field from the `fields.js` table. Labels, placeholders and the
- *  error message arrive as translation keys and are resolved here. */
-export default function PortalField({ field, value, error, onChange, token }) {
+ *  error message arrive as translation keys and are resolved here.
+ *
+ *  `onFile` is `'kept'` while a stored secret is kept (shown as on file, not
+ *  asked for) and `'replacing'` once the customer chose to type a new one;
+ *  `onKeepChange(keep)` switches between the two. */
+export default function PortalField({ field, value, error, onChange, token, onFile, onKeepChange }) {
   const { t } = useI18n()
   const invalid = !!error
   const label = field.labelKey ? t(field.labelKey) : field.label
   const placeholder = field.placeholderKey ? t(field.placeholderKey) : field.placeholder
   const hint = field.hintKey ? t(field.hintKey) : field.hint
   const message = error ? t(error) : undefined
+
+  if (onFile === 'kept') {
+    return (
+      <FormField label={label}>
+        <OnFileValue onReplace={() => onKeepChange(false)} />
+      </FormField>
+    )
+  }
 
   if (field.type === 'readonly') {
     return (
@@ -219,6 +251,15 @@ export default function PortalField({ field, value, error, onChange, token }) {
   return (
     <FormField label={label} required={field.required} optional={!field.required} error={message} hint={hint}>
       {control}
+      {onFile === 'replacing' && !field.matches && (
+        <button
+          type="button"
+          onClick={() => onKeepChange(true)}
+          className="mt-1.5 text-xs font-medium text-gray-500 hover:text-gray-800 underline underline-offset-2"
+        >
+          {t('attention.fields.keepOnFile')}
+        </button>
+      )}
     </FormField>
   )
 }

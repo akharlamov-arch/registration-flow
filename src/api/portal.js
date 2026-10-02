@@ -168,19 +168,6 @@ export function fetchContractSubject(token) {
   })
 }
 
-/**
- * Saves the customer's edits to the contract subject.
- * Response on failure (422): { success: false, errors: { field: [msg] } } —
- * the required-field rule is the server's, the same one the CRM enforces.
- */
-export function saveContractSubject(token, subject) {
-  return apiFetch(`${BASE}/api/portal/contract`, {
-    method: 'POST',
-    headers: authHeaders(token),
-    body: JSON.stringify({ subject }),
-  })
-}
-
 // The portal signs in place, in an embedded Zoho frame — never by email, which
 // is the CRM operator's Send (PORTAL-SIGN-01). `sign_url` is a bearer link to
 // sign this customer's contract: keep it in memory only — never in a URL,
