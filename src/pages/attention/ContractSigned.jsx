@@ -5,6 +5,8 @@
 // "Update" opens a signed customer's form directly (ATTENTION-DIRECT-OPEN-01).
 
 import { useI18n } from '../../context/I18nContext'
+import { formatLongDate } from './dates'
+
 function CheckBadge() {
   return (
     <span className="w-10 h-10 rounded-full bg-green-50 border border-green-200 text-green-600 flex items-center justify-center shrink-0">
@@ -15,16 +17,9 @@ function CheckBadge() {
   )
 }
 
-function formatSignedAt(iso) {
-  if (!iso) return null
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return null
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-}
-
 export default function ContractSigned({ signedAt, onRequestChange }) {
   const { t } = useI18n()
-  const when = formatSignedAt(signedAt)
+  const when = formatLongDate(signedAt)
 
   return (
     <div className="space-y-4">

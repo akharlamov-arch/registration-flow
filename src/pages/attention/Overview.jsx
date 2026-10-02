@@ -42,7 +42,10 @@ function ActionCard({ icon, title, body, cta, onClick }) {
   )
 }
 
-export default function Overview({ onOpenContract, onOpenBank, requestReceived = false }) {
+// `contractInInbox`: a contract is out for signature by email
+// (ATTENTION-INBOX-01). The landing page is where a returning customer arrives,
+// and "Update details" alone gives no hint that a signature is owed.
+export default function Overview({ onOpenContract, onOpenBank, requestReceived = false, contractInInbox = false }) {
   const { t } = useI18n()
   return (
     <div className="space-y-4">
@@ -54,6 +57,16 @@ export default function Overview({ onOpenContract, onOpenBank, requestReceived =
             </svg>
           </span>
           <p className="text-sm font-medium text-green-900 leading-relaxed">{t('attention.review.requestReceived')}</p>
+        </div>
+      )}
+      {contractInInbox && (
+        <div role="status" className="rounded-2xl border border-primary/20 bg-primary/5 px-4 sm:px-6 py-4 flex items-start gap-3">
+          <span className="w-6 h-6 shrink-0 rounded-full bg-primary text-white flex items-center justify-center" aria-hidden="true">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+            </svg>
+          </span>
+          <p className="text-sm font-medium text-gray-900 leading-relaxed">{t('attention.hub.inboxBanner')}</p>
         </div>
       )}
       <ActionCard

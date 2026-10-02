@@ -59,7 +59,9 @@ import Step2Bank from './Step2Bank'
 import BankReminder from './BankReminder'
 import { bankVerified, openSubmission } from '../../components/bankDisplay'
 import ContractSigned from './ContractSigned'
-import { ContractPending, ContractConfirming, ContractUnderReview } from './ContractSigningStatus'
+import {
+  ContractPending, ContractInInbox, ContractConfirming, ContractUnderReview,
+} from './ContractSigningStatus'
 import PoliciesLibrary from './PoliciesLibrary'
 import Login from './Login'
 
@@ -191,6 +193,9 @@ export default function AttentionPage() {
   const contract = customer?.contract
   const signed = contractSigned(contract)
   const resumable = contract?.pending?.delivery === 'embedded'
+  // Out for signature by email — an approved change request, or a CRM Send.
+  // The customer signs in the email, not here (ATTENTION-INBOX-01).
+  const emailed = contract?.pending?.delivery === 'email'
   // CRM-CONTRACT-REVIEW-01: a customer past their first contract revision
   // has their Sign attempt staged for operator review instead of opening an
   // embedded request — `contract.update_review` carries that state across a
@@ -585,14 +590,26 @@ export default function AttentionPage() {
     }
 
     // An embedded request is out and unsigned: reopen it rather than create a
-    // new one. An emailed one (sent by an operator) is not resumable here — the
-    // form below signs in place and supersedes it.
+    // new one.
     if (resumable && !editingContract) {
       return (
         <ContractPending
           note={signNote}
           resuming={resuming}
           onResume={handleResume}
+          onEdit={() => { setSignNote(''); setEditingContract(true) }}
+        />
+      )
+    }
+
+    // An emailed one cannot be framed here: the signature happens in the
+    // email. The form is still reachable — on the review track it stages
+    // another request, otherwise it signs here and replaces the emailed one.
+    if (emailed && !editingContract) {
+      return (
+        <ContractInInbox
+          sentAt={contract.pending.sent_at}
+          reviewRequired={reviewRequired}
           onEdit={() => { setSignNote(''); setEditingContract(true) }}
         />
       )
@@ -610,7 +627,7 @@ export default function AttentionPage() {
         onSelectChoice={selectChoice}
         onSign={handleSign}
         mode={reviewRequired ? 'review' : signed ? 'change' : 'sign'}
-        onCancel={signed || resumable ? () => setEditingContract(false) : undefined}
+        onCancel={signed || resumable || emailed ? () => setEditingContract(false) : undefined}
         token={token}
         formError={sendError || signNote}
       />
@@ -683,6 +700,7 @@ export default function AttentionPage() {
                 onOpenContract={openContract}
                 onOpenBank={() => setStep(2)}
                 requestReceived={pendingReview}
+                contractInInbox={emailed}
               />
             ) : step === 'policies' ? (
               <PoliciesLibrary policies={policies} loading={policiesLoading} />
