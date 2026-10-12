@@ -671,15 +671,20 @@ export default function AttentionPage() {
           </p>
         </div>
 
+        {/* MOBILE-VERSION-01: below `lg` the rail would stack above the cards,
+            so the step list is desktop-only and the documents link moves under
+            the content. */}
         <div className="grid grid-cols-1 lg:grid-cols-[264px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
-          <aside className="lg:sticky lg:top-20">
-            <Stepper
-              steps={steps}
-              current={step}
-              readOnly
-            />
+          <aside className="order-last lg:order-none lg:sticky lg:top-20">
+            <div className="hidden lg:block">
+              <Stepper
+                steps={steps}
+                current={step}
+                readOnly
+              />
+            </div>
 
-            <div className="mt-3 pt-3 border-t border-gray-200">
+            <div className="lg:mt-3 lg:pt-3 lg:border-t border-gray-200">
               <button
                 type="button"
                 onClick={() => setStep('policies')}
