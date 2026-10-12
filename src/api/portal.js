@@ -11,13 +11,63 @@ const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 // and return the customer to sign-in instead of leaving a dead form behind.
 export const SESSION_EXPIRED_EVENT = 'portal:session-expired'
 
+function announceSessionLoss(status, data) {
+  if (status === 401 && data?.code === 'INVALID_SESSION') {
+    window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
+  }
+}
+
 export async function apiFetch(url, options = {}) {
   const res = await fetch(url, options)
   const data = await res.json().catch(() => ({}))
-  if (res.status === 401 && data?.code === 'INVALID_SESSION') {
-    window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
-  }
+  announceSessionLoss(res.status, data)
   return { ok: res.ok, status: res.status, data }
+}
+
+// Code of the synthetic result `apiUpload` gives a request that never completed.
+export const UPLOAD_INTERRUPTED = 'UPLOAD_INTERRUPTED'
+
+/**
+ * `apiFetch` for a body that takes a while to send. XMLHttpRequest rather than
+ * fetch because only it reports upload progress — which is what tells a customer
+ * on a weak signal that the upload is crawling, not dead.
+ *
+ * Resolves to the same `{ ok, status, data }` and fires the same session-expired
+ * event. A request that never completes — dropped connection, nginx giving up on
+ * a stalled body, a refusal the browser hides behind CORS — resolves to
+ * `{ ok: false, status: 0, data: { code: UPLOAD_INTERRUPTED } }` instead of
+ * rejecting, so the caller can tell it from a server refusal.
+ */
+export function apiUpload(url, { headers = {}, body, onProgress } = {}) {
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', url)
+    Object.entries(headers).forEach(([name, value]) => xhr.setRequestHeader(name, value))
+
+    if (onProgress) {
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100))
+      }
+    }
+
+    xhr.onload = () => {
+      let data = {}
+      try {
+        data = JSON.parse(xhr.responseText)
+      } catch {
+        // A non-JSON body (a proxy's error page) carries no code.
+      }
+      announceSessionLoss(xhr.status, data)
+      resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, data })
+    }
+
+    const interrupted = () => resolve({ ok: false, status: 0, data: { code: UPLOAD_INTERRUPTED } })
+    xhr.onerror = interrupted
+    xhr.onabort = interrupted
+    xhr.ontimeout = interrupted
+
+    xhr.send(body)
+  })
 }
 
 function authHeaders(token) {
@@ -168,19 +218,6 @@ export function fetchContractSubject(token) {
   })
 }
 
-/**
- * Saves the customer's edits to the contract subject.
- * Response on failure (422): { success: false, errors: { field: [msg] } } —
- * the required-field rule is the server's, the same one the CRM enforces.
- */
-export function saveContractSubject(token, subject) {
-  return apiFetch(`${BASE}/api/portal/contract`, {
-    method: 'POST',
-    headers: authHeaders(token),
-    body: JSON.stringify({ subject }),
-  })
-}
-
 // The portal signs in place, in an embedded Zoho frame — never by email, which
 // is the CRM operator's Send (PORTAL-SIGN-01). `sign_url` is a bearer link to
 // sign this customer's contract: keep it in memory only — never in a URL,
@@ -228,16 +265,18 @@ export function completeContractSigning(token) {
  * (PORTAL-UPLOAD-01), which stores it and records it on the customer before
  * answering — so it survives a reload before signing, like a lead's upload.
  * Multipart: only the Authorization header; the browser sets the boundary.
+ * `onProgress(percent)` is called as the body goes out.
  * Response: 201 { success, file: { name, type } }
- *         | 422 { code: FILE_REQUIRED | FILE_TYPE_INVALID | FILE_TOO_LARGE } | 502 UPLOAD_FAILED.
+ *         | 422 { code: FILE_REQUIRED | FILE_TYPE_INVALID | FILE_TOO_LARGE } | 502 UPLOAD_FAILED
+ *         | status 0 { code: UPLOAD_INTERRUPTED } when the request never completed.
  */
-export function uploadDriverLicense(token, file) {
+export function uploadDriverLicense(token, file, onProgress) {
   const body = new FormData()
   body.append('file', file, file.name)
-  return apiFetch(`${BASE}/api/portal/contract/driver-license`, {
-    method: 'POST',
+  return apiUpload(`${BASE}/api/portal/contract/driver-license`, {
     headers: { Authorization: `Bearer ${token}` },
     body,
+    onProgress,
   })
 }
 

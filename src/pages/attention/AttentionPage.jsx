@@ -50,7 +50,7 @@ import ContractSigningFrame from '../../components/ContractSigningFrame'
 import { getPolicies } from './api'
 import {
   initialFormFromSubject, initialChoicesFromSubject, validate, isComplete,
-  buildContractPayload, mapServerErrors,
+  buildContractPayload, mapServerErrors, keptOnFile, onFileFormKeys,
 } from './formState'
 import Stepper from './Stepper'
 import Overview from './Overview'
@@ -59,7 +59,9 @@ import Step2Bank from './Step2Bank'
 import BankReminder from './BankReminder'
 import { bankVerified, openSubmission } from '../../components/bankDisplay'
 import ContractSigned from './ContractSigned'
-import { ContractPending, ContractConfirming, ContractUnderReview } from './ContractSigningStatus'
+import {
+  ContractPending, ContractInInbox, ContractConfirming, ContractUnderReview,
+} from './ContractSigningStatus'
 import PoliciesLibrary from './PoliciesLibrary'
 import Login from './Login'
 
@@ -161,14 +163,19 @@ export default function AttentionPage() {
   const [subjectLoading, setSubjectLoading] = useState(true)
   const [subjectLoadError, setSubjectLoadError] = useState('')
   const [serverSubject, setServerSubject] = useState(null)
+  // Which secrets the server has on file (never their values), and which of
+  // those the customer chose to replace — see keptOnFile.
+  const [stored, setStored] = useState({})
+  const [replacing, setReplacing] = useState({})
   const [values, setValues] = useState({})
   const [choices, setChoices] = useState({})
   const [showErrors, setShowErrors] = useState(false)
   const [signing, setSigning] = useState(false)
   const [serverFieldErrors, setServerFieldErrors] = useState({})
   const [sendError, setSendError] = useState('')
-  // Re-opens the sign form on an already-signed contract (ContractSigned's
-  // "Update my details") or over a pending one ("Change my details first").
+  // Re-opens the sign form on an already-signed contract (the overview's
+  // "Update", ContractSigned's "Update my details") or over a pending one
+  // ("Change my details first").
   const [editingContract, setEditingContract] = useState(false)
 
   // Signing in place. `signingUrl` is a bearer link to sign this customer's
@@ -190,6 +197,9 @@ export default function AttentionPage() {
   const contract = customer?.contract
   const signed = contractSigned(contract)
   const resumable = contract?.pending?.delivery === 'embedded'
+  // Out for signature by email — an approved change request, or a CRM Send.
+  // The customer signs in the email, not here (ATTENTION-INBOX-01).
+  const emailed = contract?.pending?.delivery === 'email'
   // CRM-CONTRACT-REVIEW-01: a customer past their first contract revision
   // has their Sign attempt staged for operator review instead of opening an
   // embedded request — `contract.update_review` carries that state across a
@@ -367,6 +377,8 @@ export default function AttentionPage() {
 
       const subject = data.subject?.subject || {}
       setServerSubject(subject)
+      setStored(data.subject?.stored || {})
+      setReplacing({})
       setValues(initialFormFromSubject(subject))
       setChoices(initialChoicesFromSubject(subject))
       setSubjectLoading(false)
@@ -379,17 +391,31 @@ export default function AttentionPage() {
     return () => { cancelled = true }
   }, [token, t])
 
+  const kept = useMemo(() => keptOnFile(stored, replacing), [stored, replacing])
   const errors = useMemo(
-    () => ({ ...validate(values, choices), ...serverFieldErrors }),
-    [values, choices, serverFieldErrors],
+    () => ({ ...validate(values, choices, kept), ...serverFieldErrors }),
+    [values, choices, kept, serverFieldErrors],
   )
-  const complete = useMemo(() => isComplete(values, choices), [values, choices])
+  const complete = useMemo(() => isComplete(values, choices, kept), [values, choices, kept])
 
   const setValue = (key, v) => {
     setValues((prev) => ({ ...prev, [key]: v }))
     setServerFieldErrors({})
   }
   const selectChoice = (id, value) => setChoices((prev) => ({ ...prev, [id]: value }))
+
+  // Keeping the stored value again drops whatever was typed, so the submission
+  // posts it blank and the server keeps the one on file.
+  const keepOnFile = (storedKey, keep) => {
+    setReplacing((prev) => ({ ...prev, [storedKey]: !keep }))
+    if (keep) {
+      setValues((prev) => ({
+        ...prev,
+        ...Object.fromEntries(onFileFormKeys(storedKey).map((key) => [key, ''])),
+      }))
+    }
+    setServerFieldErrors({})
+  }
 
   // `validate` walks GROUPS in render order, so the first key is the topmost
   // invalid field on the page.
@@ -464,6 +490,17 @@ export default function AttentionPage() {
     }
 
     setSendError(data?.message || t('portal.contractForm.errorGeneric'))
+  }
+
+  // The overview's "Update" is a request to change something, so a signed
+  // customer lands on the form, as a stale one always has — not on the signed
+  // panel, which is then only the confirmation after signing in place and
+  // where the form's Cancel returns. `signed` already excludes a pending
+  // request, so this never skips "Resume signing": a fresh submit there would
+  // supersede the request the customer was part-way through.
+  const openContract = () => {
+    if (signed) setEditingContract(true)
+    setStep(1)
   }
 
   const handleSignOut = () => {
@@ -573,14 +610,26 @@ export default function AttentionPage() {
     }
 
     // An embedded request is out and unsigned: reopen it rather than create a
-    // new one. An emailed one (sent by an operator) is not resumable here — the
-    // form below signs in place and supersedes it.
+    // new one.
     if (resumable && !editingContract) {
       return (
         <ContractPending
           note={signNote}
           resuming={resuming}
           onResume={handleResume}
+          onEdit={() => { setSignNote(''); setEditingContract(true) }}
+        />
+      )
+    }
+
+    // An emailed one cannot be framed here: the signature happens in the
+    // email. The form is still reachable — on the review track it stages
+    // another request, otherwise it signs here and replaces the emailed one.
+    if (emailed && !editingContract) {
+      return (
+        <ContractInInbox
+          sentAt={contract.pending.sent_at}
+          reviewRequired={reviewRequired}
           onEdit={() => { setSignNote(''); setEditingContract(true) }}
         />
       )
@@ -597,8 +646,11 @@ export default function AttentionPage() {
         onChange={setValue}
         onSelectChoice={selectChoice}
         onSign={handleSign}
+        stored={stored}
+        kept={kept}
+        onKeepOnFile={keepOnFile}
         mode={reviewRequired ? 'review' : signed ? 'change' : 'sign'}
-        onCancel={signed || resumable ? () => setEditingContract(false) : undefined}
+        onCancel={signed || resumable || emailed ? () => setEditingContract(false) : undefined}
         token={token}
         formError={sendError || signNote}
       />
@@ -668,9 +720,10 @@ export default function AttentionPage() {
 
             {onOverview ? (
               <Overview
-                onOpenContract={() => setStep(1)}
+                onOpenContract={openContract}
                 onOpenBank={() => setStep(2)}
                 requestReceived={pendingReview}
+                contractInInbox={emailed}
               />
             ) : step === 'policies' ? (
               <PoliciesLibrary policies={policies} loading={policiesLoading} />

@@ -50,9 +50,19 @@ function ChoiceRadios({ group, selected, onSelect }) {
   )
 }
 
-function GroupCard({ group, values, errors, choices, onChange, onSelectChoice, token }) {
+// 'kept' | 'replacing' | undefined — see PortalField. A confirmation field
+// (`matches`) has nothing to show while the value it confirms is kept.
+function onFileState(field, stored, kept) {
+  if (!field.onFile || !stored[field.onFile]) return undefined
+  return kept[field.onFile] ? 'kept' : 'replacing'
+}
+
+function GroupCard({ group, values, errors, choices, onChange, onSelectChoice, token, stored, kept, onKeepOnFile }) {
   const { t } = useI18n()
   const hidden = groupHidden(group, choices)
+  const fields = group.fields.filter(
+    (field) => !(field.matches && onFileState(field, stored, kept) === 'kept'),
+  )
 
   return (
     <section className="bg-white rounded-2xl border border-gray-200 shadow-ds-sm p-5 sm:p-6">
@@ -68,7 +78,7 @@ function GroupCard({ group, values, errors, choices, onChange, onSelectChoice, t
       {!hidden && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4">
-            {group.fields.map((field) => (
+            {fields.map((field) => (
               <div
                 key={field.key}
                 id={`field-${field.key}`}
@@ -80,6 +90,8 @@ function GroupCard({ group, values, errors, choices, onChange, onSelectChoice, t
                   error={errors[field.key]}
                   onChange={(v) => onChange(field.key, v)}
                   token={token}
+                  onFile={onFileState(field, stored, kept)}
+                  onKeepChange={(keep) => onKeepOnFile(field.onFile, keep)}
                 />
               </div>
             ))}
@@ -101,6 +113,7 @@ function GroupCard({ group, values, errors, choices, onChange, onSelectChoice, t
 export default function Step1Contract({
   values, errors, choices, showErrors, complete, signing, mode = 'sign',
   onChange, onSelectChoice, onSign, onCancel, token, formError,
+  stored = {}, kept = {}, onKeepOnFile,
 }) {
   const { t } = useI18n()
   const errorCount = Object.keys(errors).length
@@ -129,6 +142,9 @@ export default function Step1Contract({
           onChange={onChange}
           onSelectChoice={onSelectChoice}
           token={token}
+          stored={stored}
+          kept={kept}
+          onKeepOnFile={onKeepOnFile}
         />
       ))}
 

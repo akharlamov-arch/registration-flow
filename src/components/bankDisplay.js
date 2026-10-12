@@ -68,6 +68,13 @@ export function openSubmission(history = []) {
   return history.find((e) => String(e?.id).startsWith('sub-') && OPEN_SUBMISSION_STATUSES.includes(e.status)) || null
 }
 
+// Whether any new bank is still under way — a portal (MOOV) submission, or a
+// Plaid re-link staged for our review (not a `sub-` entry, so `openSubmission`
+// does not see it). Either way the bank in use has not been replaced yet.
+export function bankChangeUnderWay(history = []) {
+  return history.some((e) => OPEN_SUBMISSION_STATUSES.includes(e?.status))
+}
+
 // Whether the customer's bank counts as verified — what every bank gate reads.
 // `bank_verification.status` covers Plaid and Moov alike (PORTAL-MOOV-02); a
 // bank verified through a MOOV submission has no Plaid item, so reading

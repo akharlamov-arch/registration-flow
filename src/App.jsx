@@ -55,7 +55,7 @@ function AppShell() {
           <Route path="/registration" element={<OtpVerification />} />
           <Route path="/post-signing" element={<PostSigning />} />
           <Route path="/relink" element={<RelinkPage />} />
-          <Route path="/portal" element={<PortalPage />} />
+          <Route path="/portal" element={<Navigate to="/attention" replace />} />
           <Route path="/attention" element={<AttentionPage />} />
           {/* Retired URLs, kept so links already shared with testers still land
               somewhere (PORTAL-UI-01). `replace` keeps them out of history. A

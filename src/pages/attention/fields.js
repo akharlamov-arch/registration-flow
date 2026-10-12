@@ -14,6 +14,11 @@
 // `crm` is the record name on our side. Fields marked `isNew` are what the
 // updated contract adds.
 //
+// `onFile` names the server's `stored` flag a secret depends on. The server
+// never sends the value back, only whether it is on file, and a blank one keeps
+// the stored value — so while it is on file the form shows it as such and asks
+// for it only when the customer chooses to replace it (CONTRACT-DETAILS-GATE-01).
+//
 // Option labels are literals because LeadForm hardcodes them in English for
 // every language — matching it keeps the two consistent.
 
@@ -106,9 +111,9 @@ export const GROUPS = [
     titleKey: 'personalInfo.heading',
     blurbKey: 'personalInfo.subheading',
     fields: [
-      { key: 'ssn',        crm: 'Full Social Security Number',       labelKey: 'personalInfo.labelSsn',       type: 'secret', required: true, digits: 9, format: 'ssn', placeholderKey: 'personalInfo.placeholderSsn' },
-      { key: 'dl_number',  crm: 'Driver License',                    labelKey: 'personalInfo.labelDl',        type: 'secret', required: true, placeholderKey: 'personalInfo.placeholderDl' },
-      { key: 'dl_confirm', crm: 'Driver License',                    labelKey: 'personalInfo.labelDlConfirm', type: 'secret', required: true, matches: 'dl_number', placeholderKey: 'personalInfo.placeholderDlConfirm' },
+      { key: 'ssn',        crm: 'Full Social Security Number',       labelKey: 'personalInfo.labelSsn',       type: 'secret', required: true, digits: 9, format: 'ssn', onFile: 'ssn', placeholderKey: 'personalInfo.placeholderSsn' },
+      { key: 'dl_number',  crm: 'Driver License',                    labelKey: 'personalInfo.labelDl',        type: 'secret', required: true, onFile: 'driver_license_number', placeholderKey: 'personalInfo.placeholderDl' },
+      { key: 'dl_confirm', crm: 'Driver License',                    labelKey: 'personalInfo.labelDlConfirm', type: 'secret', required: true, matches: 'dl_number', onFile: 'driver_license_number', placeholderKey: 'personalInfo.placeholderDlConfirm' },
       { key: 'dl_file',    crm: 'Driver License Attached File Name', labelKey: 'personalInfo.labelDlFile',    type: 'file',   required: true, span: 2 },
     ],
     noticeKey: 'personalInfo.ownerNotice',
