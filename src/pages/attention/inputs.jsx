@@ -204,8 +204,8 @@ export default function PortalField({ field, value, error, onChange, token, onFi
           value={value}
           onChange={onChange}
           invalid={invalid}
-          upload={async (file) => {
-            const { ok, data } = await uploadDriverLicense(token, file)
+          upload={async (file, { onProgress } = {}) => {
+            const { ok, data } = await uploadDriverLicense(token, file, onProgress)
             return ok && data?.success ? { ok: true, key: data.file?.name } : { ok: false, code: data?.code }
           }}
         />

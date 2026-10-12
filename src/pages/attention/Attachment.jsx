@@ -3,8 +3,10 @@
 // and 2551-2612): a dashed drop panel that turns into a green-ticked filename
 // with "Click to change file" once something is attached.
 //
-// What happens to the picked file is the caller's `upload(file)`, which
-// resolves to { ok, key, code }. The contract form passes the recording
+// The picked file is first read into memory and, if it is a big photo, shrunk
+// (prepareUpload.js) — a weak uplink cannot carry a 10 MB camera original. What
+// happens to the result is the caller's `upload(file, { onProgress })`, which
+// resolves to { ok, key, code } (`onProgress` may be ignored). The contract form passes the recording
 // endpoint (api/portal.js uploadDriverLicense, PORTAL-UPLOAD-01): the server
 // stores the file AND records it on the customer before answering, so the
 // attachment survives a reload before signing. MoovFallback keeps the file in
@@ -24,16 +26,20 @@
 import { useState } from 'react'
 import { useI18n } from '../../context/I18nContext'
 import { validateUploadFile } from '../../api/leadMappers'
+import { prepareUpload, RAW_LIMIT_BYTES } from './prepareUpload'
 
 // What the server accepts (Pijb.Storage.DocumentUpload: PDF, JPEG, PNG, WebP,
 // GIF). Offering HEIC/DOC here only to refuse them after the upload would be
 // worse; iOS converts a HEIC photo to JPEG when HEIC is not listed.
 const ACCEPT = '.pdf,.jpg,.jpeg,.png,.webp,.gif'
 
-// Server refusal codes → the lead flow's own messages.
+// Refusal codes → messages. The first two are the server's (the lead flow's own
+// messages); UPLOAD_INTERRUPTED is api/portal.js's for a request that never
+// completed, which is a connection problem rather than anything wrong with the file.
 const ERROR_KEYS = {
   FILE_TOO_LARGE: 'common.fileTooLarge',
   FILE_TYPE_INVALID: 'common.fileTypeInvalid',
+  UPLOAD_INTERRUPTED: 'common.uploadInterrupted',
 }
 
 // Stored keys end in the original filename made path-safe, after a
@@ -65,26 +71,44 @@ export default function Attachment({ value, onChange, invalid, upload }) {
   const { t } = useI18n()
   const [pickedName, setPickedName] = useState('')
   const [uploading, setUploading] = useState(false)
+  // null while the file is being prepared; 0–100 once it is going out.
+  const [progress, setProgress] = useState(null)
   const [uploadError, setUploadError] = useState('')
 
   const handlePick = async (file) => {
     if (!file || uploading) return
     setUploadError('')
+    setProgress(null)
+    setUploading(true)
+
+    const refuse = (messageKey) => {
+      setUploading(false)
+      setPickedName('')
+      setUploadError(t(messageKey))
+    }
+
+    // Only stops us reading something absurd into memory; a normal photo is
+    // shrunk below, so the real limit is applied to what will be sent.
+    if (file.size > RAW_LIMIT_BYTES) return refuse('common.fileTooLarge')
+
+    let prepared
+    try {
+      prepared = await prepareUpload(file)
+    } catch {
+      return refuse('common.fileUnreadable')
+    }
 
     // The registration flow's own pre-check (10 MB, PDF or image) — the server
     // still decides.
-    const check = validateUploadFile(file)
-    if (!check.ok) {
-      setUploadError(t(check.reason === 'size' ? 'common.fileTooLarge' : 'common.fileTypeInvalid'))
-      return
-    }
+    const check = validateUploadFile(prepared)
+    if (!check.ok) return refuse(check.reason === 'size' ? 'common.fileTooLarge' : 'common.fileTypeInvalid')
 
     setPickedName(file.name)
-    setUploading(true)
+    setProgress(0)
 
     let result
     try {
-      result = await upload(file)
+      result = await upload(prepared, { onProgress: setProgress })
     } catch {
       result = { ok: false }
     }
@@ -121,13 +145,19 @@ export default function Attachment({ value, onChange, invalid, upload }) {
           className="sr-only"
           disabled={uploading}
           onChange={(e) => {
-            handlePick(e.target.files?.[0] ?? null)
-            // Picking the same file again after a refusal must fire onChange.
-            e.target.value = ''
+            const input = e.target
+            // Cleared once the file has been read into memory, not before: on
+            // some phones the picked file is only valid while the input holds it.
+            // Clearing at all lets the same file be picked again after a refusal.
+            handlePick(input.files?.[0] ?? null).finally(() => {
+              input.value = ''
+            })
           }}
         />
         {uploading ? (
-          <p className="text-sm text-gray-500">{t('common.loading')}</p>
+          <p className="text-sm text-gray-500" role="status">
+            {progress === null ? t('common.uploadPreparing') : `${t('common.loading')} ${progress}%`}
+          </p>
         ) : value ? (
           <>
             <CheckIcon />
