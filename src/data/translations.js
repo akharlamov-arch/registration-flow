@@ -163,6 +163,13 @@ const portalStrings = {
   },
 }
 
+// The tutorials knowledge base (#/tutorials, src/pages/tutorials/). Its own
+// copy is RU/EN and lives in content.js; only the tab title is read through
+// t(), and it is the original site's bilingual title in every language.
+const tutorialsStrings = {
+  title: 'Клиентский портал iTrucking | Client Portal iTrucking',
+}
+
 // The customer portal's attention page (#/attention, src/pages/attention/).
 // Only the copy that has no counterpart in the registration flow lives here —
 // everything the page reuses (field labels, placeholders, validation messages,
@@ -905,6 +912,7 @@ const attentionStrings = {
 const translations = {
   en: {
     portal: portalStrings,
+    tutorials: tutorialsStrings,
     attention: attentionStrings.en,
     common: {
       next: 'Next',
@@ -1369,6 +1377,7 @@ const translations = {
 
   ru: {
     portal: portalStrings,
+    tutorials: tutorialsStrings,
     attention: attentionStrings.ru,
     common: {
       next: 'Далее',
@@ -1833,6 +1842,7 @@ const translations = {
 
   uk: {
     portal: portalStrings,
+    tutorials: tutorialsStrings,
     attention: attentionStrings.uk,
     common: {
       next: 'Далі',
@@ -2297,6 +2307,7 @@ const translations = {
 
   es: {
     portal: portalStrings,
+    tutorials: tutorialsStrings,
     attention: attentionStrings.es,
     common: {
       next: 'Siguiente',
