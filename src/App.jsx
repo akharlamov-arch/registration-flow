@@ -54,9 +54,14 @@ function AppShell() {
   // The tutorials knowledge base is a standalone port with its own header,
   // footer and RU/EN switch (TUTORIALS-PAGE-01), so it gets neither the app
   // header and footer nor the first-visit language prompt. Every other page
-  // gets the site header and footer modelled on it (SITE-CHROME-01); the
-  // column layout keeps the footer at the bottom of a short page.
-  const standalone = useLocation().pathname.startsWith('/tutorials')
+  // gets the site header modelled on it (SITE-CHROME-01). The site footer is
+  // for the customer portal only — the registration pages (lead form,
+  // registration, post-signing, relink) stay free of it so nothing pulls an
+  // applicant away mid-flow. The column layout keeps it at the bottom of a
+  // short page.
+  const { pathname } = useLocation()
+  const standalone = pathname.startsWith('/tutorials')
+  const withFooter = pathname.startsWith('/attention')
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans">
@@ -82,7 +87,7 @@ function AppShell() {
           </Routes>
         </Suspense>
       </div>
-      {!standalone && <SiteFooter />}
+      {withFooter && <SiteFooter />}
     </div>
   )
 }
