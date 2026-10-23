@@ -524,7 +524,7 @@ export default function AttentionPage() {
 
   if (view === 'login') {
     return (
-      <div className="min-h-screen bg-surface">
+      <div className="flex-1 bg-surface">
         <Login
           notice={sessionExpired ? t('attention.sessionExpired') : ''}
           onSignedIn={(t, c) => {
@@ -558,6 +558,16 @@ export default function AttentionPage() {
 
   const allDone = signed && linked
   const onOverview = step === 'overview'
+  // Steps the customer still has to act on — a step with our team (awaiting
+  // review, deposit on its way) is open but not theirs to do.
+  const actionCount = steps.filter((s) => ['active', 'locked'].includes(s.state)).length
+  const otherDone = steps.some((s) => s.state === 'done')
+  // On the overview the "all set" card carries the message itself.
+  const heading = allDone
+    ? !onOverview && { title: t('attention.heroUpToDate'), sub: t('attention.hub.sub') }
+    : actionCount === 2 ? { title: t('attention.home.titleTwo'), sub: t('attention.subAnyOrder') }
+    : actionCount === 1 ? { title: t('attention.home.titleOne'), sub: otherDone ? t('attention.home.subOne') : t('attention.home.subWithTeam') }
+    : { title: t('attention.home.titleNone'), sub: t('attention.home.subNone') }
   // Once manual details are in, the customer has done their part — keep the
   // red reminder for the case where nothing has been submitted at all.
   const remind = signed && !linked && !bankPending
@@ -658,33 +668,34 @@ export default function AttentionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="flex-1 bg-surface">
       <main className="max-w-portal mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <AccountBar company={customer?.profile?.cust_name} onSignOut={handleSignOut} />
 
-        <div className="mb-6">
-          <h1 className="text-lg sm:text-xl font-bold text-gray-900">
-            {allDone ? t('attention.heroUpToDate') : t('attention.heroAttention')}
-          </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {allDone ? t('attention.hub.sub') : t('attention.subAnyOrder')}
-          </p>
-        </div>
+        {heading && (
+          <div className="mb-6">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">{heading.title}</h1>
+            <p className="text-sm text-gray-500 mt-0.5">{heading.sub}</p>
+          </div>
+        )}
 
         {/* MOBILE-VERSION-01: below `lg` the rail would stack above the cards,
             so the step list is desktop-only and the documents link moves under
-            the content. */}
-        <div className="grid grid-cols-1 lg:grid-cols-[264px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
-          <aside className="order-last lg:order-none lg:sticky lg:top-20">
-            <div className="hidden lg:block">
-              <Stepper
-                steps={steps}
-                current={step}
-                readOnly
-              />
-            </div>
+            the content. With nothing left to do there is no progress to show,
+            so the rail is just the documents link. */}
+        <div className="grid grid-cols-1 lg:grid-cols-[264px_minmax(0,1fr)] gap-7 lg:gap-8 items-start">
+          <aside className="order-last lg:order-none lg:sticky lg:top-[105px]">
+            {!allDone && (
+              <div className="hidden lg:block lg:mb-3 lg:pb-3 lg:border-b border-gray-200">
+                <Stepper
+                  steps={steps}
+                  current={step}
+                  readOnly
+                />
+              </div>
+            )}
 
-            <div className="lg:mt-3 lg:pt-3 lg:border-t border-gray-200">
+            <div>
               <button
                 type="button"
                 onClick={() => setStep('policies')}
@@ -725,6 +736,9 @@ export default function AttentionPage() {
 
             {onOverview ? (
               <Overview
+                contractState={steps[0].state}
+                bankState={bankState}
+                codeAwaited={codeAwaited}
                 onOpenContract={openContract}
                 onOpenBank={() => setStep(2)}
                 requestReceived={pendingReview}

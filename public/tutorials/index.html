@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Клиентский портал iTrucking | Client Portal iTrucking</title>
+    <!--
+      Clean URL for the tutorials page (TUTORIALS-PAGE-01): the app routes with
+      HashRouter, so …/tutorials is served this file, which hands over to
+      …/#/tutorials. The base is derived from the path so it works with or
+      without a trailing slash and under any deploy subpath.
+    -->
+    <script>
+      (function () {
+        var base = window.location.pathname.replace(/tutorials(\/(index\.html)?)?$/, '');
+        window.location.replace(base + window.location.search + '#/tutorials');
+      })();
+    </script>
+  </head>
+  <body>
+    <noscript><a href="../#/tutorials">Клиентский портал iTrucking / Client Portal iTrucking</a></noscript>
+  </body>
+</html>

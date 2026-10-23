@@ -958,8 +958,10 @@ export default function OtpVerification() {
           <div className="text-center mb-8 sm:mb-12">
             <div className="flex justify-center mb-5">
               <div className="relative h-16 w-28">
-                <div className="absolute left-0 top-0 w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-ds-sm border-4 border-white z-10">
-                  <span className="text-white font-black text-lg tracking-tight">IT</span>
+                {/* Brand mark: stays iTrucking red with a white label in the dark
+                    theme, where the palette's red-600 would turn light. */}
+                <div className="absolute left-0 top-0 w-16 h-16 rounded-full bg-red-600 dark:bg-[#dc2626] flex items-center justify-center shadow-ds-sm border-4 border-white z-10">
+                  <span className="text-white dark:!text-white font-black text-lg tracking-tight">IT</span>
                 </div>
                 <div className="absolute right-0 top-0 w-16 h-16 rounded-full bg-gray-950 flex items-center justify-center shadow-ds-sm border-4 border-white">
                   <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">

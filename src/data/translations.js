@@ -163,6 +163,13 @@ const portalStrings = {
   },
 }
 
+// The tutorials knowledge base (#/tutorials, src/pages/tutorials/). Its own
+// copy is RU/EN and lives in content.js; only the tab title is read through
+// t(), and it is the original site's bilingual title in every language.
+const tutorialsStrings = {
+  title: 'Клиентский портал iTrucking | Client Portal iTrucking',
+}
+
 // The customer portal's attention page (#/attention, src/pages/attention/).
 // Only the copy that has no counterpart in the registration flow lives here —
 // everything the page reuses (field labels, placeholders, validation messages,
@@ -236,6 +243,27 @@ const attentionStrings = {
       bankTitle: 'Update bank', bankBody: 'Link a new bank account or change payment details.',
       cta: 'Update', back: 'Back to overview',
       inboxBanner: 'Your updated contract is waiting in your inbox. Open the email from Zoho Sign to sign it.',
+    },
+    home: {
+      titleTwo: '2 things need your attention',
+      titleOne: '1 thing needs your attention',
+      titleNone: 'Nothing needs your attention right now',
+      subOne: 'Everything else is up to date.',
+      subWithTeam: 'The rest is with our team — nothing to do there.',
+      subNone: "Our team is reviewing what you sent. We'll let you know if anything else is needed.",
+      contractTitle: 'Update your contract details',
+      contractBody: 'Review and confirm your company and contract information.',
+      contractCta: 'Update details',
+      bankTitle: 'Link your bank account',
+      bankBody: 'Connect your bank securely through Plaid.',
+      bankCta: 'Link bank account',
+      viewStatus: 'View status',
+      continue: 'Continue',
+      moreOpen: 'Need to change something else?',
+      doneTitle: 'Your account is all set',
+      doneSub: 'Everything meets our requirements. No action is needed right now.',
+      moreDone: 'Need to make changes?',
+      tutorials: 'Tutorials', seeAll: 'See all', readArticle: 'Read article',
     },
     sign: {
       heading: 'Review your updated contract details',
@@ -434,6 +462,27 @@ const attentionStrings = {
       cta: 'Обновить', back: 'Назад к обзору',
       inboxBanner: 'Обновлённый контракт ждёт вас на почте. Откройте письмо от Zoho Sign, чтобы подписать его.',
     },
+    home: {
+      titleTwo: 'Требуются 2 действия',
+      titleOne: 'Требуется 1 действие',
+      titleNone: 'Сейчас от вас ничего не требуется',
+      subOne: 'Всё остальное в порядке.',
+      subWithTeam: 'Остальное — на проверке у нашей команды, там от вас ничего не нужно.',
+      subNone: 'Наша команда проверяет то, что вы отправили. Мы сообщим, если понадобится что-то ещё.',
+      contractTitle: 'Обновите данные договора',
+      contractBody: 'Проверьте и подтвердите данные компании и договора.',
+      contractCta: 'Обновить данные',
+      bankTitle: 'Привяжите банковский счёт',
+      bankBody: 'Безопасное подключение банка через Plaid.',
+      bankCta: 'Привязать счёт',
+      viewStatus: 'Посмотреть статус',
+      continue: 'Продолжить',
+      moreOpen: 'Нужно изменить что-то ещё?',
+      doneTitle: 'Ваш аккаунт в порядке',
+      doneSub: 'Всё соответствует требованиям. Сейчас никаких действий не нужно.',
+      moreDone: 'Хотите внести изменения?',
+      tutorials: 'Инструкции', seeAll: 'Смотреть все', readArticle: 'Читать статью',
+    },
     sign: {
       heading: 'Проверьте данные обновлённого контракта',
       blurb: 'В обновлённом соглашении мы просим несколько сведений, которых раньше не собирали. Заполните их и подпишите.',
@@ -630,6 +679,27 @@ const attentionStrings = {
       bankTitle: 'Оновити банк', bankBody: 'Прив’яжіть новий банківський рахунок або змініть платіжні дані.',
       cta: 'Оновити', back: 'Назад до огляду',
       inboxBanner: 'Оновлений контракт чекає на вас на пошті. Відкрийте лист від Zoho Sign, щоб підписати його.',
+    },
+    home: {
+      titleTwo: 'Потрібні 2 дії',
+      titleOne: 'Потрібна 1 дія',
+      titleNone: 'Зараз від вас нічого не потрібно',
+      subOne: 'Усе інше в порядку.',
+      subWithTeam: 'Решта — на перевірці в нашої команди, там від вас нічого не потрібно.',
+      subNone: 'Наша команда перевіряє те, що ви надіслали. Ми повідомимо, якщо знадобиться щось іще.',
+      contractTitle: 'Оновіть дані договору',
+      contractBody: 'Перевірте й підтвердьте дані компанії та договору.',
+      contractCta: 'Оновити дані',
+      bankTitle: 'Прив’яжіть банківський рахунок',
+      bankBody: 'Безпечне підключення банку через Plaid.',
+      bankCta: 'Прив’язати рахунок',
+      viewStatus: 'Переглянути статус',
+      continue: 'Продовжити',
+      moreOpen: 'Потрібно змінити щось іще?',
+      doneTitle: 'Ваш акаунт у порядку',
+      doneSub: 'Усе відповідає вимогам. Зараз жодних дій не потрібно.',
+      moreDone: 'Бажаєте внести зміни?',
+      tutorials: 'Інструкції', seeAll: 'Дивитися всі', readArticle: 'Читати статтю',
     },
     sign: {
       heading: 'Перевірте дані оновленого контракту',
@@ -828,6 +898,27 @@ const attentionStrings = {
       cta: 'Actualizar', back: 'Volver al resumen',
       inboxBanner: 'Su contrato actualizado le espera en su correo. Abra el correo de Zoho Sign para firmarlo.',
     },
+    home: {
+      titleTwo: '2 cosas requieren su atención',
+      titleOne: '1 cosa requiere su atención',
+      titleNone: 'Por ahora no se requiere nada de su parte',
+      subOne: 'Todo lo demás está al día.',
+      subWithTeam: 'Lo demás está con nuestro equipo; no tiene que hacer nada ahí.',
+      subNone: 'Nuestro equipo está revisando lo que envió. Le avisaremos si se necesita algo más.',
+      contractTitle: 'Actualice los datos de su contrato',
+      contractBody: 'Revise y confirme la información de su empresa y del contrato.',
+      contractCta: 'Actualizar datos',
+      bankTitle: 'Vincule su cuenta bancaria',
+      bankBody: 'Conecte su banco de forma segura a través de Plaid.',
+      bankCta: 'Vincular cuenta',
+      viewStatus: 'Ver estado',
+      continue: 'Continuar',
+      moreOpen: '¿Necesita cambiar algo más?',
+      doneTitle: 'Su cuenta está en orden',
+      doneSub: 'Todo cumple con nuestros requisitos. No se necesita ninguna acción por ahora.',
+      moreDone: '¿Necesita hacer cambios?',
+      tutorials: 'Tutoriales', seeAll: 'Ver todos', readArticle: 'Leer artículo',
+    },
     sign: {
       heading: 'Revise los datos de su contrato actualizado',
       blurb: 'Nuestro acuerdo actualizado solicita algunos datos que antes no recopilábamos. Complételos y firme.',
@@ -958,10 +1049,54 @@ const attentionStrings = {
   },
 }
 
+// Site header and footer (SITE-CHROME-01, src/components/Header.jsx and
+// SiteFooter.jsx). The footer copy follows the tutorials page's footer
+// (src/pages/tutorials/content.js); UK and ES are translated from it.
+const chromeStrings = {
+  en: {
+    header: { language: 'Select language', themeDark: 'Switch to dark theme', themeLight: 'Switch to light theme' },
+    footer: {
+      contact: 'Contact', mainPhone: 'iTrucking Services', accountingPhone: 'Accounting Team', tirePhone: 'Tire Department',
+      departments: 'Departments', general: 'General Inquiries', fuel: 'Fuel Department', accounting: 'Accounting Team',
+      resources: 'Resources', privacy: 'Privacy Policy', terms: 'Terms of Service',
+      address: 'Address', social: 'Social Media', copyright: 'iTrucking Services. All rights reserved.',
+    },
+  },
+  ru: {
+    header: { language: 'Выбрать язык', themeDark: 'Включить тёмную тему', themeLight: 'Включить светлую тему' },
+    footer: {
+      contact: 'Контакты', mainPhone: 'iTrucking Services', accountingPhone: 'Бухгалтерия', tirePhone: 'Отдел шин',
+      departments: 'Отделы', general: 'Общие вопросы', fuel: 'Топливный отдел', accounting: 'Бухгалтерия',
+      resources: 'Ресурсы', privacy: 'Политика конфиденциальности', terms: 'Условия использования',
+      address: 'Адрес', social: 'Социальные сети', copyright: 'iTrucking Services. Все права защищены.',
+    },
+  },
+  uk: {
+    header: { language: 'Вибрати мову', themeDark: 'Увімкнути темну тему', themeLight: 'Увімкнути світлу тему' },
+    footer: {
+      contact: 'Контакти', mainPhone: 'iTrucking Services', accountingPhone: 'Бухгалтерія', tirePhone: 'Відділ шин',
+      departments: 'Відділи', general: 'Загальні питання', fuel: 'Паливний відділ', accounting: 'Бухгалтерія',
+      resources: 'Ресурси', privacy: 'Політика конфіденційності', terms: 'Умови використання',
+      address: 'Адреса', social: 'Соціальні мережі', copyright: 'iTrucking Services. Усі права захищені.',
+    },
+  },
+  es: {
+    header: { language: 'Seleccionar idioma', themeDark: 'Activar tema oscuro', themeLight: 'Activar tema claro' },
+    footer: {
+      contact: 'Contacto', mainPhone: 'iTrucking Services', accountingPhone: 'Contabilidad', tirePhone: 'Departamento de llantas',
+      departments: 'Departamentos', general: 'Consultas generales', fuel: 'Departamento de combustible', accounting: 'Contabilidad',
+      resources: 'Recursos', privacy: 'Política de privacidad', terms: 'Términos de servicio',
+      address: 'Dirección', social: 'Redes sociales', copyright: 'iTrucking Services. Todos los derechos reservados.',
+    },
+  },
+}
+
 const translations = {
   en: {
     portal: portalStrings,
+    tutorials: tutorialsStrings,
     attention: attentionStrings.en,
+    ...chromeStrings.en,
     common: {
       next: 'Next',
       back: 'Back',
@@ -1428,7 +1563,9 @@ const translations = {
 
   ru: {
     portal: portalStrings,
+    tutorials: tutorialsStrings,
     attention: attentionStrings.ru,
+    ...chromeStrings.ru,
     common: {
       next: 'Далее',
       back: 'Назад',
@@ -1895,7 +2032,9 @@ const translations = {
 
   uk: {
     portal: portalStrings,
+    tutorials: tutorialsStrings,
     attention: attentionStrings.uk,
+    ...chromeStrings.uk,
     common: {
       next: 'Далі',
       back: 'Назад',
@@ -2362,7 +2501,9 @@ const translations = {
 
   es: {
     portal: portalStrings,
+    tutorials: tutorialsStrings,
     attention: attentionStrings.es,
+    ...chromeStrings.es,
     common: {
       next: 'Siguiente',
       back: 'Atrás',

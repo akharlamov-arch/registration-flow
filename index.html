@@ -26,11 +26,37 @@
         }
       })();
     </script>
+    <!--
+      Theme before the first paint (SITE-CHROME-01): src/context/ThemeContext.jsx
+      owns it once React runs, this only keeps a dark page from flashing light.
+    -->
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem('itrucking-theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <!--
+      Clean URL …/tutorials (TUTORIALS-PAGE-01) on servers that answer it with
+      this file (Vite dev/preview SPA fallback) instead of the static
+      public/tutorials/index.html: hand over to the hash route.
+    -->
+    <script>
+      (function () {
+        var m = window.location.pathname.match(/^(.*\/)tutorials\/?$/);
+        if (m && !window.location.hash) {
+          window.location.replace(m[1] + window.location.search + '#/tutorials');
+        }
+      })();
+    </script>
     <title>iTrucking — Registration</title>
     <link rel="icon" type="image/svg+xml" href="/src/assets/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>
