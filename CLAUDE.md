@@ -33,7 +33,7 @@ A plain path like `/registration-flow/registration` (no `#`) matches no route an
 
 **PortalPage** (`src/pages/PortalPage.jsx`) — self-serve portal for **existing customers** (distinct from leads). Internal view state machine (like `RelinkPage`): OTP-to-email login (`requestCode` → `verifyCode`) → read-only `DASHBOARD` (masked summary + document downloads) → `CHANGE` (propose edits to whitelisted fields + note + S3-uploaded files) → `SUBMITTED`. Talks to `/api/portal/*` (see `src/api/portal.js`); the session token lives in `sessionStorage` under `itrucking-portal-token`. Nothing here mutates the customer record — submissions are change requests an operator reviews in the CRM. Backend contract: `docs/conventions/portal-api-contract.md`.
 
-**TutorialsPage** (`src/pages/tutorials/`) — the customer knowledge base, a pixel-exact port of the static site `akharlamov-arch/tutorial.itrucking.pro` (ticket `docs/tickets/TUTORIALS-PAGE-01.md`). Standalone: renders without the app `Header` and `LanguagePromptModal`. Styles are the original stylesheet scoped under `.tutorials-page` in `tutorials.css` (plain CSS, not Tailwind; its prelude rolls back Tailwind preflight inside the page) — keep it in sync with the original rather than restyling. Content and its RU/EN UI strings live in `content.js`, not `translations.js`: the page shows RU for `ru`/`uk`, EN for `en`/`es`, and RU before any language is chosen (without persisting it). Images are in `src/assets/tutorials/`, resolved by `asset()` via `import.meta.glob`. The clean URL `…/tutorials` is handled by `public/tutorials/index.html` (static servers) and a script in `index.html` (SPA-fallback servers).
+**TutorialsPage** (`src/pages/tutorials/`) — the customer knowledge base, a pixel-exact port of the static site `akharlamov-arch/tutorial.itrucking.pro` (ticket `docs/tickets/TUTORIALS-PAGE-01.md`). Standalone: renders without the app `SiteFooter` and `LanguagePromptModal` (it keeps its own footer). It renders the shared site `Header` itself (not via `AppShell`), passing `lang`/`onLangChange` (the dropdown shows RU before any language is chosen) and `extra` (its PWA install button); its theme comes from the shared `ThemeContext`. A "Back to portal" button above the categories leads to `#/attention`, and `#/tutorials?article=<id>` opens one tutorial (used by the portal's tutorials block). Styles are the original stylesheet scoped under `.tutorials-page` in `tutorials.css` (plain CSS, not Tailwind; its prelude rolls back Tailwind preflight inside the page) — keep it in sync with the original rather than restyling. Content and its RU/EN UI strings live in `content.js`, not `translations.js`: the page shows RU for `ru`/`uk`, EN for `en`/`es`, and RU before any language is chosen (without persisting it). Images are in `src/assets/tutorials/`, resolved by `asset()` via `import.meta.glob`. The clean URL `…/tutorials` is handled by `public/tutorials/index.html` (static servers) and a script in `index.html` (SPA-fallback servers).
 
 The read-only summary primitives (`ReviewSection`, `ReviewRow`, `Row`, `US_STATES`, `formatAddress`) are shared via `src/components/ReviewCard.jsx` — used by both `OtpVerification` and `PortalPage`.
 
@@ -66,6 +66,17 @@ const d = value.replace(/\D/g, '')
 const local = d.length === 11 ? d.slice(1) : d
 // local.length === 10 → valid
 ```
+
+## Site chrome and theme
+
+Every page gets `src/components/Header.jsx` (logo, 4-language dropdown, 🌙/☀️ theme toggle) — from `AppShell` in `App.jsx`, except the tutorials page, which renders it itself — and every page but the tutorials gets `src/components/SiteFooter.jsx`; both are Tailwind rebuilds of the tutorials page's header and footer (ticket `docs/tickets/SITE-CHROME-01.md`). Their strings are `header.*` / `footer.*` in `translations.js`.
+
+`useTheme()` from `src/context/ThemeContext.jsx` exposes `{ theme, toggleTheme }`; the theme persists under `itrucking-theme` (shared with the tutorials page) and is set as `<html data-theme>` (also before first paint by a script in `index.html`). Dark mode works by palette, not by `dark:` variants: `tailwind.config.js` makes `gray`, `slate`, `red`, `green`, `amber`, `blue`, `emerald`, `primary`, `secondary`, `surface`, `ds-text` read `--c-*` channels from `src/index.css`, which `html[data-theme="dark"]` swaps for an inverted set. So existing classes follow the theme automatically. Things to know:
+- `white` is not themed (it is also the label on blue buttons); `index.css` turns only `bg-white` surfaces dark. Use `bg-white` for cards, never a raw hex.
+- A dark fill (any themed shade 500–950, incl. `hover:` fills) turns light in dark mode; `index.css` switches `text-white` on and inside it to dark text. A brand mark that must stay saturated uses `dark:bg-[#hex] dark:!text-white`. `border-white` becomes the surface colour.
+- Other palettes (e.g. `indigo`, `purple`) are **not** themed — add them to `themed()` in `tailwind.config.js` and regenerate their `--c-*` values before using them.
+- `darkMode` is `['selector', '[data-theme="dark"]']`, so `dark:` variants work for one-off tweaks.
+- After editing `tailwind.config.js`, restart `npm run dev`: a running dev server can keep serving utilities built from the old config, which mixes old fixed colours with the new `index.css` overrides (light page, unreadable dark cards).
 
 ## Design system
 

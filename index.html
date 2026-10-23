@@ -27,6 +27,19 @@
       })();
     </script>
     <!--
+      Theme before the first paint (SITE-CHROME-01): src/context/ThemeContext.jsx
+      owns it once React runs, this only keeps a dark page from flashing light.
+    -->
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem('itrucking-theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <!--
       Clean URL …/tutorials (TUTORIALS-PAGE-01) on servers that answer it with
       this file (Vite dev/preview SPA fallback) instead of the static
       public/tutorials/index.html: hand over to the hash route.

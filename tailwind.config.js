@@ -1,6 +1,16 @@
 /** @type {import('tailwindcss').Config} */
 // Tokens aligned with design-system/itrucking-registration/MASTER.md
+
+// Dark theme (SITE-CHROME-01): the palettes the app uses read their shades from
+// CSS variables (src/index.css), which <html data-theme="dark"> swaps for an
+// inverted set — so every existing `bg-gray-50` / `text-red-700` follows the
+// theme without a `dark:` variant on each class.
+const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]
+const themed = (name) =>
+  Object.fromEntries(SHADES.map((s) => [s, `rgb(var(--c-${name}-${s}) / <alpha-value>)`]))
+
 export default {
+  darkMode: ['selector', '[data-theme="dark"]'],
   content: [
     './index.html',
     './src/**/*.{js,jsx}',
@@ -8,12 +18,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary:   '#2563EB',
-        secondary: '#1D4ED8',
+        primary:   'rgb(var(--c-primary) / <alpha-value>)',   // #2563EB
+        secondary: 'rgb(var(--c-secondary) / <alpha-value>)', // #1D4ED8
         cta:       '#F97316',
-        surface:   '#F5F5F5',
+        surface:   'rgb(var(--c-surface) / <alpha-value>)',   // #F5F5F5
         // DS text token — minimalist near-black
-        'ds-text': '#111111',
+        'ds-text': 'rgb(var(--c-ds-text) / <alpha-value>)',   // #111111
+        gray:    themed('gray'),
+        slate:   themed('slate'),
+        red:     themed('red'),
+        green:   themed('green'),
+        amber:   themed('amber'),
+        blue:    themed('blue'),
+        emerald: themed('emerald'),
       },
       fontFamily: {
         sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],

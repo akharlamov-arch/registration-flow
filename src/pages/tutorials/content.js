@@ -67,7 +67,8 @@ export const STRINGS = {
     'android-install-title': 'Установка на Android',
     'android-install-prompt': 'Установить приложение на домашний экран?',
     'read-time': 'мин чтения',
-    'steps': 'шагов'
+    'steps': 'шагов',
+    'back-to-portal': 'Назад в портал'
   },
   en: {
     'site-title': 'iTrucking Services',
@@ -120,7 +121,8 @@ export const STRINGS = {
     'android-install-title': 'Install on Android',
     'android-install-prompt': 'Install app on home screen?',
     'read-time': 'min read',
-    'steps': 'steps'
+    'steps': 'steps',
+    'back-to-portal': 'Back to portal'
   }
 }
 

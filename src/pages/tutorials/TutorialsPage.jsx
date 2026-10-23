@@ -3,14 +3,16 @@
 // Texts come from content.js (RU/EN only) rather than t(): the page shows RU
 // or EN even when the app language is UK/ES, and RU before any choice.
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useI18n } from '../../context/I18nContext'
+import { useTheme } from '../../context/ThemeContext'
 import { STRINGS, TUTORIALS, asset } from './content'
+import Header, { headerIconBtnCls } from '../../components/Header'
 import TutorialModal from './TutorialModal'
 import InstallModal, { useInstallPrompt } from './InstallModal'
 import './tutorials.css'
 
 const LANG_KEY = 'itrucking-lang'
-const THEME_KEY = 'itrucking-theme'
 const EXCLUDED_RECOMMENDATION_ID = 7 // "How to set Unit number and PIN"
 
 const CATEGORIES = [
@@ -29,26 +31,20 @@ function safeGet(key) {
   }
 }
 
-function safeSet(key, value) {
-  try {
-    localStorage.setItem(key, value)
-  } catch {
-    // Ignore storage failures (e.g. private mode / blocked storage)
-  }
-}
-
 // The language is shared with the rest of the app (itrucking-lang), mapped to
 // the two languages the tutorials exist in. Until the visitor has chosen one
-// anywhere, the page opens in RU like the original, without persisting it.
+// anywhere, the page opens in RU like the original, without persisting it —
+// and the header's dropdown shows RU to match (`selected`).
 function usePageLang() {
   const { lang, setLang } = useI18n()
   const [chosen, setChosen] = useState(() => Boolean(safeGet(LANG_KEY)))
-  const pageLang = !chosen || lang === 'ru' || lang === 'uk' ? 'ru' : 'en'
+  const selected = chosen ? lang : 'ru'
+  const pageLang = selected === 'ru' || selected === 'uk' ? 'ru' : 'en'
   const choose = (code) => {
     setLang(code)
     setChosen(true)
   }
-  return [pageLang, choose]
+  return [pageLang, choose, selected]
 }
 
 function pluralizeSteps(count, lang) {
@@ -107,11 +103,13 @@ function useTutorialsHead() {
 }
 
 export default function TutorialsPage() {
-  const [lang, chooseLang] = usePageLang()
+  const [lang, chooseLang, selectedLang] = usePageLang()
   const s = (key) => STRINGS[lang][key]
   const categoryName = (category) => s(`category-${category}`) || category
 
-  const [theme, setTheme] = useState(() => safeGet(THEME_KEY) || 'light')
+  // Shared with the rest of the app (SITE-CHROME-01), same storage key as before.
+  const { theme } = useTheme()
+  const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('all')
   const [modal, setModal] = useState({ id: null, open: false, recommendations: [] })
@@ -124,18 +122,23 @@ export default function TutorialsPage() {
   const later = (fn, ms) => timers.current.push(setTimeout(fn, ms))
   useEffect(() => () => timers.current.forEach(clearTimeout), [])
 
-  const toggleTheme = () => {
-    const next = theme === 'light' ? 'dark' : 'light'
-    setTheme(next)
-    safeSet(THEME_KEY, next)
-  }
-
   const openTutorial = (id) => setModal({ id, open: true, recommendations: pickRecommendations(id) })
   const closeModal = () => setModal((m) => ({ ...m, open: false }))
   const navigateTo = (id) => {
     closeModal()
     later(() => openTutorial(id), 300)
   }
+
+  // Deep link from the customer portal (`#/tutorials?article=<id>`): opens that
+  // tutorial over the list, then drops the parameter so closing it and
+  // reloading lands on the plain list.
+  const [searchParams, setSearchParams] = useSearchParams()
+  useEffect(() => {
+    const id = Number(searchParams.get('article'))
+    if (TUTORIALS.some((t) => t.id === id)) openTutorial(id)
+    if (searchParams.has('article')) setSearchParams({}, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- read once, on arrival
+  }, [])
 
   const openLightbox = (src) => setLightbox({ src, open: true })
   const closeLightbox = () => {
@@ -182,29 +185,20 @@ export default function TutorialsPage() {
     (term === '' || t.title[lang].toLowerCase().includes(term) || t.description[lang].toLowerCase().includes(term)))
   const hasQuery = query.trim().length > 0
 
+  // The site header (SITE-CHROME-01) — the same as on every other page — sits
+  // above the page root, outside the original stylesheet's scope.
   return (
+    <>
+    <Header
+      lang={selectedLang}
+      onLangChange={chooseLang}
+      extra={install.visible && (
+        <button type="button" className={headerIconBtnCls} title={s('install-app')} aria-label={s('install-app')} onClick={install.install}>
+          📱
+        </button>
+      )}
+    />
     <div className="tutorials-page" data-theme={theme}>
-      <header className="header">
-        <div className="header-container">
-          <a href="https://itrucking.pro/" className="logo" target="_blank" rel="noopener noreferrer">
-            <div className="logo-icon">
-              <img src={asset('logos/Logo_for_white_theme.png')} alt="iTrucking" className="logo-img logo-light" />
-              <img src={asset('logos/Logo_for_dark_theme.png')} alt="iTrucking" className="logo-img logo-dark" />
-            </div>
-          </a>
-          <div className="header-controls">
-            <div className="lang-switcher">
-              {['ru', 'en'].map((code) => (
-                <button key={code} className={`lang-btn${lang === code ? ' active' : ''}`} onClick={() => chooseLang(code)}>
-                  {code.toUpperCase()}
-                </button>
-              ))}
-            </div>
-            <button className={`install-btn${install.visible ? ' show' : ''}`} title={s('install-app')} onClick={install.install}>📱</button>
-            <button className="theme-toggle" onClick={toggleTheme}>{theme === 'light' ? '🌙' : '☀️'}</button>
-          </div>
-        </div>
-      </header>
 
       <section className="search-section">
         <div className="search-header">
@@ -231,6 +225,12 @@ export default function TutorialsPage() {
       </section>
 
       <section className="categories-section">
+        <button type="button" className="back-to-portal" onClick={() => navigate('/attention')}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          <span>{s('back-to-portal')}</span>
+        </button>
         <div className="categories-title">{s('categories-title')}</div>
         <div className="categories">
           {CATEGORIES.map((c) => (
@@ -373,5 +373,6 @@ export default function TutorialsPage() {
         </div>
       </footer>
     </div>
+    </>
   )
 }
