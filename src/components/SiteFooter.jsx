@@ -2,7 +2,22 @@
 // (now src/pages/tutorials/components/Footer/), rebuilt in
 // Tailwind for every other page and translated into all four app languages.
 
+import { createContext, useContext, useEffect } from 'react'
 import { useI18n } from '../context/I18nContext'
+
+// The footer is opt-in per page: AppShell (App.jsx) renders it only while the
+// current page asks for it through `useSiteFooter`. That lets the customer
+// portal keep it off its sign-in screens (ATTENTION-LOGIN-NO-FOOTER-01) and
+// show it only once the customer is signed in.
+export const SiteFooterContext = createContext(() => {})
+
+export function useSiteFooter(show) {
+  const setShown = useContext(SiteFooterContext)
+  useEffect(() => {
+    setShown(show)
+    return () => setShown(false)
+  }, [show, setShown])
+}
 
 const linkCls = 'block text-[0.938rem] text-gray-500 hover:text-primary transition-colors duration-ds-slow'
 const smallCls = 'block mt-1 text-[0.813rem] text-gray-400'

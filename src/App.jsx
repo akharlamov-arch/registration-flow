@@ -1,10 +1,10 @@
 // DS React stack guideline: lazy() for routes — code splitting
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { I18nProvider, useI18n } from './context/I18nContext'
 import { ThemeProvider } from './context/ThemeContext'
 import Header from './components/Header'
-import SiteFooter from './components/SiteFooter'
+import SiteFooter, { SiteFooterContext } from './components/SiteFooter'
 import LanguagePromptModal from './components/LanguagePromptModal'
 
 const LeadForm         = lazy(() => import('./pages/LeadForm'))
@@ -56,40 +56,44 @@ function AppShell() {
   // the app header itself, so it gets neither the app header and footer here
   // nor the first-visit language prompt. Every other page
   // gets the site header modelled on it (SITE-CHROME-01). The site footer is
-  // for the customer portal only — the registration pages (lead form,
+  // for the signed-in customer portal only — a page opts in with
+  // `useSiteFooter`, and only AttentionPage does, once signed in
+  // (ATTENTION-LOGIN-NO-FOOTER-01). The registration pages (lead form,
   // registration, post-signing, relink) stay free of it so nothing pulls an
   // applicant away mid-flow. The column layout keeps it at the bottom of a
   // short page.
   const { pathname } = useLocation()
   const standalone = pathname.startsWith('/tutorials')
-  const withFooter = pathname.startsWith('/attention')
+  const [withFooter, setWithFooter] = useState(false)
 
   return (
-    <div className="min-h-screen flex flex-col bg-white font-sans">
-      <TitleUpdater />
-      {!standalone && <Header />}
-      {!standalone && <LanguagePromptModal />}
-      <div className="flex-1 flex flex-col">
-        <Suspense fallback={<PageFallback />}>
-          <Routes>
-            <Route path="/" element={<LeadForm />} />
-            <Route path="/registration" element={<OtpVerification />} />
-            <Route path="/post-signing" element={<PostSigning />} />
-            <Route path="/relink" element={<RelinkPage />} />
-            <Route path="/portal" element={<Navigate to="/attention" replace />} />
-            <Route path="/attention" element={<AttentionPage />} />
-            <Route path="/tutorials/*" element={<TutorialsApp />} />
-            {/* Retired URLs, kept so links already shared with testers still land
-                somewhere (PORTAL-UI-01). `replace` keeps them out of history. A
-                redirect drops router state, so the /portal gates navigate to
-                /attention directly rather than through these. */}
-            <Route path="/attantion" element={<Navigate to="/attention" replace />} />
-            <Route path="/portal-demo" element={<Navigate to="/attention" replace />} />
-          </Routes>
-        </Suspense>
+    <SiteFooterContext.Provider value={setWithFooter}>
+      <div className="min-h-screen flex flex-col bg-white font-sans">
+        <TitleUpdater />
+        {!standalone && <Header />}
+        {!standalone && <LanguagePromptModal />}
+        <div className="flex-1 flex flex-col">
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route path="/" element={<LeadForm />} />
+              <Route path="/registration" element={<OtpVerification />} />
+              <Route path="/post-signing" element={<PostSigning />} />
+              <Route path="/relink" element={<RelinkPage />} />
+              <Route path="/portal" element={<Navigate to="/attention" replace />} />
+              <Route path="/attention" element={<AttentionPage />} />
+              <Route path="/tutorials/*" element={<TutorialsApp />} />
+              {/* Retired URLs, kept so links already shared with testers still land
+                  somewhere (PORTAL-UI-01). `replace` keeps them out of history. A
+                  redirect drops router state, so the /portal gates navigate to
+                  /attention directly rather than through these. */}
+              <Route path="/attantion" element={<Navigate to="/attention" replace />} />
+              <Route path="/portal-demo" element={<Navigate to="/attention" replace />} />
+            </Routes>
+          </Suspense>
+        </div>
+        {withFooter && <SiteFooter />}
       </div>
-      {withFooter && <SiteFooter />}
-    </div>
+    </SiteFooterContext.Provider>
   )
 }
 
