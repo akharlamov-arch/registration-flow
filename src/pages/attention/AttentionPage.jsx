@@ -47,6 +47,7 @@ import {
   signContract, resumeContractSigning, completeContractSigning,
 } from '../../api/portal'
 import ContractSigningFrame from '../../components/ContractSigningFrame'
+import { useSiteFooter } from '../../components/SiteFooter'
 import { getPolicies } from './api'
 import {
   initialFormFromSubject, initialChoicesFromSubject, validate, isComplete,
@@ -129,6 +130,9 @@ export default function AttentionPage() {
   }, [])
 
   const [view, setView] = useState('loading')
+  // The site footer only once signed in — not under sign-in, nor while a
+  // stored session is still being checked (ATTENTION-LOGIN-NO-FOOTER-01).
+  useSiteFooter(view === 'portal')
   const [token, setToken] = useState('')
   const [customer, setCustomer] = useState(null)
   const [sessionExpired, setSessionExpired] = useState(false)
