@@ -1,0 +1,86 @@
+@import './tokens.css';
+
+/*
+ * Глобальные стили оригинала. В registration-flow страница — часть общего приложения,
+ * поэтому они ограничены её корнем: .tutorials-page (токены, фон) и .tutorials-content
+ * (всё под общим Header — шапка приложения сделана на Tailwind и остаётся как есть).
+ *
+ * Оригинал работал без Tailwind preflight и src/index.css. Внутри страницы их правила
+ * откатываются к тем браузерным значениям, на которые рассчитаны CSS-модули.
+ * :where() держит специфичность на уровне селектора тега, поэтому любой класс
+ * из модуля по-прежнему побеждает.
+ */
+
+.tutorials-page {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  transition: var(--transition);
+}
+
+.tutorials-content {
+  font-family: var(--font);
+  color: var(--text-primary);
+  line-height: 1.7;
+  /* Ровнее переносы и без одного слова на последней строке. Висячие предлоги убирает lib/typography.ts. */
+  text-wrap: pretty;
+  overflow-x: clip;
+}
+
+:where(.tutorials-content),
+:where(.tutorials-content) *,
+:where(.tutorials-content) *::before,
+:where(.tutorials-content) *::after {
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+
+:where(.tutorials-content, .tutorials-page .site-header dialog) :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font);
+  font-size: revert;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: inherit;
+}
+
+:where(.tutorials-content) a {
+  color: revert;
+  text-decoration: revert;
+}
+
+:where(.tutorials-content) :is(ol, ul) {
+  list-style: revert;
+}
+
+:where(.tutorials-content) :is(button, input) {
+  font: revert;
+  font-family: var(--font);
+  letter-spacing: revert;
+  color: revert;
+  text-transform: revert;
+}
+
+:where(.tutorials-content) :is(img, svg, video) {
+  display: revert;
+  vertical-align: revert;
+}
+
+:where(.tutorials-content) img {
+  max-width: 100%;
+  height: revert;
+}
+
+/* Окно установки приложения открывается из кнопки в общем Header — вне .tutorials-content. */
+:where(.tutorials-page .site-header) dialog {
+  font-family: var(--font);
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

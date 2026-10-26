@@ -1,5 +1,5 @@
 // Site header (SITE-CHROME-01) — the tutorials page's header
-// (src/pages/tutorials/tutorials.css, `.header`), rebuilt in Tailwind for every
+// (tutorial.itrucking.pro's `.header`), rebuilt in Tailwind for every
 // other page: logo on the left, language and theme on the right. The language
 // stays a dropdown with all four app languages rather than the tutorials'
 // RU/EN buttons. The support phone moved to the footer.

@@ -1,0 +1,116 @@
+.footer {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  padding: 3rem 2rem 2rem;
+  margin-top: 4rem;
+}
+
+.content {
+  max-width: var(--container);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.content h3 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.link,
+.address {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: var(--transition);
+  font-size: 0.938rem;
+  display: block;
+}
+
+.link:hover {
+  color: var(--accent);
+}
+
+.link small {
+  font-size: 0.813rem;
+  color: var(--text-tertiary);
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.address {
+  font-style: normal;
+}
+
+.address span {
+  display: block;
+}
+
+.social {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.socialButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.938rem;
+  color: white;
+  transition: var(--transition);
+}
+
+.socialButton svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.socialButton:hover {
+  transform: translateY(-2px);
+}
+
+.instagram {
+  background: linear-gradient(
+    45deg,
+    #f09433 0%,
+    #e6683c 25%,
+    #dc2743 50%,
+    #cc2366 75%,
+    #bc1888 100%
+  );
+}
+
+.instagram:hover {
+  box-shadow: 0 4px 12px rgba(188, 24, 136, 0.4);
+}
+
+.facebook {
+  background: #1877f2;
+}
+
+.facebook:hover {
+  box-shadow: 0 4px 12px rgba(24, 119, 242, 0.4);
+}
+
+.bottom {
+  max-width: var(--container);
+  margin: 2rem auto 0;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+}

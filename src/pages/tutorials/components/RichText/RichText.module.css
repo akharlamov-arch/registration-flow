@@ -1,0 +1,8 @@
+.richText p + p {
+  margin-top: 0.75rem;
+}
+
+.link {
+  color: var(--accent);
+  text-decoration: underline;
+}

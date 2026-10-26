@@ -164,7 +164,7 @@ const portalStrings = {
 }
 
 // The tutorials knowledge base (#/tutorials, src/pages/tutorials/). Its own
-// copy is RU/EN and lives in content.js; only the tab title is read through
+// copy is RU/EN and lives in its i18n/messages.ts and content/; only the tab title is read through
 // t(), and it is the original site's bilingual title in every language.
 const tutorialsStrings = {
   title: 'Клиентский портал iTrucking | Client Portal iTrucking',
@@ -1051,7 +1051,7 @@ const attentionStrings = {
 
 // Site header and footer (SITE-CHROME-01, src/components/Header.jsx and
 // SiteFooter.jsx). The footer copy follows the tutorials page's footer
-// (src/pages/tutorials/content.js); UK and ES are translated from it.
+// (src/pages/tutorials/i18n/messages.ts); UK and ES are translated from it.
 const chromeStrings = {
   en: {
     header: { language: 'Select language', themeDark: 'Switch to dark theme', themeLight: 'Switch to light theme' },

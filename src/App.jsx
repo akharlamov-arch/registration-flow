@@ -13,7 +13,7 @@ const PostSigning      = lazy(() => import('./pages/PostSigning'))
 const RelinkPage       = lazy(() => import('./pages/RelinkPage'))
 const PortalPage       = lazy(() => import('./pages/PortalPage'))
 const AttentionPage    = lazy(() => import('./pages/attention/AttentionPage'))
-const TutorialsPage    = lazy(() => import('./pages/tutorials/TutorialsPage'))
+const TutorialsApp     = lazy(() => import('./pages/tutorials/app/App'))
 
 function TitleUpdater() {
   const { t } = useI18n()
@@ -51,9 +51,10 @@ function PageFallback() {
 // The portal's signing return is not a route here: Zoho refuses a `#` in a
 // redirect URL, so it is the static public/portal-signing-return.html.
 function AppShell() {
-  // The tutorials knowledge base is a standalone port with its own header,
-  // footer and RU/EN switch (TUTORIALS-PAGE-01), so it gets neither the app
-  // header and footer nor the first-visit language prompt. Every other page
+  // The tutorials knowledge base is the tutorial.itrucking.pro React app
+  // (src/pages/tutorials/) with its own footer and RU/EN content; it renders
+  // the app header itself, so it gets neither the app header and footer here
+  // nor the first-visit language prompt. Every other page
   // gets the site header modelled on it (SITE-CHROME-01). The site footer is
   // for the customer portal only — the registration pages (lead form,
   // registration, post-signing, relink) stay free of it so nothing pulls an
@@ -77,7 +78,7 @@ function AppShell() {
             <Route path="/relink" element={<RelinkPage />} />
             <Route path="/portal" element={<Navigate to="/attention" replace />} />
             <Route path="/attention" element={<AttentionPage />} />
-            <Route path="/tutorials" element={<TutorialsPage />} />
+            <Route path="/tutorials/*" element={<TutorialsApp />} />
             {/* Retired URLs, kept so links already shared with testers still land
                 somewhere (PORTAL-UI-01). `replace` keeps them out of history. A
                 redirect drops router state, so the /portal gates navigate to

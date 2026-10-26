@@ -1,0 +1,16 @@
+.badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.625rem;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.highlight {
+  background: var(--tone-orange-bg);
+  color: var(--tone-orange-fg);
+  box-shadow: inset 0 0 0 1px var(--tone-orange-border);
+  font-weight: 600;
+}
