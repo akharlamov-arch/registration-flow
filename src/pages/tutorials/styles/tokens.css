@@ -1,0 +1,76 @@
+/* Токены оригинала. В registration-flow они заданы на корне страницы (.tutorials-page),
+   а не на :root: имена вроде --shadow-md уже заняты в src/index.css. */
+.tutorials-page {
+  --bg-primary: #fafafa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f5f5f5;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --accent: #0066ff;
+  --accent-hover: #0052cc;
+  --brand-red: #e53935;
+  --border: #e5e5e5;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --radius: 12px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --font: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --container: 1400px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --shadow-hover: 0 2px 4px rgba(16, 24, 40, 0.04), 0 18px 36px -14px rgba(16, 24, 40, 0.24);
+
+  /* Тона выделенных блоков: фон, рамка 1px, цвет иконки и подписи. */
+  --tone-accent-bg: #eef4ff;
+  --tone-accent-fg: #0052cc;
+  --tone-green-bg: #eff8f0;
+  --tone-green-border: #d3ecd7;
+  --tone-green-fg: #2e7d32;
+  --tone-blue-bg: #eef6fd;
+  --tone-blue-border: #d3e7f8;
+  --tone-blue-fg: #1565c0;
+  --tone-amber-bg: #fff8e1;
+  --tone-amber-border: #f8e6ad;
+  --tone-amber-fg: #8a6100;
+  --tone-orange-bg: #fff4e8;
+  --tone-orange-border: #fbdcbc;
+  --tone-orange-fg: #b45309;
+  --tone-purple-bg: #f5ecfa;
+  --tone-purple-fg: #7b1fa2;
+}
+
+[data-theme='dark'] .tutorials-page {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #141414;
+  --bg-tertiary: #1a1a1a;
+  --text-primary: #f5f5f5;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #666666;
+  --accent: #3385ff;
+  --accent-hover: #5c9eff;
+  --border: #2a2a2a;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.3), 0 18px 36px -14px rgba(0, 0, 0, 0.7);
+
+  --tone-accent-bg: rgba(51, 133, 255, 0.14);
+  --tone-accent-fg: #8bb8ff;
+  --tone-green-bg: rgba(76, 175, 80, 0.12);
+  --tone-green-border: rgba(76, 175, 80, 0.26);
+  --tone-green-fg: #81d185;
+  --tone-blue-bg: rgba(33, 150, 243, 0.12);
+  --tone-blue-border: rgba(33, 150, 243, 0.28);
+  --tone-blue-fg: #74bcf7;
+  --tone-amber-bg: rgba(255, 193, 7, 0.1);
+  --tone-amber-border: rgba(255, 193, 7, 0.24);
+  --tone-amber-fg: #ffd25e;
+  --tone-orange-bg: rgba(255, 152, 0, 0.11);
+  --tone-orange-border: rgba(255, 152, 0, 0.26);
+  --tone-orange-fg: #ffb460;
+  --tone-purple-bg: rgba(186, 104, 200, 0.18);
+  --tone-purple-fg: #dda0ea;
+}

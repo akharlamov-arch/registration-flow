@@ -1,5 +1,5 @@
 // Site footer (SITE-CHROME-01) — the tutorials page's footer
-// (src/pages/tutorials/TutorialsPage.jsx + tutorials.css `.footer`), rebuilt in
+// (now src/pages/tutorials/components/Footer/), rebuilt in
 // Tailwind for every other page and translated into all four app languages.
 
 import { useI18n } from '../context/I18nContext'

@@ -1,0 +1,55 @@
+/* Кнопка «Назад в портал» — только в registration-flow. Стоит над категориями, по их сетке. */
+.backRow {
+  max-width: var(--container);
+  margin: 0 auto 1.5rem;
+  padding: 0 2rem;
+  animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+.back {
+  padding: 0.625rem 1.25rem;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.back svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.back:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.back:hover svg {
+  transform: translateX(-3px);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .backRow {
+    padding: 0 1.5rem;
+  }
+}

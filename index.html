@@ -40,15 +40,16 @@
       })();
     </script>
     <!--
-      Clean URL …/tutorials (TUTORIALS-PAGE-01) on servers that answer it with
-      this file (Vite dev/preview SPA fallback) instead of the static
-      public/tutorials/index.html: hand over to the hash route.
+      Clean URLs …/tutorials and …/tutorials/<slug> (TUTORIALS-PAGE-01) on
+      servers that answer them with this file (Vite dev/preview SPA fallback)
+      instead of the static public/tutorials/index.html: hand over to the hash
+      route.
     -->
     <script>
       (function () {
-        var m = window.location.pathname.match(/^(.*\/)tutorials\/?$/);
+        var m = window.location.pathname.match(/^(.*\/)tutorials(\/[a-z0-9-]+)?\/?$/);
         if (m && !window.location.hash) {
-          window.location.replace(m[1] + window.location.search + '#/tutorials');
+          window.location.replace(m[1] + window.location.search + '#/tutorials' + (m[2] || ''));
         }
       })();
     </script>

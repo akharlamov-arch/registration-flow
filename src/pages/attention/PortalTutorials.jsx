@@ -1,14 +1,15 @@
 // "Tutorials" on the attention page's overview: one featured article and three
-// more, taken from the knowledge base (src/pages/tutorials/content.js). Each
-// opens that article on #/tutorials (`?article=<id>`); "See all" opens the
-// list itself.
+// more, taken from the knowledge base (src/pages/tutorials/content/). Each
+// opens that article on #/tutorials/<slug>; "See all" opens the list itself.
 
 import { useNavigate } from 'react-router-dom'
 import { useI18n } from '../../context/I18nContext'
-import { STRINGS, TUTORIALS } from '../tutorials/content'
+import { getTutorial } from '../tutorials/content'
+import { messages } from '../tutorials/i18n/messages'
+import { localize } from '../tutorials/lib/localize'
 
-const FEATURED_ID = 2
-const LIST_IDS = [7, 1, 4]
+const FEATURED_SLUG = 'install-app'
+const LIST_SLUGS = ['unit-pin', 'efs-card-block', 'transaction-report']
 
 function ArrowIcon({ className }) {
   return (
@@ -18,21 +19,20 @@ function ArrowIcon({ className }) {
   )
 }
 
-const byId = (id) => TUTORIALS.find((tut) => tut.id === id)
-
 export default function PortalTutorials() {
   const { t, lang } = useI18n()
   const navigate = useNavigate()
-  // The knowledge base is RU/EN only — same mapping as TutorialsPage.
+  // The knowledge base is RU/EN only — same mapping as its LanguageProvider.
   const kbLang = lang === 'ru' || lang === 'uk' ? 'ru' : 'en'
-  const readTime = (tut) => `${tut.readTime} ${STRINGS[kbLang]['read-time']}`
+  const readTime = (tut) => `${tut.readTime} ${messages[kbLang].readTime}`
+  const cover = (tut) => tut.cover && localize(tut.cover, kbLang)
 
-  const featured = byId(FEATURED_ID)
-  const list = LIST_IDS.map(byId).filter(Boolean)
-  const href = (id) => `#/tutorials?article=${id}`
-  const open = (e, id) => {
+  const featured = getTutorial(FEATURED_SLUG)
+  const list = LIST_SLUGS.map(getTutorial).filter(Boolean)
+  const href = (slug) => `#/tutorials/${slug}`
+  const open = (e, slug) => {
     e.preventDefault()
-    navigate(`/tutorials?article=${id}`)
+    navigate(`/tutorials/${slug}`)
   }
 
   const cardCls = 'bg-white border border-gray-200 shadow-ds-sm overflow-hidden transition-[box-shadow,transform] duration-ds-slow ' +
@@ -56,9 +56,9 @@ export default function PortalTutorials() {
 
       <div className="grid gap-3 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:gap-4">
         {featured && (
-          <a href={href(featured.id)} onClick={(e) => open(e, featured.id)} className={`group flex flex-col rounded-2xl ${cardCls}`}>
+          <a href={href(featured.slug)} onClick={(e) => open(e, featured.slug)} className={`group flex flex-col rounded-2xl ${cardCls}`}>
             <img
-              src={featured.mainImage[kbLang]}
+              src={cover(featured)}
               alt=""
               className="w-full aspect-[1200/630] object-cover bg-gray-100"
             />
@@ -75,14 +75,14 @@ export default function PortalTutorials() {
 
         <ul className="grid gap-3 xl:grid-rows-3">
           {list.map((tut) => (
-            <li key={tut.id} className="flex">
+            <li key={tut.slug} className="flex">
               <a
-                href={href(tut.id)}
-                onClick={(e) => open(e, tut.id)}
+                href={href(tut.slug)}
+                onClick={(e) => open(e, tut.slug)}
                 className={`w-full flex items-center gap-3.5 p-2.5 rounded-[14px] ${cardCls}`}
               >
                 <img
-                  src={tut.mainImage[kbLang]}
+                  src={cover(tut)}
                   alt=""
                   className="w-28 sm:w-32 shrink-0 aspect-[1200/630] object-cover rounded-lg bg-gray-100"
                 />

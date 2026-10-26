@@ -1,0 +1,370 @@
+/* ---------- Текст ---------- */
+.text-body {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.text-step,
+.text-substep {
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* ---------- Картинки ---------- */
+.image-body {
+  margin-bottom: 1.5rem;
+}
+
+.image-step,
+.image-substep {
+  margin-top: 1rem;
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+/* Вертикальные скриншоты телефона на всю ширину были бы слишком высокими. */
+.image-small {
+  max-width: 360px;
+  margin-inline: auto;
+}
+
+.image-medium {
+  max-width: 560px;
+  margin-inline: auto;
+}
+
+/* Блок после картинки начинает новую группу «текст → картинка»: отступ над ним вдвое больше,
+   чтобы текст визуально относился к своей (следующей) картинке, а не к предыдущей. */
+.image-step + :not(.image-step),
+.image-substep + :not(.image-substep) {
+  margin-top: 2rem;
+}
+
+/* ---------- Нумерованный список ---------- */
+.list {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+}
+
+.list h3 {
+  font-size: 1.125rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.list ol {
+  list-style: none;
+  counter-reset: list-counter;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.list li {
+  counter-increment: list-counter;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 0.875rem;
+  align-items: start;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.list li::before {
+  content: counter(list-counter);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--tone-accent-bg);
+  color: var(--tone-accent-fg);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Чек-лист ---------- */
+.checklist {
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.checklist li {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 0.625rem;
+  align-items: start;
+}
+
+.checkIcon {
+  width: 20px;
+  height: 20px;
+  margin-top: calc((1.6em - 20px) / 2);
+  color: var(--tone-green-fg);
+}
+
+.bullets {
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.bullets li {
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.bullets li::before {
+  content: '';
+  position: absolute;
+  left: 0.25rem;
+  top: calc(0.8em - 3px);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* ---------- Заголовки разделов ---------- */
+.heading {
+  margin: 2.5rem 0 1rem;
+}
+
+.subheading {
+  font-size: 1.125rem;
+  line-height: 1.4;
+  margin: 1.5rem 0 0.75rem;
+  text-wrap: balance;
+}
+
+.heading + .subheading {
+  margin-top: 0;
+}
+
+/* ---------- Шаги ---------- */
+.stepsSection {
+  margin-top: 0.5rem;
+}
+
+.substepsSection {
+  margin-top: 2.5rem;
+}
+
+.stepsTitle {
+  margin-bottom: 1rem;
+}
+
+.stepsSection + .stepsSection {
+  margin-top: 2.5rem;
+}
+
+.stepsDescription {
+  margin: -0.5rem 0 1rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.steps {
+  list-style: none;
+  display: grid;
+  gap: 1rem;
+}
+
+.step,
+.substep {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+}
+
+.step {
+  padding: 1.5rem;
+}
+
+.substep {
+  padding: 1.25rem;
+}
+
+.stepTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  font-size: 1.125rem;
+  line-height: 1.35;
+  margin-bottom: 0.875rem;
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+
+.substep .stepTitle {
+  font-size: 1rem;
+  gap: 0.75rem;
+  margin-bottom: 0.625rem;
+}
+
+.stepNumber {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.substep .stepNumber {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--tone-purple-bg);
+  color: var(--tone-purple-fg);
+  font-size: 0.8125rem;
+}
+
+/* ---------- Выделенные блоки ---------- */
+.callout {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  column-gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  background: var(--tone-bg);
+  border: 1px solid var(--tone-border);
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+.calloutPlain {
+  display: block;
+}
+
+.calloutIcon {
+  width: 20px;
+  height: 20px;
+  /* По центру первой строки текста. */
+  margin-top: calc((1.7em - 20px) / 2);
+  color: var(--tone-fg);
+}
+
+.calloutContent {
+  min-width: 0;
+}
+
+.calloutLabel {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  color: var(--tone-fg);
+  margin-bottom: 0.125rem;
+}
+
+.calloutImage {
+  margin-top: 1rem;
+  border-radius: 10px;
+}
+
+.callout-body {
+  margin: 1.5rem 0;
+  padding: 1.25rem 1.5rem;
+}
+
+.callout-step,
+.callout-substep {
+  margin-top: 1rem;
+}
+
+.callout-body.tone-info {
+  margin: 0 0 1rem;
+}
+
+.callout-body.tone-warning {
+  margin: 0 0 2rem;
+}
+
+.callout-body.tone-conclusion {
+  margin: 2rem 0 0;
+}
+
+.tone-solution {
+  --tone-bg: var(--bg-secondary);
+  --tone-border: var(--border);
+  --tone-fg: var(--accent);
+  color: var(--text-secondary);
+}
+
+.tone-tip,
+.tone-conclusion {
+  --tone-bg: var(--tone-green-bg);
+  --tone-border: var(--tone-green-border);
+  --tone-fg: var(--tone-green-fg);
+}
+
+.tone-note {
+  --tone-bg: var(--tone-blue-bg);
+  --tone-border: var(--tone-blue-border);
+  --tone-fg: var(--tone-blue-fg);
+}
+
+.tone-hint {
+  --tone-bg: var(--tone-amber-bg);
+  --tone-border: var(--tone-amber-border);
+  --tone-fg: var(--tone-amber-fg);
+}
+
+/* Как на старом сайте: жирный текст в подсказке — отдельной строкой и цветом. */
+.tone-hint .calloutContent strong {
+  display: block;
+  margin-top: 0.125rem;
+  color: var(--tone-fg);
+}
+
+.tone-warning {
+  --tone-bg: var(--tone-orange-bg);
+  --tone-border: var(--tone-orange-border);
+  --tone-fg: var(--tone-orange-fg);
+}
+
+.tone-info {
+  --tone-bg: var(--bg-tertiary);
+  --tone-border: transparent;
+  line-height: 1.8;
+}
+
+@media (max-width: 768px) {
+  .step {
+    padding: 1.25rem;
+  }
+
+  .stepTitle {
+    gap: 0.75rem;
+    font-size: 1.0625rem;
+  }
+
+  .stepNumber {
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    font-size: 0.8125rem;
+  }
+
+  .callout,
+  .callout-body {
+    padding: 0.875rem 1rem;
+  }
+}
