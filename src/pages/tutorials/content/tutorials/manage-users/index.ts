@@ -1,6 +1,6 @@
 import { defineTutorial } from '@/content/schema';
-import coverEn from './cover-en.png';
-import coverRu from './cover-ru.png';
+import coverEn from './cover-en.jpg';
+import coverRu from './cover-ru.jpg';
 import edit1 from './edit-1.png';
 import edit2 from './edit-2.png';
 import edit3 from './edit-3.png';
