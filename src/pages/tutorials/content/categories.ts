@@ -14,27 +14,39 @@ export interface Category {
 export const categories = [
   {
     id: 'pumpprice',
-    name: { ru: 'PumpPrice', en: 'PumpPrice' },
+    name: { ru: 'PumpPrice', en: 'PumpPrice', uk: 'PumpPrice' },
     icon: { image: pumppriceIcon },
   },
   {
     id: 'onramp',
-    name: { ru: 'OnRamp Fleet Dashboard', en: 'OnRamp Fleet Dashboard' },
+    name: {
+      ru: 'OnRamp Fleet Dashboard',
+      en: 'OnRamp Fleet Dashboard',
+      uk: 'OnRamp Fleet Dashboard',
+    },
     icon: { image: onrampIcon },
   },
   {
     id: 'onramp-app',
-    name: { ru: 'OnRamp Mobile App', en: 'OnRamp Mobile App' },
+    name: { ru: 'OnRamp Mobile App', en: 'OnRamp Mobile App', uk: 'OnRamp Mobile App' },
     icon: { image: onrampIcon },
   },
   {
     id: 'efs-cards',
-    name: typographLocalized({ ru: 'Использование карт EFS', en: 'Using EFS Cards Tutorial' }),
+    name: typographLocalized({
+      ru: 'Использование карт EFS',
+      en: 'Using EFS Cards Tutorial',
+      uk: 'Використання карток EFS',
+    }),
     icon: { emoji: '💳' },
   },
   {
     id: 'tire-discount',
-    name: typographLocalized({ ru: 'Программа скидок на шины', en: 'Tire Discount Program' }),
+    name: typographLocalized({
+      ru: 'Программа скидок на шины',
+      en: 'Tire Discount Program',
+      uk: 'Програма знижок на шини',
+    }),
     icon: { emoji: '🚛' },
   },
 ] as const satisfies readonly Category[];

@@ -1,7 +1,7 @@
 import { AppDownloadButtons } from '@/components/AppDownloadButtons/AppDownloadButtons';
 import { RichText } from '@/components/RichText/RichText';
 import { ZoomableImage } from '@/components/ZoomableImage/ZoomableImage';
-import type { Block, CalloutVariant, StepsBlock } from '@/content/schema';
+import type { Block, CalloutVariant, Localized, StepsBlock } from '@/content/schema';
 import { useI18n } from '@/i18n/context';
 import type { Messages } from '@/i18n/messages';
 import { localize } from '@/lib/localize';
@@ -106,7 +106,7 @@ const CALLOUT_LABELS: Partial<Record<CalloutVariant, keyof Messages>> = {
 
 interface CalloutProps {
   variant: CalloutVariant;
-  text: Record<'ru' | 'en', string>;
+  text: Localized;
   image?: string;
   placement: Placement;
 }

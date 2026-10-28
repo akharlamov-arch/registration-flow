@@ -4,38 +4,50 @@
  *    (страница будет /tutorials/fuel-limits).
  * 2. Положите картинки в эту же папку и подключите их через import (см. закомментированные строки).
  * 3. Заполните поля ниже. TypeScript подскажет, если что-то пропущено или написано с ошибкой.
+ *    Каждый текст — на трёх языках: ru, en и uk (украинский есть только в registration-flow;
+ *    если uk не указан, на украинской версии покажется ru).
  * 4. Запустите `npm test` — тесты проверят переводы, категории и ссылки на другие туториалы.
  */
 import { defineTutorial } from '@/content/schema';
 // import coverRu from './cover-ru.png';
 // import coverEn from './cover-en.png';
+// import coverUk from './cover-uk.png';
 // import step1 from './step-1.png';
 
 export default defineTutorial({
   category: 'pumpprice', // pumpprice | onramp | onramp-app | efs-cards | tire-discount (см. src/content/categories.ts)
   order: 100, // место в списке: меньше — выше
-  title: { ru: 'Название туториала', en: 'Tutorial title' },
-  description: { ru: 'Короткое описание для карточки', en: 'Short description for the card' },
-  // cover: { ru: coverRu, en: coverEn }, // или одна картинка: cover: coverRu
+  title: { ru: 'Название туториала', en: 'Tutorial title', uk: 'Назва туторіалу' },
+  description: {
+    ru: 'Короткое описание для карточки',
+    en: 'Short description for the card',
+    uk: 'Короткий опис для картки',
+  },
+  // cover: { ru: coverRu, en: coverEn, uk: coverUk }, // или одна картинка: cover: coverRu
   icon: '📘', // показывается на карточке, если нет обложки
-  // badges: [{ ru: 'Только предоплата', en: 'Prepay only' }], // дополнительный оранжевый бейдж рядом с категорией
+  // badges: [{ ru: 'Только предоплата', en: 'Prepay only', uk: 'Лише передоплата' }], // дополнительный оранжевый бейдж рядом с категорией
   body: [
     {
       type: 'text',
       text: {
         ru: 'Вступление. Можно **выделить жирным**, вставить [ссылку](https://itrucking.pro/) или сослаться на [другой туториал](tutorial:ifta-report).',
         en: 'Intro. You can use **bold**, add a [link](https://itrucking.pro/) or point to [another tutorial](tutorial:ifta-report).',
+        uk: 'Вступ. Можна **виділити жирним**, вставити [посилання](https://itrucking.pro/) або послатися на [інший туторіал](tutorial:ifta-report).',
       },
     },
     {
       type: 'steps',
       items: [
         {
-          title: { ru: 'Первый шаг', en: 'First step' },
+          title: { ru: 'Первый шаг', en: 'First step', uk: 'Перший крок' },
           blocks: [
-            { type: 'text', text: { ru: 'Что сделать.', en: 'What to do.' } },
+            { type: 'text', text: { ru: 'Что сделать.', en: 'What to do.', uk: 'Що зробити.' } },
             // { type: 'image', src: step1 },
-            { type: 'callout', variant: 'hint', text: { ru: 'Подсказка.', en: 'Hint.' } },
+            {
+              type: 'callout',
+              variant: 'hint',
+              text: { ru: 'Подсказка.', en: 'Hint.', uk: 'Підказка.' },
+            },
           ],
         },
       ],
@@ -43,7 +55,7 @@ export default defineTutorial({
     {
       type: 'callout',
       variant: 'conclusion',
-      text: { ru: 'Итог.', en: 'Summary.' },
+      text: { ru: 'Итог.', en: 'Summary.', uk: 'Підсумок.' },
     },
   ],
 });

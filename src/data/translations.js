@@ -164,10 +164,14 @@ const portalStrings = {
 }
 
 // The tutorials knowledge base (#/tutorials, src/pages/tutorials/). Its own
-// copy is RU/EN and lives in its i18n/messages.ts and content/; only the tab title is read through
-// t(), and it is the original site's bilingual title in every language.
+// copy is RU/EN/UK and lives in its i18n/messages.ts and content/; only the tab title is read through
+// t(), and it is the original site's bilingual title (RU | EN) — on the Ukrainian version, UK | EN.
 const tutorialsStrings = {
   title: 'Клиентский портал iTrucking | Client Portal iTrucking',
+}
+
+const tutorialsStringsUk = {
+  title: 'Клієнтський портал iTrucking | Client Portal iTrucking',
 }
 
 // The customer portal's attention page (#/attention, src/pages/attention/).
@@ -2032,7 +2036,7 @@ const translations = {
 
   uk: {
     portal: portalStrings,
-    tutorials: tutorialsStrings,
+    tutorials: tutorialsStringsUk,
     attention: attentionStrings.uk,
     ...chromeStrings.uk,
     common: {
