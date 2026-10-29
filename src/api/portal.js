@@ -6,6 +6,11 @@
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
+// Where the customer portal (#/attention) keeps its session token in
+// sessionStorage. Read here too by the tutorials' sign-in gate in App.jsx
+// (TUTORIALS-AUTH-01), so a signed-in tab passes straight through.
+export const ATTENTION_TOKEN_KEY = 'itrucking-attention-token'
+
 // Fired on `window` when an authenticated call is refused because the session
 // is gone (6h absolute / 10 min idle). Pages that hold a session listen for it
 // and return the customer to sign-in instead of leaving a dead form behind.

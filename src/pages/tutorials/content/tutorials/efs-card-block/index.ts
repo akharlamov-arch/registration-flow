@@ -3,8 +3,11 @@ import coverEn from './cover-en.png';
 import coverRu from './cover-ru.png';
 import coverUk from './cover-uk.jpg';
 import step1 from './step-1.png';
+import step1Uk from './step-1-uk.jpg';
 import step2 from './step-2.png';
+import step2Uk from './step-2-uk.jpg';
 import step3 from './step-3.png';
+import step3Uk from './step-3-uk.jpg';
 import step4 from './step-4.png';
 
 export default defineTutorial({
@@ -55,7 +58,7 @@ export default defineTutorial({
             },
             {
               type: 'image',
-              src: step1,
+              src: { ru: step1, en: step1, uk: step1Uk },
             },
             {
               type: 'callout',
@@ -85,7 +88,7 @@ export default defineTutorial({
             },
             {
               type: 'image',
-              src: step2,
+              src: { ru: step2, en: step2, uk: step2Uk },
             },
             {
               type: 'callout',
@@ -115,7 +118,7 @@ export default defineTutorial({
             },
             {
               type: 'image',
-              src: step3,
+              src: { ru: step3, en: step3, uk: step3Uk },
             },
             {
               type: 'callout',
