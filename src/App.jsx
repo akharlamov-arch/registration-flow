@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext'
 import Header from './components/Header'
 import SiteFooter, { SiteFooterContext } from './components/SiteFooter'
 import LanguagePromptModal from './components/LanguagePromptModal'
+import { validateSession, ATTENTION_TOKEN_KEY } from './api/portal'
 
 const LeadForm         = lazy(() => import('./pages/LeadForm'))
 const OtpVerification  = lazy(() => import('./pages/OtpVerification'))
@@ -48,6 +49,36 @@ function PageFallback() {
   )
 }
 
+// The tutorials are for signed-in customers only (TUTORIALS-AUTH-01). The same
+// check the portal makes on a direct visit: no stored session, or one the
+// server no longer accepts (or cannot be asked about), goes to the portal's
+// sign-in at #/attention — `replace`, so Back does not bounce through here
+// again. Signing in then lands on the portal overview, like any sign-in.
+// Checked once on entering #/tutorials, not on moves inside it.
+function RequirePortalSession({ children }) {
+  const [status, setStatus] = useState(() =>
+    sessionStorage.getItem(ATTENTION_TOKEN_KEY) ? 'checking' : 'signedOut')
+
+  useEffect(() => {
+    const token = sessionStorage.getItem(ATTENTION_TOKEN_KEY)
+    if (!token) return
+    let cancelled = false
+    validateSession(token)
+      .then(({ ok, data }) => ok && data?.success)
+      .catch(() => false)
+      .then((valid) => {
+        if (cancelled) return
+        if (!valid) sessionStorage.removeItem(ATTENTION_TOKEN_KEY)
+        setStatus(valid ? 'signedIn' : 'signedOut')
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  if (status === 'signedOut') return <Navigate to="/attention" replace />
+  if (status === 'checking') return <PageFallback />
+  return children
+}
+
 // The portal's signing return is not a route here: Zoho refuses a `#` in a
 // redirect URL, so it is the static public/portal-signing-return.html.
 function AppShell() {
@@ -81,7 +112,10 @@ function AppShell() {
               <Route path="/relink" element={<RelinkPage />} />
               <Route path="/portal" element={<Navigate to="/attention" replace />} />
               <Route path="/attention" element={<AttentionPage />} />
-              <Route path="/tutorials/*" element={<TutorialsApp />} />
+              <Route
+                path="/tutorials/*"
+                element={<RequirePortalSession><TutorialsApp /></RequirePortalSession>}
+              />
               {/* Retired URLs, kept so links already shared with testers still land
                   somewhere (PORTAL-UI-01). `replace` keeps them out of history. A
                   redirect drops router state, so the /portal gates navigate to

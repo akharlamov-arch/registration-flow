@@ -6,7 +6,7 @@ const STORAGE_KEY = 'itrucking-lang'
 const LANGUAGE_OPTIONS = [
   { code: 'en', label: 'English', shortLabel: 'EN' },
   { code: 'es', label: 'Español', shortLabel: 'ES' },
-  { code: 'uk', label: 'Українська', shortLabel: 'UK' },
+  { code: 'uk', label: 'Українська', shortLabel: 'UA' },
   { code: 'ru', label: 'Русский', shortLabel: 'RU' },
 ]
 

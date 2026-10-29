@@ -164,10 +164,14 @@ const portalStrings = {
 }
 
 // The tutorials knowledge base (#/tutorials, src/pages/tutorials/). Its own
-// copy is RU/EN and lives in its i18n/messages.ts and content/; only the tab title is read through
-// t(), and it is the original site's bilingual title in every language.
+// copy is RU/EN/UK and lives in its i18n/messages.ts and content/; only the tab title is read through
+// t(), and it is the original site's bilingual title (RU | EN) — on the Ukrainian version, UK | EN.
 const tutorialsStrings = {
   title: 'Клиентский портал iTrucking | Client Portal iTrucking',
+}
+
+const tutorialsStringsUk = {
+  title: 'Клієнтський портал iTrucking | Client Portal iTrucking',
 }
 
 // The customer portal's attention page (#/attention, src/pages/attention/).
@@ -1057,7 +1061,7 @@ const chromeStrings = {
     header: { language: 'Select language', themeDark: 'Switch to dark theme', themeLight: 'Switch to light theme' },
     footer: {
       contact: 'Contact', mainPhone: 'iTrucking Services', accountingPhone: 'Accounting Team', tirePhone: 'Tire Department',
-      departments: 'Departments', general: 'General Inquiries', fuel: 'Fuel Department', accounting: 'Accounting Team',
+      departments: 'Departments', general: 'General Inquiries', fuel: 'Fuel Department',
       resources: 'Resources', privacy: 'Privacy Policy', terms: 'Terms of Service',
       address: 'Address', social: 'Social Media', copyright: 'iTrucking Services. All rights reserved.',
     },
@@ -1066,7 +1070,7 @@ const chromeStrings = {
     header: { language: 'Выбрать язык', themeDark: 'Включить тёмную тему', themeLight: 'Включить светлую тему' },
     footer: {
       contact: 'Контакты', mainPhone: 'iTrucking Services', accountingPhone: 'Бухгалтерия', tirePhone: 'Отдел шин',
-      departments: 'Отделы', general: 'Общие вопросы', fuel: 'Топливный отдел', accounting: 'Бухгалтерия',
+      departments: 'Отделы', general: 'Общие вопросы', fuel: 'Топливный отдел',
       resources: 'Ресурсы', privacy: 'Политика конфиденциальности', terms: 'Условия использования',
       address: 'Адрес', social: 'Социальные сети', copyright: 'iTrucking Services. Все права защищены.',
     },
@@ -1075,7 +1079,7 @@ const chromeStrings = {
     header: { language: 'Вибрати мову', themeDark: 'Увімкнути темну тему', themeLight: 'Увімкнути світлу тему' },
     footer: {
       contact: 'Контакти', mainPhone: 'iTrucking Services', accountingPhone: 'Бухгалтерія', tirePhone: 'Відділ шин',
-      departments: 'Відділи', general: 'Загальні питання', fuel: 'Паливний відділ', accounting: 'Бухгалтерія',
+      departments: 'Відділи', general: 'Загальні питання', fuel: 'Паливний відділ',
       resources: 'Ресурси', privacy: 'Політика конфіденційності', terms: 'Умови використання',
       address: 'Адреса', social: 'Соціальні мережі', copyright: 'iTrucking Services. Усі права захищені.',
     },
@@ -1084,7 +1088,7 @@ const chromeStrings = {
     header: { language: 'Seleccionar idioma', themeDark: 'Activar tema oscuro', themeLight: 'Activar tema claro' },
     footer: {
       contact: 'Contacto', mainPhone: 'iTrucking Services', accountingPhone: 'Contabilidad', tirePhone: 'Departamento de llantas',
-      departments: 'Departamentos', general: 'Consultas generales', fuel: 'Departamento de combustible', accounting: 'Contabilidad',
+      departments: 'Departamentos', general: 'Consultas generales', fuel: 'Departamento de combustible',
       resources: 'Recursos', privacy: 'Política de privacidad', terms: 'Términos de servicio',
       address: 'Dirección', social: 'Redes sociales', copyright: 'iTrucking Services. Todos los derechos reservados.',
     },
@@ -2032,7 +2036,7 @@ const translations = {
 
   uk: {
     portal: portalStrings,
-    tutorials: tutorialsStrings,
+    tutorials: tutorialsStringsUk,
     attention: attentionStrings.uk,
     ...chromeStrings.uk,
     common: {
