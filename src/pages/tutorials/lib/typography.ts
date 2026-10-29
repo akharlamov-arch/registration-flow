@@ -8,8 +8,8 @@ import type { Localized } from '@/content/schema';
 
 const NBSP = ' ';
 
-// Слова, которые привязываются к следующему слову.
-const RU_SHORT = String.raw`[а-яё]{1,2}|для|без|под|над|при|про|или`;
+// Слова, которые привязываются к следующему слову (русские и украинские).
+const RU_SHORT = String.raw`[а-яёіїєґ]{1,2}|для|без|под|над|при|про|или|під|від|або`;
 const EN_SHORT = String.raw`a|an|the|to|of|in|on|at|by|for|and|or|as|if`;
 // Частицы, которые, наоборот, привязываются к предыдущему слову.
 const RU_PARTICLES = String.raw`же|ли|бы`;
@@ -27,6 +27,7 @@ export function typograph(text: string): string {
     .replace(DASH, `${NBSP}$1 `);
 }
 
+/** Через неё проходят все тексты туториалов и категорий; нет украинского — подставляется русский. */
 export function typographLocalized(text: Localized): Localized {
-  return { ru: typograph(text.ru), en: typograph(text.en) };
+  return { ru: typograph(text.ru), en: typograph(text.en), uk: typograph(text.uk ?? text.ru) };
 }

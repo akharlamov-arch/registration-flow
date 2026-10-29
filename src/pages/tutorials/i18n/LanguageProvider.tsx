@@ -5,7 +5,7 @@ import { I18nContext } from './context';
 import { messages } from './messages';
 
 // В registration-flow язык общий для всего приложения (itrucking-lang, 4 языка),
-// а туториалы есть только на RU и EN: uk показывает RU, es — EN. Пока посетитель
+// а туториалы есть на RU, EN и UK: es показывает EN. Пока посетитель
 // нигде не выбрал язык, страница открывается на RU, как оригинал, и ничего не сохраняет.
 const LANG_KEY = 'itrucking-lang';
 
@@ -19,13 +19,13 @@ function hasStoredLang(): boolean {
 
 /**
  * Язык страницы. `selected` — код для выпадающего списка в общем Header (en/ru/uk/es),
- * `lang` — язык туториалов (ru/en), `choose` — выбор в Header.
+ * `lang` — язык туториалов (ru/en/uk), `choose` — выбор в Header.
  */
 export function usePageLanguage() {
   const { lang: appLang, setLang: setAppLang } = useAppI18n();
   const [chosen, setChosen] = useState(hasStoredLang);
   const selected: string = chosen ? appLang : 'ru';
-  const lang: Lang = selected === 'ru' || selected === 'uk' ? 'ru' : 'en';
+  const lang: Lang = selected === 'ru' || selected === 'uk' ? selected : 'en';
   const choose = (code: string) => {
     setAppLang(code);
     setChosen(true);

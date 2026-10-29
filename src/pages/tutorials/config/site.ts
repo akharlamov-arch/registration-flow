@@ -23,7 +23,6 @@ export const site = {
   emails: [
     { label: 'footerGeneral', address: 'info@itruckingservices.com' },
     { label: 'footerFuel', address: 'fuel@itrucking.org' },
-    { label: 'footerAccounting', address: 'accounting@itrucking.org' },
   ],
   addressLines: ['1229 Pleasant Grove Blvd', 'Roseville, CA 95678'],
   social: {

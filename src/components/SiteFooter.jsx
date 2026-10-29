@@ -73,10 +73,6 @@ export default function SiteFooter() {
               <span>{t('footer.fuel')}</span>
               <small className={smallCls}>fuel@itrucking.org</small>
             </a>
-            <a href="mailto:accounting@itrucking.org" className={linkCls}>
-              <span>{t('footer.accounting')}</span>
-              <small className={smallCls}>accounting@itrucking.org</small>
-            </a>
           </div>
         </Section>
 

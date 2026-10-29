@@ -1,6 +1,6 @@
 // DS React stack guideline: lazy() for routes — code splitting
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { I18nProvider, useI18n } from './context/I18nContext'
 import { ThemeProvider } from './context/ThemeContext'
 import Header from './components/Header'
@@ -8,6 +8,7 @@ import SiteFooter, { SiteFooterContext } from './components/SiteFooter'
 import LanguagePromptModal from './components/LanguagePromptModal'
 import RenameRoute from './components/RenameRoute'
 import { SURFACE, PORTAL_HOME } from './config/surfaces'
+import { validateSession, ATTENTION_TOKEN_KEY } from './api/portal'
 
 const LeadForm         = lazy(() => import('./pages/LeadForm'))
 const OtpVerification  = lazy(() => import('./pages/OtpVerification'))
@@ -57,7 +58,10 @@ const onboardingRoutes = (
 const portalRoutes = (
   <>
     <Route path={PORTAL_HOME} element={<AttentionPage />} />
-    <Route path="/tutorials/*" element={<TutorialsApp />} />
+    <Route
+      path="/tutorials/*"
+      element={<RequirePortalSession><TutorialsApp /></RequirePortalSession>}
+    />
     {/* The portal's earlier names (PORTAL-UI-01, PUBLIC-HOSTS-02), kept for
         links already shared. */}
     {['/attention', '/attantion', '/portal-demo', '/portal']
@@ -77,6 +81,36 @@ function PageFallback() {
       </div>
     </main>
   )
+}
+
+// The tutorials are for signed-in customers only (TUTORIALS-AUTH-01). The same
+// check the portal makes on a direct visit: no stored session, or one the
+// server no longer accepts (or cannot be asked about), goes to the portal's
+// sign-in at PORTAL_HOME — `replace`, so Back does not bounce through here
+// again. Signing in then lands on the portal overview, like any sign-in.
+// Checked once on entering #/tutorials, not on moves inside it.
+function RequirePortalSession({ children }) {
+  const [status, setStatus] = useState(() =>
+    sessionStorage.getItem(ATTENTION_TOKEN_KEY) ? 'checking' : 'signedOut')
+
+  useEffect(() => {
+    const token = sessionStorage.getItem(ATTENTION_TOKEN_KEY)
+    if (!token) return
+    let cancelled = false
+    validateSession(token)
+      .then(({ ok, data }) => ok && data?.success)
+      .catch(() => false)
+      .then((valid) => {
+        if (cancelled) return
+        if (!valid) sessionStorage.removeItem(ATTENTION_TOKEN_KEY)
+        setStatus(valid ? 'signedIn' : 'signedOut')
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  if (status === 'signedOut') return <Navigate to={PORTAL_HOME} replace />
+  if (status === 'checking') return <PageFallback />
+  return children
 }
 
 // The portal's signing return is not a route here: Zoho refuses a `#` in a

@@ -45,6 +45,7 @@ import { useI18n } from '../../context/I18nContext'
 import {
   validateSession, getMe, fetchContractSubject, SESSION_EXPIRED_EVENT,
   signContract, resumeContractSigning, completeContractSigning,
+  ATTENTION_TOKEN_KEY as TOKEN_KEY,
 } from '../../api/portal'
 import ContractSigningFrame from '../../components/ContractSigningFrame'
 import { useSiteFooter } from '../../components/SiteFooter'
@@ -65,8 +66,6 @@ import {
 } from './ContractSigningStatus'
 import PoliciesLibrary from './PoliciesLibrary'
 import Login from './Login'
-
-const TOKEN_KEY = 'itrucking-attention-token'
 
 // Fail-closed: only an explicit `stale: false` with nothing awaiting a signature
 // is a signed contract. A missing `contract`, a `null` `stale` or an error

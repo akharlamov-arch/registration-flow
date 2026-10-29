@@ -22,8 +22,8 @@ function ArrowIcon({ className }) {
 export default function PortalTutorials() {
   const { t, lang } = useI18n()
   const navigate = useNavigate()
-  // The knowledge base is RU/EN only — same mapping as its LanguageProvider.
-  const kbLang = lang === 'ru' || lang === 'uk' ? 'ru' : 'en'
+  // The knowledge base is RU/EN/UK (Spanish shows EN) — same mapping as its LanguageProvider.
+  const kbLang = lang === 'ru' || lang === 'uk' ? lang : 'en'
   const readTime = (tut) => `${tut.readTime} ${messages[kbLang].readTime}`
   const cover = (tut) => tut.cover && localize(tut.cover, kbLang)
 

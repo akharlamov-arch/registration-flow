@@ -1,10 +1,14 @@
 import type { CategoryId } from './categories';
 
-export const LANGS = ['ru', 'en'] as const;
+// uk есть только в registration-flow (в оригинале — RU и EN).
+export const LANGS = ['ru', 'en', 'uk'] as const;
 export type Lang = (typeof LANGS)[number];
 export const DEFAULT_LANG: Lang = 'ru';
 
-/** Значение на каждом языке сайта. */
+/**
+ * Значение на каждом языке сайта. Если uk не указан (контент скопирован из оригинала),
+ * на украинской версии показывается ru — см. typographLocalized и localize.
+ */
 export type Localized<T = string> = Record<Lang, T>;
 
 /** Одно значение для всех языков или своё для каждого (например, картинка со скриншотом на русском и английском). */

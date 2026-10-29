@@ -50,7 +50,6 @@ const ru = {
   footerDepartments: 'Отделы',
   footerGeneral: 'Общие вопросы',
   footerFuel: 'Топливный отдел',
-  footerAccounting: 'Бухгалтерия',
   footerResources: 'Ресурсы',
   footerPrivacy: 'Политика конфиденциальности',
   footerTerms: 'Условия использования',
@@ -112,7 +111,6 @@ const en: Messages = {
   footerDepartments: 'Departments',
   footerGeneral: 'General Inquiries',
   footerFuel: 'Fuel Department',
-  footerAccounting: 'Accounting Team',
   footerResources: 'Resources',
   footerPrivacy: 'Privacy Policy',
   footerTerms: 'Terms of Service',
@@ -123,10 +121,73 @@ const en: Messages = {
   backToPortal: 'Back to portal',
 };
 
+// Только в registration-flow: украинская версия.
+const uk: Messages = {
+  siteTitle: 'Клієнтський портал iTrucking | Client Portal iTrucking',
+  heroTitle: 'Клієнтський портал {brand}',
+  heroSubtitle: 'Знайдіть відповіді на всі ваші запитання',
+  categoriesTitle: 'Категорії',
+  categoryAll: 'Усі',
+  noResults: 'Тут поки немає туторіалів',
+  noResultsText: 'Оберіть іншу категорію',
+
+  readTime: 'хв читання',
+  stepsOne: 'крок',
+  stepsFew: 'кроки',
+  stepsMany: 'кроків',
+
+  stepsTitle: 'Покрокова інструкція',
+  calloutSolution: 'Як цього уникнути:',
+  calloutTip: 'Порада:',
+  calloutNote: 'Примітка:',
+  calloutConclusion: 'Висновок',
+  downloadOn: 'Завантажити в',
+  recommendationsTitle: 'Рекомендовані матеріали',
+
+  close: 'Закрити',
+  zoomImage: 'Збільшити зображення',
+  toggleTheme: 'Перемкнути тему',
+  language: 'Мова',
+
+  installApp: 'Встановити додаток',
+  iosInstallTitle: 'Встановлення на iPhone/iPad',
+  iosInstallStep1: 'Натисніть на іконку меню',
+  iosInstallStep1Desc: '(три горизонтальні крапки)',
+  iosInstallStep2: 'Оберіть пункт меню',
+  iosInstallStep2Desc: 'Share (іконка share)',
+  iosInstallStep3: 'Натисніть',
+  iosInstallStep3Desc: 'іконку "плюсик у квадраті" з назвою "Add to Home Screen"',
+  androidInstallTitle: 'Встановлення на Android',
+  androidInstallStep1: 'Натисніть на іконку',
+  androidInstallStep1Desc: '(три крапки) у правому верхньому куті',
+  androidInstallStep2: 'Натисніть на',
+  androidInstallStep2Desc: 'Add to Home screen',
+
+  footerContact: 'Контакти',
+  footerMainPhone: 'iTrucking Services',
+  footerAccountingPhone: 'Бухгалтерія',
+  footerTirePhone: 'Відділ шин',
+  footerDepartments: 'Відділи',
+  footerGeneral: 'Загальні питання',
+  footerFuel: 'Паливний відділ',
+  footerResources: 'Ресурси',
+  footerPrivacy: 'Політика конфіденційності',
+  footerTerms: 'Умови використання',
+  footerAddress: 'Адреса',
+  footerSocial: 'Соціальні мережі',
+  footerCopyright: 'iTrucking Services. Усі права захищені.',
+
+  backToPortal: 'Назад до порталу',
+};
+
 function withTypography(texts: Messages): Messages {
   return Object.fromEntries(
     Object.entries(texts).map(([key, text]) => [key, typograph(text)]),
   ) as Messages;
 }
 
-export const messages: Record<Lang, Messages> = { ru: withTypography(ru), en: withTypography(en) };
+export const messages: Record<Lang, Messages> = {
+  ru: withTypography(ru),
+  en: withTypography(en),
+  uk: withTypography(uk),
+};
