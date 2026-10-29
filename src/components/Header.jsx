@@ -16,7 +16,7 @@ import logoDark from '../assets/tutorials/logos/Logo_for_dark_theme.png'
 const LANGUAGES = [
   { code: 'en', label: 'EN' },
   { code: 'ru', label: 'RU' },
-  { code: 'uk', label: 'UK' },
+  { code: 'uk', label: 'UA' },
   { code: 'es', label: 'ES' },
 ]
 
