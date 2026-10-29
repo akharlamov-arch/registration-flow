@@ -6,6 +6,15 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "registration-flow (one host)",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "VITE_ONBOARDING_ORIGIN=http://localhost:5175 VITE_PORTAL_ORIGIN=http://localhost:5175 npx vite --port 5175 --strictPort"
+      ],
+      "port": 5175
     }
   ]
 }

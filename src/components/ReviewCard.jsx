@@ -1,6 +1,6 @@
 // Shared read-only "review" primitives.
 //
-// Extracted from OtpVerification.jsx so the customer portal (PortalPage.jsx)
+// Extracted from OtpVerification.jsx so the customer portal (src/pages/attention/)
 // and the registration review step render summaries with one consistent design.
 // These are presentational only — no i18n, no business logic.
 

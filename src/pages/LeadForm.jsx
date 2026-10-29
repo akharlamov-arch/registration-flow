@@ -193,7 +193,7 @@ export default function LeadForm() {
     setOtpResetSent(true)
     // Brief pause so the user sees the success state before leaving the page
     setTimeout(() => {
-      window.location.replace('/#/registration')
+      window.location.replace('#/setup')
     }, 1200)
   }
 
@@ -442,7 +442,7 @@ export default function LeadForm() {
             sessionStorage.removeItem('itrucking-invite-label')
             sessionStorage.removeItem('itrucking-invite-preapproved')
             window.location.replace(
-              '/#/registration?sessionToken=' + encodeURIComponent(data.session_token)
+              '#/setup?sessionToken=' + encodeURIComponent(data.session_token)
             )
           } else {
             // Submission complete — token has been consumed, clear storage.

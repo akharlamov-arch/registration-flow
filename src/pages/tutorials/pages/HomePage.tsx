@@ -7,6 +7,7 @@ import { tutorials } from '@/content';
 import { isCategoryId, type CategoryId } from '@/content/categories';
 import { useI18n } from '@/i18n/context';
 import styles from './HomePage.module.css';
+import { PORTAL_HOME } from '../../../config/surfaces';
 
 /**
  * Главная: список туториалов. Открытый туториал рендерится поверх через <Outlet />.
@@ -37,14 +38,17 @@ export function HomePage() {
   );
 }
 
-/** Только в registration-flow: возврат в клиентский портал (#/attention). */
+/**
+ * Только в registration-flow: возврат в клиентский портал — #/ на
+ * portal.itrucking.pro, #/portal в одно-хостовой сборке (src/config/surfaces.js).
+ */
 function BackToPortal() {
   const { t } = useI18n();
   const navigate = useNavigate();
 
   return (
     <div className={styles.backRow}>
-      <button type="button" className={styles.back} onClick={() => navigate('/attention')}>
+      <button type="button" className={styles.back} onClick={() => navigate(PORTAL_HOME)}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
         </svg>

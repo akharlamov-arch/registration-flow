@@ -2,7 +2,9 @@
 //
 // Deliberately NOT a blocking modal: the old PortalBankVerificationGate threw a
 // full-screen red overlay that read as an error and trapped the customer. This
-// sits in the flow, states what is missing, and links to the step.
+// sits in the flow, states what is missing, and `onGo` takes the customer
+// straight into connecting (the page opens the bank tab with Plaid already
+// launched — see ATTENTION-REMINDER-CONNECT-01 in AttentionPage).
 
 import { useI18n } from '../../context/I18nContext'
 export default function BankReminder({ onGo }) {

@@ -707,7 +707,7 @@ export default function OtpVerification() {
         const resumeStep = getResumeStep(data)
 
         if (resumeStep >= 11 && token) {
-          window.location.replace(`/#/post-signing?token=${encodeURIComponent(token)}`)
+          window.location.replace(`#/post-signing?token=${encodeURIComponent(token)}`)
           return
         }
 
@@ -903,7 +903,7 @@ export default function OtpVerification() {
       // Steps 11+ (contractSigned, allDone) now live in PostSigning.
       // Redirect using the session token so that page can validate and resume.
       if (resumeStep >= 11 && data.session_token) {
-        window.location.replace(`/#/post-signing?token=${encodeURIComponent(data.session_token)}`)
+        window.location.replace(`#/post-signing?token=${encodeURIComponent(data.session_token)}`)
         return
       }
 

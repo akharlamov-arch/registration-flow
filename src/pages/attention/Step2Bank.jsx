@@ -15,7 +15,7 @@
 // shows the same stage instead of dropping back to "connect".
 
 import { useI18n } from '../../context/I18nContext'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import MoovFallback from './MoovFallback'
 import BankHistory from './BankHistory'
 import BankCodeEntry from './BankCodeEntry'
@@ -105,8 +105,13 @@ function SubmissionWaiting({ stage, submission }) {
   )
 }
 
+// `connectRequested` / `onConnectRequestHandled`: the page's one-shot request to
+// open Plaid as soon as this tab shows (the red reminder's "Connect now"). The
+// page owns the flag because the click happens outside this tab; it is cleared
+// through `onConnectRequestHandled` the moment it is read.
 export default function Step2Bank({
   token, bank, history = [], awaitingCodes = [], connected, onConnected, onManualSubmitted, onVerified, onRefresh,
+  connectRequested = false, onConnectRequestHandled,
 }) {
   const { t } = useI18n()
   // A bank on file that is not linked through Plaid (typed in, imported, or a
@@ -212,6 +217,29 @@ export default function Step2Bank({
     // `open` reports its own failure through onError, which resets the status.
     if (!opened) setStatus('idle')
   }
+
+  // The reminder's "Connect now" (ATTENTION-REMINDER-CONNECT-01) means connect,
+  // not "take me to a page with another Connect button" — customers pressed it,
+  // landed here and stopped. So the request opens Plaid itself, and a failure
+  // lands in the error panel above the still-usable button like any other.
+  //
+  // Not while a verification code is awaited (PORTAL-MOOV-02): entering it is
+  // what that customer came back for, and a new link would replace the bank it
+  // verifies. `requestHandledRef` keeps StrictMode's doubled mount effect from
+  // minting two link sessions for one click; it re-arms when the flag clears.
+  const requestHandledRef = useRef(false)
+  useEffect(() => {
+    if (!connectRequested) {
+      requestHandledRef.current = false
+      return
+    }
+    if (requestHandledRef.current) return
+    requestHandledRef.current = true
+
+    onConnectRequestHandled?.()
+    if (awaitingCodes.length === 0) connect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reacts to the request, not to every new `connect`
+  }, [connectRequested])
 
   return (
     <div className="space-y-4">

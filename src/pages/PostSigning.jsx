@@ -157,7 +157,7 @@ export default function PostSigning() {
           <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('postSigning.errorTitle')}</h2>
           <p className="text-sm text-gray-500 leading-relaxed mb-6">{pageError}</p>
           <a
-            href="/#/registration"
+            href="#/setup"
             className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-primary
                        border border-primary rounded-md hover:bg-primary hover:text-white
                        transition-colors duration-200"

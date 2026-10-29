@@ -1,39 +1,70 @@
 // DS React stack guideline: lazy() for routes — code splitting
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { HashRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { I18nProvider, useI18n } from './context/I18nContext'
 import { ThemeProvider } from './context/ThemeContext'
 import Header from './components/Header'
 import SiteFooter, { SiteFooterContext } from './components/SiteFooter'
 import LanguagePromptModal from './components/LanguagePromptModal'
+import RenameRoute from './components/RenameRoute'
+import { SURFACE, PORTAL_HOME } from './config/surfaces'
 
 const LeadForm         = lazy(() => import('./pages/LeadForm'))
 const OtpVerification  = lazy(() => import('./pages/OtpVerification'))
 const PostSigning      = lazy(() => import('./pages/PostSigning'))
 const RelinkPage       = lazy(() => import('./pages/RelinkPage'))
-const PortalPage       = lazy(() => import('./pages/PortalPage'))
 const AttentionPage    = lazy(() => import('./pages/attention/AttentionPage'))
 const TutorialsApp     = lazy(() => import('./pages/tutorials/app/App'))
+
+function titleKey(pathname) {
+  if (pathname.startsWith('/tutorials')) return 'tutorials.title'
+  if (SURFACE === 'portal' || pathname.startsWith('/portal') || pathname.startsWith('/attention')) {
+    return 'portal.title'
+  }
+  if (pathname.startsWith('/setup') || pathname.startsWith('/post-signing')) return 'registration.title'
+  return 'lead.title'
+}
 
 function TitleUpdater() {
   const { t } = useI18n()
   const location = useLocation()
 
   useEffect(() => {
-    if (location.pathname.startsWith('/tutorials')) {
-      document.title = t('tutorials.title')
-      return
-    }
-    if (location.pathname.startsWith('/portal') || location.pathname.startsWith('/attention')) {
-      document.title = t('portal.title')
-      return
-    }
-    const isReg = location.pathname.startsWith('/registration') || location.pathname.startsWith('/post-signing')
-    document.title = isReg ? t('registration.title') : t('lead.title')
+    document.title = t(titleKey(location.pathname))
   }, [location.pathname, t])
 
   return null
 }
+
+// The route tables, one per host (src/config/surfaces.js). A one-host build
+// mounts both, the portal at #/portal. A route of the other host never reaches
+// these: main.jsx sends it there first.
+
+// Onboarding: registration.itrucking.pro.
+const onboardingRoutes = (
+  <>
+    <Route path="/" element={<LeadForm />} />
+    <Route path="/setup" element={<OtpVerification />} />
+    <Route path="/post-signing" element={<PostSigning />} />
+    <Route path="/relink" element={<RelinkPage />} />
+    {/* Its name until PUBLIC-HOSTS-02: OTP e-mails and approval links already
+        sent carry it, with their ?code=. */}
+    <Route path="/registration" element={<RenameRoute to="/setup" />} />
+  </>
+)
+
+// The customer portal and the tutorials: portal.itrucking.pro.
+const portalRoutes = (
+  <>
+    <Route path={PORTAL_HOME} element={<AttentionPage />} />
+    <Route path="/tutorials/*" element={<TutorialsApp />} />
+    {/* The portal's earlier names (PORTAL-UI-01, PUBLIC-HOSTS-02), kept for
+        links already shared. */}
+    {['/attention', '/attantion', '/portal-demo', '/portal']
+      .filter((path) => path !== PORTAL_HOME)
+      .map((path) => <Route key={path} path={path} element={<RenameRoute to={PORTAL_HOME} />} />)}
+  </>
+)
 
 // DS: animate-pulse skeleton while lazy chunk loads
 function PageFallback() {
@@ -75,19 +106,8 @@ function AppShell() {
         <div className="flex-1 flex flex-col">
           <Suspense fallback={<PageFallback />}>
             <Routes>
-              <Route path="/" element={<LeadForm />} />
-              <Route path="/registration" element={<OtpVerification />} />
-              <Route path="/post-signing" element={<PostSigning />} />
-              <Route path="/relink" element={<RelinkPage />} />
-              <Route path="/portal" element={<Navigate to="/attention" replace />} />
-              <Route path="/attention" element={<AttentionPage />} />
-              <Route path="/tutorials/*" element={<TutorialsApp />} />
-              {/* Retired URLs, kept so links already shared with testers still land
-                  somewhere (PORTAL-UI-01). `replace` keeps them out of history. A
-                  redirect drops router state, so the /portal gates navigate to
-                  /attention directly rather than through these. */}
-              <Route path="/attantion" element={<Navigate to="/attention" replace />} />
-              <Route path="/portal-demo" element={<Navigate to="/attention" replace />} />
+              {SURFACE !== 'portal' && onboardingRoutes}
+              {SURFACE !== 'onboarding' && portalRoutes}
             </Routes>
           </Suspense>
         </div>
